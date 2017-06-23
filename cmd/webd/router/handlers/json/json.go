@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	_mw "github.com/mappcpd/web-services/cmd/webd/router/handlers/middleware"
 	a_ "github.com/mappcpd/web-services/internal/authentication"
 	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
 )
@@ -45,13 +44,15 @@ type MongoMeta struct {
 	Query interface{} `json:"query" bson:"query"`
 }
 
-// NewPayLoad returns a a pointer to a new Payload and sets a fresh token if a token available
-func NewPayload() *Payload {
+// NewPayLoad returns a pointer to a new Payload value. It received a token string which it will
+// check for validity and if ok will set a refresh token as part of the payload.
+func NewPayload(ts string) *Payload {
 
 	p := Payload{}
 
+	// todo fix import cycle issue caused by this code
 	// if universal UserAuthToken value is present, use this to set fresh token
-	t, err := j_.CheckJWT(_mw.UserAuthToken.Token)
+	t, err := j_.CheckJWT(ts)
 	if err != nil {
 		// No panic here, we'll just not do a fresh token
 		return &p

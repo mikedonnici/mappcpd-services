@@ -15,7 +15,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
-	_mw "github.com/mappcpd/web-services/cmd/webd/router/handlers/middleware"
+	_mw "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	a_ "github.com/mappcpd/web-services/internal/activities"
 	m_ "github.com/mappcpd/web-services/internal/members"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
@@ -24,7 +24,7 @@ import (
 // Activities fetches list of activity types
 func Activities(w http.ResponseWriter, _ *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	al, err := a_.ActivityList()
 	if err != nil {
@@ -46,7 +46,7 @@ func Activities(w http.ResponseWriter, _ *http.Request) {
 // ActivitiesID fetches a single activity type by ID
 func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -74,7 +74,7 @@ func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 // Activities fetches a single activity record by id
 func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -112,7 +112,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 // MembersActivitiesAdd adds a new activity for the logged in member
 func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	// Decode JSON body into NewActivity value
 	a := m_.MemberActivityRow{}
@@ -153,7 +153,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 // update one to many fields.
 func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	// Get activity id from path... and make it an int
 	v := mux.Vars(r)
@@ -226,7 +226,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 // MembersActivitiesRecurring fetches the member's recurring activities (if any) stored in MongoDB
 func MembersActivitiesRecurring(w http.ResponseWriter, _ *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	ra, err := m_.MemberRecurring(_mw.UserAuthToken.Claims.ID)
 	if err != nil {
@@ -245,7 +245,7 @@ func MembersActivitiesRecurring(w http.ResponseWriter, _ *http.Request) {
 // Note that this function reads and writes only to MongoDB
 func MembersActivitiesRecurringAdd(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	// Get user id from token
 	id := _mw.UserAuthToken.Claims.ID
@@ -296,7 +296,7 @@ func MembersActivitiesRecurringAdd(w http.ResponseWriter, r *http.Request) {
 // doc in the collection, only one element from the array of recurring activities in the doc that belongs to the member
 func MembersActivitiesRecurringRemove(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
 
 	// Get user id from token
 	id := _mw.UserAuthToken.Claims.ID

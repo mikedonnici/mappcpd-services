@@ -10,6 +10,7 @@ import (
 	"github.com/gorilla/mux"
 
 	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	mw_ "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
 	r_ "github.com/mappcpd/web-services/internal/resources"
 )
@@ -17,7 +18,7 @@ import (
 // ResourcesID fetches a single resource from the MySQLConnection db
 func ResourcesID(w http.ResponseWriter, req *http.Request) {
 
-	p := _json.Payload{}
+	p := _json.NewPayload(mw_.UserAuthToken.Token)
 	// Request - convert id from string to int type
 	v := mux.Vars(req)
 	id, err := strconv.Atoi(v["id"])
@@ -46,7 +47,7 @@ func ResourcesID(w http.ResponseWriter, req *http.Request) {
 func ResourcesCollection(w http.ResponseWriter, r *http.Request) {
 
 	// Response
-	p := _json.Payload{}
+	p := _json.NewPayload(mw_.UserAuthToken.Token)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)

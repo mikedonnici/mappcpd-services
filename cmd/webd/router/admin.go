@@ -5,7 +5,7 @@ import (
 	"github.com/urfave/negroni"
 
 	_h "github.com/mappcpd/web-services/cmd/webd/router/handlers"
-	_mw "github.com/mappcpd/web-services/cmd/webd/router/handlers/middleware"
+	_mw "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 )
 
 // adminSubRouter adds end points for admin, and appropriate middleware
