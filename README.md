@@ -5,5 +5,5 @@ Combine services projects into a single project structure based on Bill Kennedy'
 
 
 * [cmd/](/cmd/README.md) - all executable packages
-  * [webd/](/mappcpd/web-services/blob/master/cmd/webd/README.md) - web server (api)
-* [internal/](/mappcpd/web-services/blob/master/internal/README.md) - in-house packages
+  * [webd/](/cmd/webd/README.md) - web server (api)
+* [internal/](/internal/README.md) - in-house packages
