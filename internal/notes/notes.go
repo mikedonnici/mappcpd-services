@@ -1,6 +1,6 @@
-package models
+package notes
 
-import "github.com/mappcpd/api/db"
+import "github.com/mappcpd/web-services/internal/platform/datastore"
 
 // Note is just that - a note recorded in the system which may be linked to a member,
 // and more specifically to another entity such as an application, or an issue
@@ -35,7 +35,7 @@ func (n *Note) SetAttachments() error {
 	LEFT JOIN fs_url u ON s.id = u.fs_set_id
 	WHERE wa.wf_note_id = ?`
 
-	rows, err := db.MySQL.Session.Query(query, n.ID)
+	rows, err := datastore.MySQL.Session.Query(query, n.ID)
 	if err != nil {
 		return err
 	}
@@ -74,7 +74,7 @@ func NoteById(id int) (*Note, error) {
 		LEFT JOIN member m ON wna.member_id = m.id
 		WHERE wn.id = ?`
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&n.MemberID,
 		&n.DateCreated,
 		&n.DateUpdated,
@@ -113,7 +113,7 @@ func NotesByMemberID(id int) (*Notes, error) {
 		WHERE m.id = ?
 		ORDER BY wn.effective_on DESC`
 
-	rows, err := db.MySQL.Session.Query(query, id)
+	rows, err := datastore.MySQL.Session.Query(query, id)
 	if err != nil {
 		return &ns, err
 	}

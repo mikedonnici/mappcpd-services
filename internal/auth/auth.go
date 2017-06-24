@@ -1,4 +1,4 @@
-package models
+package auth
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 
 	"database/sql"
 
-	db_ "github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // AuthMember checks login & pass against db_
@@ -19,7 +19,7 @@ func AuthMember(u, p string) (int, string, error) {
 	var id int
 	var name string
 	var errMsg error
-	err := db_.MySQL.Session.QueryRow(query).Scan(&id, &name)
+	err := datastore.MySQL.Session.QueryRow(query).Scan(&id, &name)
 
 	// zero rows is a failed login
 	if err == sql.ErrNoRows {

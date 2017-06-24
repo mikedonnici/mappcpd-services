@@ -1,4 +1,4 @@
-package models
+package modules
 
 import (
 	"fmt"
@@ -6,8 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mappcpd/api/db"
 	"gopkg.in/mgo.v2/bson"
+
+	"github.com/mappcpd/api/db"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/utility"
 )
 
 // Module defines struct for a CPD module
@@ -51,7 +54,7 @@ func ModuleByID(id int) (*Module, error) {
 	var updatedAt string
 	var publishedAt string
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&createdAt,
 		&updatedAt,
 		&publishedAt,
@@ -65,9 +68,9 @@ func ModuleByID(id int) (*Module, error) {
 		return &m, err
 	}
 	// Convert MySQL date time strings to time.Time
-	m.CreatedAt, _ = dateTime(createdAt)
-	m.UpdatedAt, _ = dateTime(updatedAt)
-	m.PublishedAt, _ = dateTime(publishedAt)
+	m.CreatedAt, _ = utility.DateTime(createdAt)
+	m.UpdatedAt, _ = utility.DateTime(updatedAt)
+	m.PublishedAt, _ = utility.DateTime(publishedAt)
 
 	return &m, nil
 }
@@ -75,13 +78,13 @@ func ModuleByID(id int) (*Module, error) {
 // DocModulesAll searches the Modules collection.
 func DocModulesAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	modules, err := db.MongoDB.ModulesCol()
+	modules, err := datastore.MongoDB.ModulesCol()
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
 	// Run query and return results TODO remove limit here!!
 	var m []interface{}
@@ -99,7 +102,7 @@ func DocModulesLimit(q map[string]interface{}, p map[string]interface{}, l int) 
 	m := []interface{}{}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
 	modules, err := db.MongoDB.ModulesCol()
 	if err != nil {
@@ -120,7 +123,7 @@ func DocModulesOne(q map[string]interface{}) (Module, error) {
 	m := Module{}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
 	modules, err := db.MongoDB.ModulesCol()
 	if err != nil {
@@ -141,7 +144,7 @@ func QueryModulesCollection(mq db.MongoQuery) ([]interface{}, error) {
 	r := []interface{}{}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
 
 	// get a pointer to the modules collection
 	c, err := db.MongoDB.ModulesCol()

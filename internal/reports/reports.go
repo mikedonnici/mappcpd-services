@@ -1,6 +1,6 @@
 package models
 
-import "github.com/mappcpd/api/db"
+import "github.com/mappcpd/web-services/internal/platform/datastore"
 
 func ReportModulesByDate() (map[string]int, error) {
 
@@ -10,7 +10,7 @@ func ReportModulesByDate() (map[string]int, error) {
   		Count(*) As 'Modules'
 		FROM ol_m_module
 		GROUP BY Year(created_at), Month(created_at);`
-	rows, err := db.MySQL.Session.Query(sql)
+	rows, err := datastore.MySQL.Session.Query(sql)
 	defer rows.Close()
 
 	if err != nil {
@@ -37,7 +37,7 @@ func ReportPointsByRecordDate() (map[string]float32, error) {
 		FROM ce_m_activity
 		GROUP BY Year(created_at), Month(created_at)
 		ORDER BY Year(created_at), Month(created_at);`
-	rows, err := db.MySQL.Session.Query(sql)
+	rows, err := datastore.MySQL.Session.Query(sql)
 	defer rows.Close()
 
 	if err != nil {
@@ -64,7 +64,7 @@ func ReportPointsByActivityDate() (map[string]float32, error) {
 		FROM ce_m_activity
 		GROUP BY Year(activity_on), Month(created_at)
 		ORDER BY Year(activity_on), Month(created_at);`
-	rows, err := db.MySQL.Session.Query(sql)
+	rows, err := datastore.MySQL.Session.Query(sql)
 	defer rows.Close()
 
 	if err != nil {

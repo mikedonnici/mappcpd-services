@@ -1,28 +1,31 @@
-package models
+package members
 
 import (
 	"fmt"
-	"github.com/mappcpd/api/db"
-	"gopkg.in/go-playground/validator.v9"
 	"log"
 	"sync"
 	"time"
+
+	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/mappcpd/web-services/internal/activities"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // MemberActivityDoc is the document format for an activity that is
 // recorded by a member - that is, a CPD diary entry
 type MemberActivityDoc struct {
-	ID          int              `json:"id" bson:"id"`
-	MemberID    int              `json:"memberId" bson:"memberId"`
-	CreatedAt   time.Time        `json:"createdAt" bson:"createdAt"`
-	UpdatedAt   time.Time        `json:"updatedAt" bson:"updatedAt"`
-	Date        string           `json:"date" bson:"date"`
-	DateISO     time.Time        `json:"dateISO" bson:"dateISO"`
-	Credit      float32          `json:"credit" bson:"credit"`
-	Description string           `json:"description" bson:"description"`
-	Category    ActivityCategory `json:"category" bson:"category"`
-	Activity    Activity         `json:"activity" bson:"activity"`
-	CreditData  ActivityCredit   `json:"creditData" bson:"creditData"`
+	ID          int                         `json:"id" bson:"id"`
+	MemberID    int                         `json:"memberId" bson:"memberId"`
+	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
+	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
+	Date        string                      `json:"date" bson:"date"`
+	DateISO     time.Time                   `json:"dateISO" bson:"dateISO"`
+	Credit      float32                     `json:"credit" bson:"credit"`
+	Description string                      `json:"description" bson:"description"`
+	Category    activities.ActivityCategory `json:"category" bson:"category"`
+	Activity    activities.Activity         `json:"activity" bson:"activity"`
+	CreditData  activities.ActivityCredit   `json:"creditData" bson:"creditData"`
 }
 
 // MemberActivityRow represents the minimum data to add or update a Member Activity.
@@ -72,7 +75,7 @@ func MemberActivityByID(id int) (*MemberActivityDoc, error) {
 		LEFT JOIN ce_activity_category cac ON ca.ce_activity_category_id = cac.id
 		WHERE cma.id = ?`
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&a.MemberID,
 		&a.Date,
 		&a.Description,
@@ -125,7 +128,7 @@ func MemberActivityRowByID(id int) (*MemberActivityRow, error) {
 		LEFT JOIN ce_activity ca ON cma.ce_activity_id = ca.id
 		WHERE cma.id = ?`
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&a.MemberID,
 		&a.ActivityID,
 		&a.Evidence,
@@ -146,7 +149,7 @@ func MemberActivitiesByMemberID(id int) ([]MemberActivityDoc, error) {
 	activities := MemberActivities{}
 
 	sql := fmt.Sprintf("SELECT id from ce_m_activity WHERE member_id = %v", id)
-	rows, err := db.MySQL.Session.Query(sql)
+	rows, err := datastore.MySQL.Session.Query(sql)
 	if err != nil {
 		return activities, err
 	}
@@ -178,7 +181,7 @@ func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 	id := map[string]int{"id": a.ID}
 
 	// Get pointer to the collection
-	c, err := db.MongoDB.ActivitiesCol()
+	c, err := datastore.MongoDB.ActivitiesCol()
 	if err != nil {
 		log.Printf("Error getting pointer to Activities collection: %s\n", err.Error())
 	}
@@ -197,14 +200,14 @@ func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
 func AddMemberActivity(a MemberActivityRow) (int64, error) {
 
-	validate = validator.New()
+	validate := validator.New()
 	err := validate.Struct(a)
 	if err != nil {
 		return 0, err
 	}
 
 	// Look up the credit-per-unit for this type of activity...
-	uc, err := ActivityUnitCredit(a.ActivityID)
+	uc, err := activities.ActivityUnitCredit(a.ActivityID)
 	if err != nil {
 		return 0, err
 	}
@@ -217,7 +220,7 @@ func AddMemberActivity(a MemberActivityRow) (int64, error) {
 	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
 
 	// Get result of the the query execution...
-	r, err := db.MySQL.Session.Exec(query)
+	r, err := datastore.MySQL.Session.Exec(query)
 	if err != nil {
 		return 0, err
 	}
@@ -234,14 +237,14 @@ func AddMemberActivity(a MemberActivityRow) (int64, error) {
 // UpdateMemberActivity updates an existing member activity record in the MySQL db
 func UpdateMemberActivity(a MemberActivityRow) error {
 
-	validate = validator.New()
+	validate := validator.New()
 	err := validate.Struct(a)
 	if err != nil {
 		return err
 	}
 
 	// Look up the value of this type of activity
-	uc, err := ActivityUnitCredit(a.ActivityID)
+	uc, err := activities.ActivityUnitCredit(a.ActivityID)
 	if err != nil {
 		return err
 	}
@@ -258,7 +261,7 @@ func UpdateMemberActivity(a MemberActivityRow) error {
 	WHERE id = %v
 	LIMIT 1`
 	query = fmt.Sprintf(query, a.ActivityID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
-	_, err = db.MySQL.Session.Exec(query)
+	_, err = datastore.MySQL.Session.Exec(query)
 	if err != nil {
 		return err
 	}
@@ -267,7 +270,7 @@ func UpdateMemberActivity(a MemberActivityRow) error {
 }
 
 // Save a recurring activity
-func (a *RecurringActivity) Save() error {
-
-	return nil
-}
+//func (a *members.RecurringActivity) Save() error {
+//
+//	return nil
+//}

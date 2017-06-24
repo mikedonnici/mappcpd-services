@@ -6,7 +6,7 @@ import (
 	_h "github.com/mappcpd/web-services/cmd/webd/router/handlers"
 )
 
-// authSubRouter sets up a router for authentication with no middleware
+// authSubRouter sets up a router for auth with no middleware
 func authSubRouter() *mux.Router {
 
 	r := mux.NewRouter().StrictSlash(true)

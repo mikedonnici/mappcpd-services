@@ -1,13 +1,7 @@
-package models
+package resources
 
 import (
-	"database/sql"
-	"encoding/json"
 	"fmt"
-	"github.com/mappcpd/api/db"
-	"github.com/pkg/errors"
-	"gopkg.in/mgo.v2"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"os"
 	"reflect"
@@ -15,6 +9,17 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"database/sql"
+	"encoding/json"
+	"github.com/pkg/errors"
+	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
+
+	"github.com/mappcpd/api/db"
+	"github.com/mappcpd/web-services/internal/constants"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/utility"
 )
 
 // Resource record
@@ -84,7 +89,7 @@ func ResourceByID(id int) (*Resource, error) {
 	var keywords string
 	var attributes string
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&createdAt,
 		&updatedAt,
 		&presentedOn,
@@ -114,19 +119,19 @@ func ResourceByID(id int) (*Resource, error) {
 	}
 
 	// Convert MySQL date time strings to time.Time
-	r.CreatedAt, err = time.Parse(mysqlTimestampFormat, createdAt)
+	r.CreatedAt, err = time.Parse(constants.MySQLTimestampFormat, createdAt)
 	if err != nil {
 		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse created_at", id)
 		fmt.Println(msg, err)
 		//os.Exit(1)
 	}
-	r.UpdatedAt, _ = time.Parse(mysqlTimestampFormat, updatedAt)
+	r.UpdatedAt, _ = time.Parse(constants.MySQLTimestampFormat, updatedAt)
 	if err != nil {
 		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse updated_at", id)
 		fmt.Println(msg, err)
 		//os.Exit(1)
 	}
-	r.PubDate.Date, err = time.Parse(mysqlDateFormat, presentedOn)
+	r.PubDate.Date, err = time.Parse(constants.MySQLTimestampFormat, presentedOn)
 	if err != nil {
 		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse updated_at", id)
 		fmt.Println(msg, err)
@@ -184,7 +189,7 @@ func DocResourcesAll(q map[string]interface{}, p map[string]interface{}) ([]inte
 	}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
 	// Run query and return results
 	var r []interface{}
@@ -202,7 +207,7 @@ func DocResourcesLimit(q map[string]interface{}, p map[string]interface{}, l int
 	r := []interface{}{}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
 	resources, err := db.MongoDB.ResourcesCol()
 	if err != nil {
@@ -222,7 +227,7 @@ func DocResourcesOne(q map[string]interface{}) (Resource, error) {
 	r := Resource{}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
 	resources, err := db.MongoDB.ResourcesCol()
 	if err != nil {
@@ -243,7 +248,7 @@ func QueryResourcesCollection(mq db.MongoQuery) ([]interface{}, error) {
 	r := []interface{}{}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
 
 	// get a pointer to the resources collection
 	c, err := db.MongoDB.ResourcesCol()
@@ -410,9 +415,9 @@ func (r *Resource) Save() (int64, error) {
 	}
 
 	query = fmt.Sprintf(query, r.TypeID, 1, r.Primary,
-		r.CreatedAt.Format(mysqlTimestampFormat),
-		r.UpdatedAt.Format(mysqlTimestampFormat),
-		r.PubDate.Date.Format(mysqlDateFormat),
+		r.CreatedAt.Format(constants.MySQLTimestampFormat),
+		r.UpdatedAt.Format(constants.MySQLTimestampFormat),
+		r.PubDate.Date.Format(constants.MySQLDateFormat),
 		r.PubDate.Year,
 		r.PubDate.Month,
 		r.PubDate.Day,
@@ -457,8 +462,8 @@ func (r *Resource) Update(id int) error {
 	keywords := strings.Join(r.Keywords, ",")
 
 	query = fmt.Sprintf(query, r.TypeID, 1, r.Primary,
-		r.UpdatedAt.Format(mysqlTimestampFormat),
-		r.PubDate.Date.Format(mysqlDateFormat),
+		r.UpdatedAt.Format(constants.MySQLTimestampFormat),
+		r.PubDate.Date.Format(constants.MySQLDateFormat),
 		r.PubDate.Year,
 		r.PubDate.Month,
 		r.PubDate.Day,

@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
-	a_ "github.com/mappcpd/web-services/internal/authentication"
+	a_ "github.com/mappcpd/web-services/internal/auth"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
 	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
 )

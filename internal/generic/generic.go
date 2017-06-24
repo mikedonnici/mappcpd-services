@@ -1,8 +1,9 @@
-package models
+package internal
 
 import (
 	"fmt"
-	"github.com/mappcpd/api/db"
+
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // GetIDs returns a list of ids from any table. Takes the table name (t) and a filter (f)
@@ -12,7 +13,7 @@ func GetIDs(t string, f string) ([]int, error) {
 	var ids []int
 
 	sql := fmt.Sprintf("SELECT id FROM %s %s", t, f)
-	rows, err := db.MySQL.Session.Query(sql)
+	rows, err := datastore.MySQL.Session.Query(sql)
 	if err != nil {
 		return ids, err
 	}
@@ -30,7 +31,7 @@ func GetIDs(t string, f string) ([]int, error) {
 // GetRows runs any query and returns a map slice where each slice is a row
 func GetRows(sql string) ([]map[string]string, error) {
 
-	rows, e := db.MySQL.Session.Query(sql)
+	rows, e := datastore.MySQL.Session.Query(sql)
 	if e != nil {
 		return nil, e
 	}
@@ -42,6 +43,6 @@ func GetRows(sql string) ([]map[string]string, error) {
 
 // Execute
 func Execute(sql string) error {
-	_, err := db.MySQL.Session.Exec(sql)
+	_, err := datastore.MySQL.Session.Exec(sql)
 	return err
 }

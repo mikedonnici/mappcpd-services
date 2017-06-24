@@ -1,6 +1,6 @@
-package models
+package activities
 
-import "github.com/mappcpd/api/db"
+import "github.com/mappcpd/web-services/internal/platform/datastore"
 
 // ActivityType describes the type of activity, eg online learning. This is NOT the same
 // as the category which is a much broader grouping.
@@ -37,7 +37,7 @@ func ActivityList() (Activities, error) {
 
 	query := "SELECT id, code, name, description FROM ce_activity WHERE active = 1"
 
-	rows, err := db.MySQL.Session.Query(query)
+	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
 		return ats, err
 	}
@@ -59,7 +59,7 @@ func ActivityByID(id int) (Activity, error) {
 
 	query := "SELECT id, code, name, description FROM ce_activity WHERE active = 1 AND id = ?"
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&a.ID,
 		&a.Code,
 		&a.Name,
@@ -82,7 +82,7 @@ func ActivityUnitCredit(id int) (float32, error) {
 	var p float32
 	query := `SELECT points_per_unit FROM ce_activity
 		  WHERE active = 1 AND id = ?`
-	err := db.MySQL.Session.QueryRow(query, id).Scan(&p)
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(&p)
 	if err != nil {
 		return p, err
 	}

@@ -1,6 +1,6 @@
 package models
 
-import "github.com/mappcpd/api/db"
+import "github.com/mappcpd/web-services/internal/platform/datastore"
 
 // Organisation defines a business, society or similar legal entity
 type Organisation struct {
@@ -79,7 +79,7 @@ func OrganisationByID(id int) (Organisation, error) {
 		  AND id = ?
 		  AND active = 1`
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&o.ID,
 		&o.Code,
 		&o.Name,
@@ -108,7 +108,7 @@ func OrganisationsList() ([]Organisation, error) {
 		  AND parent_organisation_id IS NULL
 		  AND active = 1`
 
-	rows, err := db.MySQL.Session.Query(query)
+	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
 		return orgs, err
 	}
@@ -138,7 +138,7 @@ func OrganisationGroupsList(id int) ([]OrganisationGroup, error) {
 		  AND parent_organisation_id = ?
 		  AND active = 1`
 
-	rows, err := db.MySQL.Session.Query(query, id)
+	rows, err := datastore.MySQL.Session.Query(query, id)
 	if err != nil {
 		return gs, err
 	}
@@ -191,7 +191,7 @@ func (og *OrganisationGroup) SetCurrentGroupPositions() error {
 		AND ((mp.end_on IS NULL) OR (mp.end_on = '0000-00-00') OR (mp.end_on > NOW()))
 		AND o.id = ?;`
 
-	rows, err := db.MySQL.Session.Query(query, og.ID)
+	rows, err := datastore.MySQL.Session.Query(query, og.ID)
 	if err != nil {
 		return err
 	}

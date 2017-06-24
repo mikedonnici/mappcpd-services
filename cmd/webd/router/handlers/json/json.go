@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	a_ "github.com/mappcpd/web-services/internal/authentication"
+	a_ "github.com/mappcpd/web-services/internal/auth"
 	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
