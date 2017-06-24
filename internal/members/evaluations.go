@@ -1,7 +1,7 @@
 package members
 
 import (
-	"github.com/mappcpd/api/db"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // Evaluation is a struct representing an 'ep' or evaluation period. This is
@@ -44,7 +44,7 @@ func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
 	LEFT JOIN ce_evaluation ce ON cme.ce_evaluation_id = ce.id
 	WHERE member_id = ?`
 
-	rows, err := db.MySQL.Session.Query(query, id)
+	rows, err := datastore.MySQL.Session.Query(query, id)
 	if err != nil {
 		return es, err
 	}
@@ -90,7 +90,7 @@ func (e *MemberEvaluation) evaluate() error {
                   AND cma.member_id = ?
                   GROUP BY cma.ce_activity_id`
 
-	rows, err := db.MySQL.Session.Query(query, e.StartDate, e.EndDate, e.MemberID)
+	rows, err := datastore.MySQL.Session.Query(query, e.StartDate, e.EndDate, e.MemberID)
 	if err != nil {
 		return err
 	}
