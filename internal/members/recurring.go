@@ -3,10 +3,13 @@ package members
 import (
 	"errors"
 	"fmt"
-	"github.com/mappcpd/api/db"
+	"time"
+
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"time"
+
+	"github.com/mappcpd/web-services/internal/constants"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // Recurring maps to doc in Recurring collection. Recurring activity items are
@@ -40,7 +43,7 @@ func MemberRecurring(id int) (*Recurring, error) {
 	r := Recurring{MemberID: id}
 
 	// Get a pointer to the collection...
-	c, err := db.MongoDB.RecurringCol()
+	c, err := datastore.MongoDB.RecurringCol()
 	if err != nil {
 		return &r, errors.New("MemberRecurring() could not get a pointer to collection -" + err.Error())
 	}
@@ -63,7 +66,7 @@ func MemberRecurring(id int) (*Recurring, error) {
 func (r *Recurring) Save() error {
 
 	// get a pointer to the collection...
-	c, err := db.MongoDB.RecurringCol()
+	c, err := datastore.MongoDB.RecurringCol()
 	if err != nil {
 		fmt.Println("Recurring.Save() could not get a pointer to collection -", err)
 		return err
@@ -88,7 +91,7 @@ func (r *Recurring) RemoveActivity(_id string) error {
 	// db.Recurring.update({"activities._id": ObjectId("59091436a9fb6e78d8945157")}, {$pull: {"activities": {"_id": ObjectId("59091436a9fb6e78d8945157")}}})
 
 	// get a pointer to the collection...
-	c, err := db.MongoDB.RecurringCol()
+	c, err := datastore.MongoDB.RecurringCol()
 	if err != nil {
 		fmt.Println("Recurring.RemoveActivity() could not get a pointer to collection -", err)
 		return err
@@ -146,7 +149,7 @@ func (r *Recurring) Record(_id string) error {
 	ar := MemberActivityRow{}
 	ar.MemberID = r.MemberID
 	ar.ActivityID = a.ActivityID
-	ar.Date = a.Next.Format(mysqlDateFormat)
+	ar.Date = a.Next.Format(constants.MySQLDateFormat)
 	ar.Quantity = a.Quantity
 	ar.Description = a.Description
 

@@ -8,7 +8,6 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mappcpd/api/db"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
 )
@@ -104,7 +103,7 @@ func DocModulesLimit(q map[string]interface{}, p map[string]interface{}, l int) 
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
-	modules, err := db.MongoDB.ModulesCol()
+	modules, err := datastore.MongoDB.ModulesCol()
 	if err != nil {
 		return m, err
 	}
@@ -125,7 +124,7 @@ func DocModulesOne(q map[string]interface{}) (Module, error) {
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
-	modules, err := db.MongoDB.ModulesCol()
+	modules, err := datastore.MongoDB.ModulesCol()
 	if err != nil {
 		return m, err
 	}
@@ -138,7 +137,7 @@ func DocModulesOne(q map[string]interface{}) (Module, error) {
 }
 
 // QueryModulesCollection ... queries the modules collection :)
-func QueryModulesCollection(mq db.MongoQuery) ([]interface{}, error) {
+func QueryModulesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 
 	// results
 	r := []interface{}{}
@@ -147,7 +146,7 @@ func QueryModulesCollection(mq db.MongoQuery) ([]interface{}, error) {
 	utility.MongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
 
 	// get a pointer to the modules collection
-	c, err := db.MongoDB.ModulesCol()
+	c, err := datastore.MongoDB.ModulesCol()
 	if err != nil {
 		return r, err
 	}
@@ -193,7 +192,7 @@ func UpdateModuleDoc(m *Module, w *sync.WaitGroup) {
 	id := map[string]int{"id": m.ID}
 
 	// Get pointer to the Modules collection
-	mc, err := db.MongoDB.ModulesCol()
+	mc, err := datastore.MongoDB.ModulesCol()
 	if err != nil {
 		log.Printf("Error getting pointer to Modules collection: %s\n", err.Error())
 		return

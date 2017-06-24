@@ -16,7 +16,6 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mappcpd/api/db"
 	"github.com/mappcpd/web-services/internal/constants"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
@@ -183,7 +182,7 @@ func ResourceByID(id int) (*Resource, error) {
 // is specified. TODO - see if we can use a the proper struct when there is no projection
 func DocResourcesAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	resources, err := db.MongoDB.ResourcesCol()
+	resources, err := datastore.MongoDB.ResourcesCol()
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +208,7 @@ func DocResourcesLimit(q map[string]interface{}, p map[string]interface{}, l int
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
-	resources, err := db.MongoDB.ResourcesCol()
+	resources, err := datastore.MongoDB.ResourcesCol()
 	if err != nil {
 		return r, err
 	}
@@ -229,7 +228,7 @@ func DocResourcesOne(q map[string]interface{}) (Resource, error) {
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
-	resources, err := db.MongoDB.ResourcesCol()
+	resources, err := datastore.MongoDB.ResourcesCol()
 	if err != nil {
 		return r, err
 	}
@@ -242,7 +241,7 @@ func DocResourcesOne(q map[string]interface{}) (Resource, error) {
 }
 
 // QueryResourcesCollection ... queries the resources collection :)
-func QueryResourcesCollection(mq db.MongoQuery) ([]interface{}, error) {
+func QueryResourcesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 
 	// results
 	r := []interface{}{}
@@ -251,7 +250,7 @@ func QueryResourcesCollection(mq db.MongoQuery) ([]interface{}, error) {
 	utility.MongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
 
 	// get a pointer to the resources collection
-	c, err := db.MongoDB.ResourcesCol()
+	c, err := datastore.MongoDB.ResourcesCol()
 	if err != nil {
 		return r, err
 	}
@@ -297,7 +296,7 @@ func UpdateResourceDoc(r *Resource, w *sync.WaitGroup) {
 	id := map[string]int{"id": r.ID}
 
 	// Get pointer to the collection
-	mc, err := db.MongoDB.ResourcesCol()
+	mc, err := datastore.MongoDB.ResourcesCol()
 	if err != nil {
 		log.Printf("Error getting pointer to Resources collection: %s\n", err.Error())
 		return
@@ -424,7 +423,7 @@ func (r *Resource) Save() (int64, error) {
 		r.Name, r.Description, keywords,
 		r.ResourceURL, r.ShortURL, r.ThumbnailURL, attributes)
 
-	res, err := db.MySQL.Session.Exec(query)
+	res, err := datastore.MySQL.Session.Exec(query)
 	if err != nil {
 		fmt.Println("Error with query: \n", query, "\n", err)
 		return 0, err
@@ -471,7 +470,7 @@ func (r *Resource) Update(id int) error {
 		r.ResourceURL, r.ShortURL, r.ThumbnailURL,
 		id)
 
-	_, err := db.MySQL.Session.Exec(query)
+	_, err := datastore.MySQL.Session.Exec(query)
 	if err != nil {
 		fmt.Println("Query error:")
 		return err
@@ -518,7 +517,7 @@ func (r *Resource) SetShortURL() error {
 	// Finally, update the ol_resource.short_url value
 	query := fmt.Sprintf("UPDATE ol_resource SET short_url = \"%v%v\" WHERE id = %v", os.Getenv("SHORT_LINK_BASE_URL"), r.ID, r.ID)
 	fmt.Println("SetShortLinkURL():", query)
-	_, err = db.MySQL.Session.Exec(query)
+	_, err = datastore.MySQL.Session.Exec(query)
 	if err != nil {
 		fmt.Println("SQL error with query: ", query, " -", err)
 		return err
@@ -541,7 +540,7 @@ func DuplicateResourceURL(url string) int {
 	}
 
 	query := "SELECT id FROM ol_resource WHERE active = 1 AND resource_url = ?"
-	db.MySQL.Session.QueryRow(query, url).Scan(&c)
+	datastore.MySQL.Session.QueryRow(query, url).Scan(&c)
 
 	return c
 }

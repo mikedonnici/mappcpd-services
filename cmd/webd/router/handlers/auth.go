@@ -10,6 +10,7 @@ import (
 	"github.com/pkg/errors"
 
 	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	mw_ "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	a_ "github.com/mappcpd/web-services/internal/auth"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
 	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
@@ -105,7 +106,7 @@ func AuthMemberCheckHandler(w http.ResponseWriter, r *http.Request) {
 // and issue a fresh one, so the consumer can update it at their end
 func MembersToken(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload()
+	p := _json.NewPayload(mw_.UserAuthToken.Token)
 
 	// Get the token from the auth header, 'Bearer' seems useless but this is an OAuth2 standard
 	// Authorization: Bearer [jwt]

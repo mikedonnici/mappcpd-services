@@ -1,15 +1,20 @@
 package members
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/mappcpd/api/db"
-	"github.com/pkg/errors"
-	"gopkg.in/mgo.v2/bson"
 	"log"
 	"strings"
 	"sync"
 	"time"
+
+	"database/sql"
+
+	"github.com/pkg/errors"
+	"gopkg.in/mgo.v2/bson"
+
+	"github.com/mappcpd/web-services/internal/notes"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/utility"
 )
 
 // Note trying to scan NULL db values into strings throws an error. This is discussed here:
@@ -112,7 +117,7 @@ func (m *Member) SetTitle() error {
 	COALESCE(a.name, '') FROM a_name_prefix a
 	RIGHT JOIN member m ON m.a_name_prefix_id = a.id
 	WHERE m.id = ?`
-	err := db.MySQL.Session.QueryRow(query, m.ID).Scan(&m.Title)
+	err := datastore.MySQL.Session.QueryRow(query, m.ID).Scan(&m.Title)
 	switch {
 	case err == sql.ErrNoRows:
 		// Do nothing... there is just no title
@@ -154,7 +159,7 @@ func (m *Member) SetContactLocations() error {
 
 	//log.Println(sql)
 
-	rows, err := db.MySQL.Session.Query(query, m.ID)
+	rows, err := datastore.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		// No rows
@@ -253,7 +258,7 @@ func (m *Member) SetMembershipTitle(mi int) error {
 		ORDER BY mmt.id DESC
 		LIMIT 1`
 
-	err := db.MySQL.Session.QueryRow(query, m.ID).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, m.ID).Scan(
 		//&t.Date,
 		//&t.Code,
 		&t,
@@ -295,7 +300,7 @@ func (m *Member) SetMembershipTitleHistory(mi int) error {
 		WHERE mmt.member_id = ?
 		ORDER BY mmt.id DESC`
 
-	rows, err := db.MySQL.Session.Query(query, m.ID)
+	rows, err := datastore.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		// no rows
@@ -347,7 +352,7 @@ func (m *Member) SetQualifications() error {
 	WHERE mmq.member_id = ?
 	ORDER BY year DESC`
 
-	rows, err := db.MySQL.Session.Query(query, m.ID)
+	rows, err := datastore.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil
@@ -399,7 +404,7 @@ func (m *Member) SetPositions() error {
 	LEFT JOIN organisation ON mmp.organisation_id = organisation.id
 	WHERE mmp.member_id = ?`
 
-	rows, err := db.MySQL.Session.Query(query, m.ID)
+	rows, err := datastore.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil
@@ -442,7 +447,7 @@ func (m *Member) SetPositions() error {
 // a particular entity 'e'. An 'entity' is a value in the db that
 // describes the table (entity) to which the note is linked. For example,
 // a note relating to a membership title would have the value mp_title
-func (m *Member) GetNotes(entityName string, entityID string) []Note {
+func (m *Member) GetNotes(entityName string, entityID string) []notes.Note {
 
 	query := `SELECT
 		wn.effective_on,
@@ -471,7 +476,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []Note {
 	fmt.Println(query)
 
 	// Get the notes relating to this title
-	n1 := Note{
+	n1 := notes.Note{
 		ID:            123,
 		DateCreated:   "2016-01-01",
 		DateUpdated:   "2016-02-02",
@@ -479,7 +484,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []Note {
 		Content:       "This is the actual note...",
 	}
 
-	n2 := Note{
+	n2 := notes.Note{
 		ID:            123,
 		DateCreated:   "2016-04-01",
 		DateUpdated:   "2016-05-02",
@@ -487,7 +492,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []Note {
 		Content:       "This is the second note...",
 	}
 
-	return []Note{n2, n1}
+	return []notes.Note{n2, n1}
 }
 
 // MemberByID fetches a member record by id, populates a Member value
@@ -518,7 +523,7 @@ func MemberByID(id int) (*Member, error) {
 	var createdAt string
 	var updatedAt string
 
-	err := db.MySQL.Session.QueryRow(query, id).Scan(
+	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&createdAt,
 		&updatedAt,
 		&m.FirstName,
@@ -543,8 +548,8 @@ func MemberByID(id int) (*Member, error) {
 	}
 
 	// Convert MySQL date time strings to time.Time
-	m.CreatedAt, _ = dateTime(createdAt)
-	m.UpdatedAt, _ = dateTime(updatedAt)
+	m.CreatedAt, _ = utility.DateTime(createdAt)
+	m.UpdatedAt, _ = utility.DateTime(updatedAt)
 
 	err = m.SetTitle()
 	if err != nil {
@@ -641,7 +646,7 @@ func UpdateMember(m map[string]interface{}) error {
 
 	if do == true {
 		fmt.Printf("UpdateMember(): %s\n", query)
-		_, err := db.MySQL.Session.Exec(query)
+		_, err := datastore.MySQL.Session.Exec(query)
 		if err != nil {
 			msg := "UpdateMember() sql error"
 			log.Println(msg, err)
@@ -664,7 +669,7 @@ func UpdateMemberDoc(m *Member, w *sync.WaitGroup) {
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := db.MongoDB.MembersCol()
+	mc, err := datastore.MongoDB.MembersCol()
 	if err != nil {
 		msg := "UpdateMemberDoc() could not get pointer to collection"
 		log.Println(msg, err)
@@ -717,13 +722,13 @@ func SyncMember(m *Member) {
 // is specified.
 func DocMembersAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	members, err := db.MongoDB.MembersCol()
+	members, err := datastore.MongoDB.MembersCol()
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
 	// Run query and return results
 	var r []interface{}
@@ -737,13 +742,13 @@ func DocMembersAll(q map[string]interface{}, p map[string]interface{}) ([]interf
 
 func DocMembersLimit(q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
 
-	members, err := db.MongoDB.MembersCol()
+	members, err := datastore.MongoDB.MembersCol()
 	if err != nil {
 		return nil, err
 	}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
 	// Run query and return results
 	var r []interface{}
@@ -760,13 +765,13 @@ func DocMembersOne(q map[string]interface{}, p map[string]interface{}) (Member, 
 
 	m := Member{}
 
-	members, err := db.MongoDB.MembersCol()
+	members, err := datastore.MongoDB.MembersCol()
 	if err != nil {
 		return m, err
 	}
 
 	// Convert string date filters to time.Time
-	mongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
 	err = members.Find(q).Select(p).One(&m)
 	if err != nil {
@@ -783,7 +788,7 @@ func (m *Member) SaveDoc() error {
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := db.MongoDB.MembersCol()
+	mc, err := datastore.MongoDB.MembersCol()
 	if err != nil {
 		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
 		return err
@@ -806,7 +811,7 @@ func (m *Member) UpdateDoc() error {
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := db.MongoDB.MembersCol()
+	mc, err := datastore.MongoDB.MembersCol()
 	if err != nil {
 		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
 		return err
