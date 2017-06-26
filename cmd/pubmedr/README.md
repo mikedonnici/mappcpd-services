@@ -1,4 +1,4 @@
-#pubmedr
+# pubmedr
 
 MappCPD worker that fetches articles from [Pubmed](https://www.ncbi.nlm.nih.gov/pubmed/) and inserts them into the primary MappCPD resources table.
 
