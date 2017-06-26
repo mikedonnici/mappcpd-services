@@ -1,6 +1,12 @@
 {
-	"comment": "",
-	"ignore": "test",
+	"rootPath": "github.com/mappcpd/web-services",
+    "heroku": {
+      "goVersion": "go1.8",
+      "install": [
+        "./webd/...",
+        "./cmd/..."
+      ]
+    },
 	"package": [
 		{
 			"checksumSHA1": "CpsDEp0QTKIuo5MowmnaRWtH/ck=",
@@ -128,6 +134,5 @@
 			"revision": "3f83fa5005286a7fe593b055f0d7771a7dce4655",
 			"revisionTime": "2016-08-18T02:01:20Z"
 		}
-	],
-	"rootPath": "github.com/mappcpd/web-services"
+	]
 }
