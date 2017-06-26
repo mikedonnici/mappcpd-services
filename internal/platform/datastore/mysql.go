@@ -17,8 +17,8 @@ type MySQLConnection struct {
 func (m *MySQLConnection) Connect() error {
 
 	// Set properties
-	m.url = os.Getenv("MYSQL_URL")
-	m.Source = os.Getenv("MYSQL_SRC")
+	m.url = os.Getenv("MAPPCPD_MYSQL_URL")
+	m.Source = os.Getenv("MAPPCPD_MYSQL_DESC")
 
 	// Establish session
 	var err error

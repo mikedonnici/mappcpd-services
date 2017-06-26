@@ -41,9 +41,9 @@ func (mq MongoQuery) Do(c *mgo.Collection, r *[]interface{}) error {
 // Connect to to MongoDB, returns an error if it fails
 func (m *MongoDBConnection) Connect() error {
 
-	m.url = os.Getenv("MONGO_URL")
-	m.db = os.Getenv("MONGO_DB")
-	m.Source = os.Getenv("MONGO_SRC")
+	m.url = os.Getenv("MAPPCPD_MONGO_URL")
+	m.db = os.Getenv("MAPPCPD_MONGO_DBNAME")
+	m.Source = os.Getenv("MAPPCPD_MONGO_DESC")
 
 	var err error
 	m.session, err = mgo.Dial(m.url)

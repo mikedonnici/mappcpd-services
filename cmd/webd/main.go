@@ -13,13 +13,14 @@ func main() {
 
 	msg := fmt.Sprint("Initialising environment...")
 	env := envr.New("myEnv", []string{
-		"MYSQL_URL",
-		"MYSQL_SRC",
-		"MONGO_URL",
-		"MONGO_DB",
-		"MONGO_SRC",
-		"BASE_URL",
-		"SHORT_LINK_BASE_URL",
+		"MAPPCPD_API_URL",
+		"MAPPCPD_MYSQL_URL",
+		"MAPPCPD_MYSQL_DESC",
+		"MAPPCPD_MONGO_URL",
+		"MAPPCPD_MONGO_DESC",
+		"MAPPCPD_MONGO_DBNAME",
+		"MAPPCPD_SHORT_LINK_URL",
+		"MAPPCPD_SHORT_LINK_PREFIX",
 	}).Auto()
 	if env.Ready {
 		msg += "ready!"

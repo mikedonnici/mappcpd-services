@@ -515,7 +515,8 @@ func (r *Resource) SetShortURL() error {
 	}
 
 	// Finally, update the ol_resource.short_url value
-	query := fmt.Sprintf("UPDATE ol_resource SET short_url = \"%v%v\" WHERE id = %v", os.Getenv("SHORT_LINK_BASE_URL"), r.ID, r.ID)
+	shortUrl := os.Getenv("MAPPCPD_SHORT_LINK_URL") + "/" + os.Getenv("MAPPCPD_SHORT_LINK_PREFIX") + strconv.Itoa(r.ID)
+	query := fmt.Sprintf("UPDATE ol_resource SET short_url = \"%v\" WHERE id = %v", shortUrl, r.ID)
 	fmt.Println("SetShortLinkURL():", query)
 	_, err = datastore.MySQL.Session.Exec(query)
 	if err != nil {
