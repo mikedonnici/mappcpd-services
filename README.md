@@ -8,5 +8,7 @@ Combine services projects into a single project structure based on Bill Kennedy'
 
 * [cmd/](/cmd/README.md) - all executable packages
   * [pubmedr/](/cmd/pubmedr/README.md) - pubmed article fetcher
+  * [mongr/](/cmd/mongr/README.md) - syncs data from MySQL -> MongoDB
+  * [pubmedr/](/cmd/algr/README.md) - sync Algolia search indexes
   * [webd/](/cmd/webd/README.md) - web server (api)
 * [internal/](/internal/README.md) - in-house packages
