@@ -12,3 +12,5 @@ Combine services projects into a single project structure based on Bill Kennedy'
   * [pubmedr/](/cmd/algr/README.md) - sync Algolia search indexes
   * [webd/](/cmd/webd/README.md) - web server (api)
 * [internal/](/internal/README.md) - in-house packages
+* [vendor/](/vendor/README.md) - vendor packages
+
