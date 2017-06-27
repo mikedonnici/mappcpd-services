@@ -1,37 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Request JSON Test</title>
+    <meta charset="UTF-8">
+    <title>Upload</title>
 </head>
 <body>
-<a href="#" id="get-data">Get JSON data</a>
-<div id="show-data"></div>
-<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+
+<input type="file" id="file-input">
+<p id="status">Please select a file</p>
+<input type="submit" value="Upload">
+
 <script>
-    $(document).ready(function () {
-        $('#get-data').click(function () {
-            var showData = $('#show-data');
 
-            $.getJSON('http://localhost:8080/v1/members/search?key=123456789&q=lastName:Jones&fields=firstName,lastName,contact', function (result) {
-                console.log(result);
+    (() => {
+        document.getElementById("file-input").onchange = () => {
+        const files = document.getElementById('file-input').files;
+        const file = files[0];
+        if(file == null){
+            return alert('No file selected.');
+        }
+        getSignedRequest(file);
+    };
+    })();
 
-                var items = result.data.map(function (item) {
-                    return item.firstName + ' ' + item.lastName;
-                });
+    function getSignedRequest(file){
+        const xhr = new XMLHttpRequest();
 
-                showData.empty();
+        // Call to the API to get a signed request URL
+        console.log(file);
+        //xhr.open('POST', `http://localhost:5000/v1/g/attachments/putrequest?file-name=${file.name}&file-type=${file.type}`);
+        xhr.open('POST', 'http://localhost:5000/v1/g/attachments/putrequest');
+        xhr.setRequestHeader("Content-Type", "application/json; charset=UTF-8");
+        xhr.setRequestHeader("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NzgyMSwibmFtZSI6IkRlbW8gTWVtYmVyIiwic2NvcGUiOlsibWVtYmVyIl0sImV4cCI6MTQ5ODU3MzM0NywiaWF0IjoxNDk4NTU4OTQ3LCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAifQ.EOKp6YPSHBVmOprsf1Rogo3xHra6MuRwpJPWQaCqBOc");
 
-                if (items.length) {
-                    var content = '<li>' + items.join('</li><li>') + '</li>';
-                    var list = $('<ul />').html(content);
-                    showData.append(list);
+        var body = {
+            fileName: file.name,
+            fileType: file.type,
+            key: "/path/to/filename.txt",
+            bucket: "upload-test-1734"
+        };
+
+        xhr.onreadystatechange = () => {
+            if(xhr.readyState === 4) {
+                if(xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    console.log(response);
+
+                    //uploadFile(file, response.signedRequest, response.url);
+
+                } else {
+                    alert('Could not get signed URL.');
                 }
-            });
+            }
+        };
+        console.log(JSON.stringify(body));
+        xhr.send(JSON.stringify(body));
+    }
 
-            showData.text('Loading the JSON file.');
-        });
-    });
+    function uploadFile(file, signedRequest, url){
+        const xhr = new XMLHttpRequest();
+        xhr.open('PUT', signedRequest);
+        xhr.onreadystatechange = () => {
+            if(xhr.readyState === 4){
+                if(xhr.status === 200){
+                    alert(url);
+                    //document.getElementById('preview').src = url;
+                    //document.getElementById('avatar-url').value = url;
+                }
+                else{
+                    alert('Could not upload file.');
+                }
+            }
+        };
+        xhr.send(file);
+    }
 </script>
 </body>
 </html>
