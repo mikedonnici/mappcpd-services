@@ -21,6 +21,8 @@ func main() {
 		"MAPPCPD_MONGO_DBNAME",
 		"MAPPCPD_SHORT_LINK_URL",
 		"MAPPCPD_SHORT_LINK_PREFIX",
+		"AWS_ACCESS_KEY_ID",
+		"AWS_SECRET_ACCESS_KEY",
 	}).Auto()
 	if env.Ready {
 		msg += "ready!"

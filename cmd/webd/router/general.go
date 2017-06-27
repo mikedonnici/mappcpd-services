@@ -4,8 +4,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 
-	_h "github.com/mappcpd/web-services/cmd/webd/router/handlers"
-	_mw "github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	"github.com/mappcpd/web-services/cmd/webd/router/handlers"
+	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
 )
 
 func generalSubRouter() *mux.Router {
@@ -18,17 +18,21 @@ func generalSubRouter() *mux.Router {
 	general := r.PathPrefix(v1GeneralBase).Subrouter()
 
 	// Activity (types)
-	general.Methods("GET").Path("/activities").HandlerFunc(_h.Activities)
-	general.Methods("GET").Path("/activities/{id:[0-9]+}").HandlerFunc(_h.ActivitiesID)
+	general.Methods("GET").Path("/activities").HandlerFunc(handlers.Activities)
+	general.Methods("GET").Path("/activities/{id:[0-9]+}").HandlerFunc(handlers.ActivitiesID)
 
 	// Resources
-	general.Methods("GET").Path("/resources/{id:[0-9]+}").HandlerFunc(_h.ResourcesID)
-	general.Methods("POST").Path("/resources").HandlerFunc(_h.ResourcesCollection)
-	general.Methods("GET").Path("/resources/latest/{n:[0-9]+}").HandlerFunc(_h.ResourcesLatest)
+	general.Methods("GET").Path("/resources/{id:[0-9]+}").HandlerFunc(handlers.ResourcesID)
+	general.Methods("POST").Path("/resources").HandlerFunc(handlers.ResourcesCollection)
+	general.Methods("GET").Path("/resources/latest/{n:[0-9]+}").HandlerFunc(handlers.ResourcesLatest)
 
 	// Modules
-	general.Methods("GET").Path("/modules/{id:[0-9]+}").HandlerFunc(_h.ModulesID)
-	general.Methods("POST").Path("/modules").HandlerFunc(_h.ModulesCollection)
+	general.Methods("GET").Path("/modules/{id:[0-9]+}").HandlerFunc(handlers.ModulesID)
+	general.Methods("POST").Path("/modules").HandlerFunc(handlers.ModulesCollection)
+
+	// Attachments
+	general.Methods("OPTIONS").Path("/attachments/putrequest").HandlerFunc(handlers.Preflight)
+	general.Methods("POST").Path("/attachments/putrequest").HandlerFunc(handlers.S3PutRequest)
 
 	return general
 }
@@ -42,7 +46,7 @@ func generalMiddleware(r *mux.Router) *negroni.Negroni {
 
 	n := negroni.New()
 	n.Use(recovery)
-	n.Use(negroni.HandlerFunc(_mw.ValidateToken))
+	n.Use(negroni.HandlerFunc(middleware.ValidateToken))
 	n.Use(negroni.NewLogger())
 	n.Use(negroni.Wrap(r))
 

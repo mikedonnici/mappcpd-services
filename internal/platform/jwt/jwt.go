@@ -11,7 +11,7 @@ import (
 )
 
 // The key for signing the JWTs - using the MYSQL_URL string for now so it will be host specific
-var signingKey = []byte(os.Getenv("MYSQL_URL"))
+var signingKey = []byte(os.Getenv("MAPPCPD_MYSQL_URL"))
 
 type AuthToken struct {
 	Token     string      `json:"token"`
@@ -41,7 +41,7 @@ func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 		jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
 			ExpiresAt: time.Now().Add(time.Hour * 4).Unix(),
-			Issuer:    os.Getenv("BASE_URL"),
+			Issuer:    os.Getenv("MAPPCPD_API_URL"),
 		},
 	}
 

@@ -25,9 +25,11 @@ func Start() {
 	// Router
 	r := mux.NewRouter()
 
+	r.Methods("OPTIONS").HandlerFunc(_h.Preflight)
+
 	// Ping and preflight, no middleware required
 	r.Methods("GET").Path("/").HandlerFunc(_h.Index)
-	r.Methods("OPTIONS").Path("/").HandlerFunc(_h.Preflight)
+	//r.Methods("OPTIONS").Path("/").HandlerFunc(_h.Preflight)
 
 	// Auth sub-router, no middleware required
 	rAuth := authSubRouter()
