@@ -17,8 +17,10 @@ import (
 	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
 	_mw "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	a_ "github.com/mappcpd/web-services/internal/activities"
+	//"github.com/mappcpd/web-services/internal/attachments"
+	"github.com/mappcpd/web-services/internal/attachments"
 	m_ "github.com/mappcpd/web-services/internal/members"
-	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // Activities fetches list of activity types
@@ -34,7 +36,7 @@ func Activities(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
 	p.Data = al
 	m := make(map[string]interface{})
 	m["count"] = len(al)
@@ -63,7 +65,7 @@ func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
 	p.Data = a
 	m := make(map[string]interface{})
 	m["description"] = "The typeId must included when creating new Activity records"
@@ -104,7 +106,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
 	p.Data = a
 	p.Send(w)
 }
@@ -235,7 +237,7 @@ func MembersActivitiesRecurring(w http.ResponseWriter, _ *http.Request) {
 		return
 	}
 
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MongoDB.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MongoDB.Source}
 	p.Meta = map[string]int{"count": len(ra.Activities)}
 	p.Data = ra
 	p.Send(w)
@@ -286,7 +288,7 @@ func MembersActivitiesRecurringAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MongoDB.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MongoDB.Source}
 	p.Meta = map[string]int{"count": len(ra.Activities)}
 	p.Data = ra
 	p.Send(w)
@@ -317,13 +319,13 @@ func MembersActivitiesRecurringRemove(w http.ResponseWriter, r *http.Request) {
 	err = ra.RemoveActivity(_id)
 	if err == mgo.ErrNotFound {
 		msg := "No activity was found with id " + _id + " - it may have been already deleted"
-		p.Message = _json.Message{http.StatusNotFound, "failure", msg + "... data retrieved from " + ds_.MongoDB.Source}
+		p.Message = _json.Message{http.StatusNotFound, "failure", msg + "... data retrieved from " + datastore.MongoDB.Source}
 
 	} else if err != nil {
 		msg := "An error occured - " + err.Error()
-		p.Message = _json.Message{http.StatusInternalServerError, "failure", msg + "... data retrieved from " + ds_.MongoDB.Source}
+		p.Message = _json.Message{http.StatusInternalServerError, "failure", msg + "... data retrieved from " + datastore.MongoDB.Source}
 	} else {
-		p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MongoDB.Source}
+		p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MongoDB.Source}
 	}
 
 	p.Meta = map[string]int{"count": len(ra.Activities)}
@@ -371,8 +373,51 @@ func MembersActivitiesRecurringRecorder(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MongoDB.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MongoDB.Source}
 	p.Meta = map[string]int{"count": len(ra.Activities)}
 	p.Data = ra
 	p.Send(w)
+}
+
+// MembersActivitiesAttachmentAdd registers a new attachment in the database. It has nothing to do with the actual upload.
+func MembersActivitiesAttachmentAdd(w http.ResponseWriter, r *http.Request) {
+
+	p := _json.NewPayload(_mw.UserAuthToken.Token)
+
+	// Get activity id from path... and make it an int
+	v := mux.Vars(r)
+	id, err := strconv.Atoi(v["id"])
+	if err != nil {
+		p.Message = _json.Message{http.StatusBadRequest, "failed", err.Error()}
+		p.Send(w)
+		return
+	}
+
+	// The only thing we will need to do with the activity id is verify that it belongs
+	// the the same member that owns the JWT
+	// todo look up activity and verify owner...
+	fmt.Println("Look up activity id", id, " and verify the owner")
+
+	// decode post body into a struct
+	var a attachments.Attachment
+
+	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+		msg := "Could not decode json in request body - " + err.Error()
+		p.Message = _json.Message{http.StatusBadRequest, "failed", msg}
+		p.Send(w)
+		return
+	}
+	fmt.Println(a)
+
+	if err := a.Register(); err != nil {
+		msg := "Error registering attachment - " + err.Error()
+		p.Message = _json.Message{http.StatusBadRequest, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	p.Message = _json.Message{http.StatusOK, "success", "Attachment registered"}
+	p.Data = a
+	p.Send(w)
+
 }

@@ -1,0 +1,84 @@
+<html>
+<head>
+    <title>S3 Upload Demo</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.11.4/jquery-ui.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-file-upload/9.5.7/jquery.fileupload.js"></script>
+    <script>
+        // Requires jQuery and blueimp's jQuery.fileUpload
+
+        // client-side validation by fileUpload should match the policy
+        // restrictions so that the checks fail early
+        var acceptFileType = /.*/i;
+        var maxFileSize = 1000;
+        // The URL to your endpoint that maps to s3Credentials function
+        var credentialsUrl = 'http://localhost:5000/v1/g/attachments/putrequest?';
+        // The URL to your endpoint to register the uploaded file
+        var uploadUrl = '/upload';
+
+        window.initS3FileUpload = function($fileInput) {
+            $fileInput.fileupload({
+                // acceptFileTypes: acceptFileType,
+                // maxFileSize: maxFileSize,
+                paramName: 'file',
+                add: s3add,
+                dataType: 'xml',
+                done: onS3Done
+            });
+        };
+
+        // This function retrieves s3 parameters from our server API and appends them
+        // to the upload form.
+        function s3add(e, data) {
+            var filename = data.files[0].name;
+            var contentType = data.files[0].type;
+            var params = [];
+            $.ajax({
+                url: credentialsUrl,
+                type: 'GET',
+                dataType: 'json',
+                beforeSend: function (xhr) {
+                    xhr.setRequestHeader ("Authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwibmFtZSI6IkRlbW8gQWRtaW4iLCJzY29wZSI6WyJhZG1pbiIsImEiLCJiIiwiYyJdLCJleHAiOjE0OTg2MjA3NzcsImlhdCI6MTQ5ODYwNjM3NywiaXNzIjoiaHR0cDovL2xvY2FsaG9zdDo1MDAwIn0.CSYmY3IjF0svv_xF7dFVP-acx6_CNfD_WOq0GeAva30");
+                },
+                data: {
+                    filename: filename,
+                    filetype: contentType,
+                    key: "/path/to/filename.txt",
+                    bucket: "upload-test-1734"
+                },
+                success: function(s3Data) {
+                    console.log("s3data from the API...");
+                    console.log(s3Data);
+                    data.url = s3Data.data.signedRequest;
+                    data.formData = s3Data.params;
+                    data.submit();
+                }
+            });
+            console.log("Params...");
+            console.log(params);
+            return params;
+        };
+
+        function onS3Done(e, data) {
+            var s3Url = $(data.jqXHR.responseXML).find('Location').text();
+            var s3Key = $(data.jqXHR.responseXML).find('Key').text();
+            // Typically, after uploading a file to S3, you want to register that file with
+            // your backend. Remember that we did not persist anything before the upload.
+            console.log($('<a/>').attr('href', s3Url).text('File uploaded at '+s3Url).appendTo($('body')));
+        };
+
+    </script>
+    <script>
+        $(function() {
+            initS3FileUpload($('#fileInput'));
+        });
+    </script>
+</head>
+<body>
+<h1>S3 Upload Demo</h1>
+<p>Sorry, but you can <b>only upload files less than a kilobyte here</b>.</p>
+<form>
+    <input id="fileInput" type="file" name="file" />
+</form>
+</body>
+</html>

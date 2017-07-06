@@ -1,14 +1,13 @@
 package handlers
 
 import (
-	"encoding/json"
+	"fmt"
+
 	"net/http"
 
 	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
 	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	"github.com/mappcpd/web-services/internal/attachments"
-	//"github.com/mappcpd/web-services/internal/platform/datastore"
-	"fmt"
 )
 
 // PutRequest issues a signed url to allow for an object to be PUT to Amazon S3
@@ -16,31 +15,39 @@ func S3PutRequest(w http.ResponseWriter, r *http.Request) {
 
 	p := _json.NewPayload(middleware.UserAuthToken.Token)
 
-	// The body should contain the bucket and the full path (key) including file name and ext.
-	body := struct {
-		key      string `json:"key"`
-		bucket   string `json:"bucket"`
-		fileName string `json:"fileName"`
-		fileType string `json:"fileType"`
-	}{}
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		msg := fmt.Sprintf("Could not decode json in request body - %s", err.Error())
-		p.Message = _json.Message{http.StatusBadRequest, "failed", msg}
-		p.Send(w)
-		return
+	// Return the URL Query string params for the caller's convenience, and signedURL
+	upload := struct {
+		Key           string `json:"key"`
+		Bucket        string `json:"bucket"`
+		FileName      string `json:"fileName"`
+		FileType      string `json:"fileType"`
+		SignedRequest string `json:"signedRequest"`
+	}{
+		Key:      r.FormValue("key"),
+		Bucket:   r.FormValue("bucket"),
+		FileName: r.FormValue("filename"),
+		FileType: r.FormValue("filetype"),
 	}
 
-	fmt.Println(body)
-	return
+	// Todo - check for missing bits?
+	//if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	//	msg := fmt.Sprintf("Could not decode json in request body - %s", err.Error())
+	//	p.Message = _json.Message{http.StatusBadRequest, "failed", msg}
+	//	p.Send(w)
+	//	return
+	//}
 
-	url, err := attachments.S3PutRequest(body.key, body.bucket)
+	url, err := attachments.S3PutRequest(upload.Key, upload.Bucket)
 	if err != nil {
 		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	p.Message = _json.Message{http.StatusOK, "success", "Signed URL issued."}
-	p.Data = url
+	fmt.Println(url)
+	upload.SignedRequest = url
+
+	p.Message = _json.Message{http.StatusOK, "success", "Signed request in data.signedRequest."}
+	p.Data = upload
 	p.Send(w)
 }

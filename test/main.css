@@ -1,0 +1,10 @@
+#uploading {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(63, 127, 191, 0.63);
+    font-size: 4rem;
+    color: whitesmoke;
+}
