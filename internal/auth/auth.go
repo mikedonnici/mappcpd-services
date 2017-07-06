@@ -9,12 +9,13 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-// AuthMember checks login & pass against db_
+// AuthMember checks login & pass against db. Check for md5() or encrypted string.
+// Latter is a workaround to allow the old member app to get a token for file uploads.
 func AuthMember(u, p string) (int, string, error) {
 
 	query := `SELECT id, concat(first_name, ' ', last_name) as name
-		  FROM member WHERE primary_email = "%s" AND password = MD5("%s")`
-	query = fmt.Sprintf(query, u, p)
+		  FROM member WHERE primary_email = "%s" AND (password = MD5("%s") OR password = "%s")`
+	query = fmt.Sprintf(query, u, p, p)
 
 	var id int
 	var name string
