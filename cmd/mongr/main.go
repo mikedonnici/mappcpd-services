@@ -166,7 +166,7 @@ func auth() {
 
 	fmt.Print("Testing authentication... ")
 	a := AuthRequest{}
-	b := `{"login": "` + os.Getenv("ADMIN_USER") + `","password": "` + os.Getenv("ADMIN_PASS") + `"}`
+	b := `{"login": "` + os.Getenv("MAPPCPD_ADMIN_USER") + `","password": "` + os.Getenv("MAPPCPD_ADMIN_PASS") + `"}`
 	res, err := httpClient.Post(apiAuth, "application/json", strings.NewReader(b))
 	if err != nil {
 		log.Fatalln(err)
