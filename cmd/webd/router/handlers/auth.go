@@ -9,7 +9,7 @@ import (
 
 	"github.com/pkg/errors"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	mw_ "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	a_ "github.com/mappcpd/web-services/internal/auth"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
@@ -83,14 +83,14 @@ func AuthMemberCheckHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the token from the auth header, 'Bearer' seems useless but this is an OAuth2 standard
 	// Authorization: Bearer [jwt]
 	a := r.Header.Get("Authorization")
-	t, err := j_.JWTFromHeader(a)
+	t, err := j_.FromHeader(a)
 	if err != nil {
 		p.Message = _json.Message{http.StatusBadRequest, "failure", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	jt, err := j_.CheckJWT(t)
+	jt, err := j_.Check(t)
 	if err != nil {
 		p.Message = _json.Message{http.StatusUnauthorized, "failure", "Authorization failed: " + err.Error()}
 		p.Send(w)
@@ -106,12 +106,12 @@ func AuthMemberCheckHandler(w http.ResponseWriter, r *http.Request) {
 // and issue a fresh one, so the consumer can update it at their end
 func MembersToken(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := _json.New(mw_.UserAuthToken.Token)
 
 	// Get the token from the auth header, 'Bearer' seems useless but this is an OAuth2 standard
 	// Authorization: Bearer [jwt]
 	a := r.Header.Get("Authorization")
-	t, err := j_.JWTFromHeader(a)
+	t, err := j_.FromHeader(a)
 	if err != nil {
 		p.Message = _json.Message{http.StatusBadRequest, "failure", err.Error()}
 		p.Send(w)
@@ -119,7 +119,7 @@ func MembersToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check current token first
-	at, err := j_.CheckJWT(t)
+	at, err := j_.Check(t)
 	if err != nil {
 		p.Message = _json.Message{http.StatusUnauthorized, "failure", "Cannot refresh token as current token is invalid: " + err.Error()}
 		p.Send(w)
@@ -226,7 +226,7 @@ func AuthAdminRefreshHandler(w http.ResponseWriter, r *http.Request) {
 	// Get the token from the auth header, 'Bearer' seems useless but this is an OAuth2 standard
 	// Authorization: Bearer [jwt]
 	a := r.Header.Get("Authorization")
-	t, err := j_.JWTFromHeader(a)
+	t, err := j_.FromHeader(a)
 	if err != nil {
 		p.Message = _json.Message{http.StatusBadRequest, "failure", err.Error()}
 		p.Send(w)
@@ -234,7 +234,7 @@ func AuthAdminRefreshHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check current token first
-	at, err := j_.CheckJWT(t)
+	at, err := j_.Check(t)
 	if err != nil {
 		p.Message = _json.Message{http.StatusUnauthorized, "failure", "Cannot refresh token as current token is invalid: " + err.Error()}
 		p.Send(w)

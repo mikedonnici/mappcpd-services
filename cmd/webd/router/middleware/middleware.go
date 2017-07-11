@@ -8,7 +8,7 @@ import (
 
 	"net/http"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
@@ -32,7 +32,7 @@ func ValidateToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc
 	// Get the token from the auth header, 'Bearer' seems useless but this is an OAuth2 standard
 	// Authorization: Bearer [jwt]
 	a := r.Header.Get("Authorization")
-	t, err := j_.JWTFromHeader(a)
+	t, err := j_.FromHeader(a)
 	if err != nil {
 		p.Message = _json.Message{http.StatusBadRequest, "failure", err.Error()}
 		p.Send(w)
@@ -40,7 +40,7 @@ func ValidateToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc
 	}
 
 	// Set the global AuthToken
-	UserAuthToken, err = j_.CheckJWT(t)
+	UserAuthToken, err = j_.Check(t)
 	if err != nil {
 		p.Message = _json.Message{http.StatusUnauthorized, "failure", "Authorization failed: " + err.Error()}
 		p.Send(w)

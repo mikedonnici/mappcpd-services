@@ -25,6 +25,10 @@ func memberSubRouter() *mux.Router {
 
 	members.Methods("GET").Path("/activities/{id:[0-9]+}").HandlerFunc(handlers.MembersActivitiesID)
 	members.Methods("PUT").Path("/activities/{id:[0-9]+}").HandlerFunc(handlers.MembersActivitiesUpdate)
+
+	// Attachments
+	members.Methods("OPTIONS").Path("/activities/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.Preflight)
+	members.Methods("GET").Path("/activities/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.MembersActivitiesAttachmentRequest)
 	members.Methods("POST").Path("/activities/{id:[0-9]+}/attachments").HandlerFunc(handlers.MembersActivitiesAttachmentAdd)
 
 	members.Methods("GET").Path("/activities/recurring").HandlerFunc(handlers.MembersActivitiesRecurring)

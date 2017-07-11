@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
@@ -21,7 +21,7 @@ func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
 
 	// Get token string from header
 	a := r.Header.Get("Authorization")
-	t, err := j_.JWTFromHeader(a)
+	t, err := j_.FromHeader(a)
 	if err != nil {
 		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -29,7 +29,7 @@ func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
 	}
 
 	// Create an AuthToken value from the token string
-	at, err := j_.CheckJWT(t)
+	at, err := j_.Check(t)
 	if err != nil {
 		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -72,7 +72,7 @@ func AuthorizeID(w http.ResponseWriter, r *http.Request, mid int) bool {
 
 	// Get token string from header
 	a := r.Header.Get("Authorization")
-	t, err := j_.JWTFromHeader(a)
+	t, err := j_.FromHeader(a)
 	if err != nil {
 		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -80,7 +80,7 @@ func AuthorizeID(w http.ResponseWriter, r *http.Request, mid int) bool {
 	}
 
 	// Create an AuthToken value from the token string
-	at, err := j_.CheckJWT(t)
+	at, err := j_.Check(t)
 	if err != nil {
 		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)

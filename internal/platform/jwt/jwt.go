@@ -58,8 +58,8 @@ func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 	return at, nil
 }
 
-// CheckJWT validates a JSON web token and returns an AuthToken value
-func CheckJWT(t string) (AuthToken, error) {
+// Check validates a JSON web token and returns an AuthToken value
+func Check(t string) (AuthToken, error) {
 
 	// token for return
 	at := AuthToken{Token: t}
@@ -134,9 +134,9 @@ func CheckJWT(t string) (AuthToken, error) {
 	return at, TokenError
 }
 
-// JWTFromHeader extracts the jwt string from the header Authorization string (a).
+// FromHeader extracts the jwt string from the header Authorization string (a).
 // The Header should be in the format: Bearer aaaa.bbbb.cccc
-func JWTFromHeader(a string) (string, error) {
+func FromHeader(a string) (string, error) {
 
 	var errMsg error
 

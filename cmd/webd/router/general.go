@@ -31,8 +31,8 @@ func generalSubRouter() *mux.Router {
 	general.Methods("POST").Path("/modules").HandlerFunc(handlers.ModulesCollection)
 
 	// Attachments
-	general.Methods("OPTIONS").Path("/attachments/putrequest").HandlerFunc(handlers.Preflight)
-	general.Methods("GET").Path("/attachments/putrequest").HandlerFunc(handlers.S3PutRequest)
+	// general.Methods("OPTIONS").Path("/attachments/putrequest").HandlerFunc(handlers.Preflight)
+	//general.Methods("GET").Path("/attachments/putrequest").HandlerFunc(handlers.S3PutRequest)
 
 	return general
 }

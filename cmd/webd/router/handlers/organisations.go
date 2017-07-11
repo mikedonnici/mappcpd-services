@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	_mw "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	o_ "github.com/mappcpd/web-services/internal/organisations"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
@@ -18,7 +18,7 @@ import (
 // Todo there is only one organisation as such so this is retrieving groups.
 func AdminOrganisations(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(_mw.UserAuthToken.Token)
+	p := _json.New(_mw.UserAuthToken.Token)
 
 	l, err := o_.OrganisationsList()
 	if err != nil {
@@ -40,7 +40,7 @@ func AdminOrganisations(w http.ResponseWriter, r *http.Request) {
 // AdminOrganisationGroups handles requests for Organisation records
 func AdminOrganisationGroups(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(_mw.UserAuthToken.Token)
+	p := _json.New(_mw.UserAuthToken.Token)
 
 	// Request - convert Organisation id from string to int type
 	v := mux.Vars(r)

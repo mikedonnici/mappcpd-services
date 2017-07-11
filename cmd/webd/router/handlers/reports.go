@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	_mw "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
 	r_ "github.com/mappcpd/web-services/internal/reports"
@@ -12,7 +12,7 @@ import (
 // ReportsTest handles a request to test the reports route
 func ReportsTest(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(_mw.UserAuthToken.Token)
+	p := _json.New(_mw.UserAuthToken.Token)
 	p.Message = _json.Message{http.StatusOK, "success", "Request to reports test handler successful!"}
 	p.Send(w)
 }
@@ -20,7 +20,7 @@ func ReportsTest(w http.ResponseWriter, r *http.Request) {
 // ReportsModulesByDate fetches data on modules by year-month
 func ReportsModulesByDate(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(_mw.UserAuthToken.Token)
+	p := _json.New(_mw.UserAuthToken.Token)
 
 	report, err := r_.ReportModulesByDate()
 	if err != nil {
@@ -44,7 +44,7 @@ func ReportsModulesByDate(w http.ResponseWriter, r *http.Request) {
 // dates are reported by ReportsPointsByActivityDate
 func ReportsPointsByRecordDate(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(_mw.UserAuthToken.Token)
+	p := _json.New(_mw.UserAuthToken.Token)
 
 	report, err := r_.ReportPointsByRecordDate()
 	if err != nil {
@@ -67,7 +67,7 @@ func ReportsPointsByRecordDate(w http.ResponseWriter, r *http.Request) {
 // according to the date of the activity itself - that is CPD Activity as opposed to system activity (above)
 func ReportsPointsByActivityDate(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(_mw.UserAuthToken.Token)
+	p := _json.New(_mw.UserAuthToken.Token)
 
 	report, err := r_.ReportPointsByActivityDate()
 	if err != nil {

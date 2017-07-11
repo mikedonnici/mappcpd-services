@@ -9,7 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	mw_ "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	m_ "github.com/mappcpd/web-services/internal/modules"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
@@ -18,7 +18,7 @@ import (
 // ModulesID fetches a single resource from the MySQLConnection db
 func ModulesID(w http.ResponseWriter, req *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := _json.New(mw_.UserAuthToken.Token)
 	// Request - convert id from string to int type
 	v := mux.Vars(req)
 	id, err := strconv.Atoi(v["id"])
@@ -46,7 +46,7 @@ func ModulesID(w http.ResponseWriter, req *http.Request) {
 func ModulesCollection(w http.ResponseWriter, r *http.Request) {
 
 	// Response
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := _json.New(mw_.UserAuthToken.Token)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)

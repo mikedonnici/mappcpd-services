@@ -10,19 +10,20 @@ import (
 
 	"github.com/gorilla/mux"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
-	mw_ "github.com/mappcpd/web-services/cmd/webd/router/middleware"
-	g_ "github.com/mappcpd/web-services/internal/generic"
-	m_ "github.com/mappcpd/web-services/internal/members"
-	n_ "github.com/mappcpd/web-services/internal/notes"
-	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
-	r_ "github.com/mappcpd/web-services/internal/resources"
+	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
+	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	"github.com/mappcpd/web-services/internal/attachments"
+	"github.com/mappcpd/web-services/internal/generic"
+	"github.com/mappcpd/web-services/internal/members"
+	"github.com/mappcpd/web-services/internal/notes"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/resources"
 )
 
 func AdminTest(w http.ResponseWriter, _ *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
-	p.Message = _json.Message{http.StatusOK, "success", "Hi Admin!"}
+	p := responder.New(middleware.UserAuthToken.Token)
+	p.Message = responder.Message{http.StatusOK, "success", "Hi Admin!"}
 	p.Send(w)
 }
 
@@ -34,7 +35,7 @@ func AdminTest(w http.ResponseWriter, _ *http.Request) {
 // API is for DB access at this stage.
 func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	var err error
 	var query map[string]interface{}
@@ -44,7 +45,7 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 	query, err = queryParams(r.FormValue("q"))
 	if err != nil {
 		if err != nil {
-			p.Message = _json.Message{
+			p.Message = responder.Message{
 				http.StatusBadRequest,
 				"failed",
 				err.Error(),
@@ -62,7 +63,7 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 	if len(r.FormValue("l")) > 0 {
 		limit, err = strconv.Atoi(r.FormValue("l"))
 		if err != nil {
-			p.Message = _json.Message{
+			p.Message = responder.Message{
 				http.StatusBadRequest,
 				"failed",
 				err.Error(),
@@ -75,20 +76,20 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 	// Run the query...
 	var res []interface{}
 	if limit > 0 {
-		res, err = m_.DocMembersLimit(query, projection, limit)
+		res, err = members.DocMembersLimit(query, projection, limit)
 	} else {
-		res, err = m_.DocMembersAll(query, projection)
+		res, err = members.DocMembersAll(query, projection)
 	}
 
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MongoDB.Source}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MongoDB.Source}
 	c := len(res)
-	p.Meta = _json.DocMeta{c, query, projection}
+	p.Meta = responder.DocMeta{c, query, projection}
 	p.Data = res
 	p.Send(w)
 }
@@ -107,14 +108,14 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 		Limit      int                    `json:"limit"`
 	}
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)
 	var f Find
 	err := decoder.Decode(&f)
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failure", errMessageDecodeJSON}
+		p.Message = responder.Message{http.StatusBadRequest, "failure", errMessageDecodeJSON}
 		p.Send(w)
 		return
 	}
@@ -122,19 +123,19 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 	// Limit query
 	var res []interface{}
 	if f.Limit > 0 {
-		res, err = m_.DocMembersLimit(f.Query, f.Projection, f.Limit)
+		res, err = members.DocMembersLimit(f.Query, f.Projection, f.Limit)
 	} else {
-		res, err = m_.DocMembersAll(f.Query, f.Projection)
+		res, err = members.DocMembersAll(f.Query, f.Projection)
 	}
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MongoDB.Source}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MongoDB.Source}
 	c := len(res)
-	p.Meta = _json.DocMeta{c, f.Query, f.Projection}
+	p.Meta = responder.DocMeta{c, f.Query, f.Projection}
 	p.Data = res
 	p.Send(w)
 }
@@ -142,23 +143,23 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 // AdminMembersUpdate will update a member record by processing the JSON body
 func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
 	// Response
-	m, err := m_.MemberByID(id)
+	m, err := members.MemberByID(id)
 
 	switch {
 	case err == sql.ErrNoRows:
-		p.Message = _json.Message{http.StatusNotFound, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
 	case err != nil:
-		p.Message = _json.Message{http.StatusNotFound, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
 	default:
 
 		// Pull the JSON body out of the request
@@ -166,7 +167,7 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 		var j map[string]interface{}
 		err = decoder.Decode(&j)
 		if err != nil {
-			p.Message = _json.Message{http.StatusBadRequest, "failure", err.Error()}
+			p.Message = responder.Message{http.StatusBadRequest, "failure", err.Error()}
 			p.Send(w)
 			return
 		}
@@ -178,7 +179,7 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 		// As a small sanity check make sure the id on the url
 		// matches the id passed in the JSON body
 		if j["id"] == "" {
-			p.Message = _json.Message{http.StatusBadRequest, "failed", "MySQLConnection row id must be included in the JSON body"}
+			p.Message = responder.Message{http.StatusBadRequest, "failed", "MySQLConnection row id must be included in the JSON body"}
 			p.Send(w)
 			return
 		}
@@ -186,22 +187,22 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 		jid := int(j["id"].(float64))
 		fmt.Printf("%v %T - %v %T", m.ID, m.ID, jid, jid)
 		if m.ID != jid {
-			p.Message = _json.Message{http.StatusBadRequest, "failed", "ID on the request URL does not match the ID in the Body"}
+			p.Message = responder.Message{http.StatusBadRequest, "failed", "ID on the request URL does not match the ID in the Body"}
 			p.Send(w)
 			return
 		}
 
-		err := m_.UpdateMember(j)
+		err := members.UpdateMember(j)
 		if err != nil {
-			p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+			p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 			p.Send(w)
 			return
 		}
 
-		m, _ = m_.MemberByID(id) // Re-fetch
-		m_.SyncMember(m)         // Sync to doc db
+		m, _ = members.MemberByID(id) // Re-fetch
+		members.SyncMember(m)         // Sync to doc db
 
-		p.Message = _json.Message{http.StatusOK, "success", "MySQLConnection record updated and copied to MongoDB"}
+		p.Message = responder.Message{http.StatusOK, "success", "MySQLConnection record updated and copied to MongoDB"}
 		p.Data = m
 	}
 
@@ -211,24 +212,24 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 // AdminMembersNotes fetches all Notes belonging to a Member
 func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
 	// Response
-	ns, err := n_.NotesByMemberID(id)
+	ns, err := notes.NotesByMemberID(id)
 	switch {
 	case err == sql.ErrNoRows:
-		p.Message = _json.Message{http.StatusNotFound, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
 	case err != nil:
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
 		p.Data = ns
 	}
 
@@ -238,24 +239,24 @@ func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 // AdminNotes fetches a single Note record by Note ID
 func AdminNotes(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
 	// Response
-	d, err := n_.NoteById(id)
+	d, err := notes.NoteById(id)
 	switch {
 	case err == sql.ErrNoRows:
-		p.Message = _json.Message{http.StatusNotFound, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
 	case err != nil:
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
 		p.Data = d
 	}
 
@@ -265,27 +266,27 @@ func AdminNotes(w http.ResponseWriter, r *http.Request) {
 // AdminMembersID fetches a member record from the MySQLConnection DB, by id
 func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
 	// Get the Member record
-	m, err := m_.MemberByID(id)
+	m, err := members.MemberByID(id)
 	// Response
 	switch {
 	case err == sql.ErrNoRows:
-		p.Message = _json.Message{http.StatusNotFound, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
 	case err != nil:
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
 		p.Data = m
-		m_.SyncMember(m)
+		members.SyncMember(m)
 	}
 
 	p.Send(w)
@@ -294,13 +295,13 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 // AdminMembersIDListHandler fetches a list of all member ids from MySQL
 func AdminIDList(w http.ResponseWriter, req *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Request - requires at least the 't' query to specify the table name
 	// and can have the option 'f' as raw HTML filter
 	t := req.FormValue("t")
 	if t == "" {
-		p.Message = _json.Message{http.StatusBadRequest, "failed", "Requires ?t=[table_name], optional &f=[sql_filter]"}
+		p.Message = responder.Message{http.StatusBadRequest, "failed", "Requires ?t=[table_name], optional &f=[sql_filter]"}
 		p.Send(w)
 		return
 	}
@@ -309,15 +310,15 @@ func AdminIDList(w http.ResponseWriter, req *http.Request) {
 	f := req.FormValue("f")
 
 	// Get the Member record
-	ii, err := g_.GetIDs(t, f)
+	ii, err := generic.GetIDs(t, f)
 	// Response
 	switch {
 	case err == sql.ErrNoRows:
-		p.Message = _json.Message{http.StatusNotFound, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
 	case err != nil:
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = _json.Message{http.StatusOK, "success", "List of ids from table: " + t + ", db: " + ds_.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "List of ids from table: " + t + ", db: " + datastore.MySQL.Source}
 		p.Meta = map[string]int{"count": len(ii)}
 		p.Data = ii
 	}
@@ -332,17 +333,17 @@ func AdminBatchResourcesPost(w http.ResponseWriter, r *http.Request) {
 
 	// Expecting a JSON body with a single 'data' field containing array of Resources to be inserted
 	type batch struct {
-		Data r_.Resources `json:"data"`
+		Data resources.Resources `json:"data"`
 	}
 	b := batch{}
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&b)
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failure", errMessageDecodeJSON}
+		p.Message = responder.Message{http.StatusBadRequest, "failure", errMessageDecodeJSON}
 		p.Send(w)
 		return
 	}
@@ -363,7 +364,7 @@ func AdminBatchResourcesPost(w http.ResponseWriter, r *http.Request) {
 
 	// Range over .Data
 	for _, v := range b.Data {
-		r := r_.Resource{}
+		r := resources.Resource{}
 		r = v
 		id, err := r.Save()
 		if err != nil {
@@ -376,11 +377,62 @@ func AdminBatchResourcesPost(w http.ResponseWriter, r *http.Request) {
 		successCount += 1
 	}
 
-	p.Message = _json.Message{http.StatusOK, "success", "Batch completed - see Failures for errors"}
+	p.Message = responder.Message{http.StatusOK, "success", "Batch completed - see Failures for errors"}
 	p.Meta = map[string]int{
 		"failed":     failCount,
 		"successful": successCount,
 	}
 	p.Data = data
 	p.Send(w)
+}
+
+// AdminAttachmentAdd registers a file attachment for a database entity specified in the request body
+func AdminAttachmentAdd(w http.ResponseWriter, r *http.Request) {
+
+	p := responder.New(middleware.UserAuthToken.Token)
+
+	// Create an attachment
+	var a attachments.Attachment
+
+	// Set the admin id from the token
+	a.UserID = middleware.UserAuthToken.Claims.ID
+
+	// Decode post body into attachment fields
+	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+		msg := "Could not decode json in request body - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Send(w)
+		return
+	}
+	fmt.Println(a)
+
+	// Check if attachment already exists before registering
+	id, err := a.Exists()
+	if err != nil {
+		msg := "Error checking for duplicate attachment - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+	if id > 0 {
+		msg := "An attachment with the same file name is already registered. The sanitized file name is %s and the " +
+			"attachment record is %s.id = %d. If this is NOT a duplicate file try changing the original file name."
+		msg = fmt.Sprintf(msg, a.CleanFilename, a.EntityName, id)
+		p.Message = responder.Message{http.StatusConflict, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// Register the attachment
+	if err := a.Register(); err != nil {
+		msg := "Error registering attachment - " + err.Error()
+		p.Message = responder.Message{http.StatusForbidden, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	p.Message = responder.Message{http.StatusOK, "success", "Attachment registered"}
+	p.Data = a
+	p.Send(w)
+
 }

@@ -1,23 +1,29 @@
+/*
+	Package attachments handles uploading of files to cloud storage and registration of the files in the database.
+*/
 package attachments
 
 import (
+	"fmt"
+	"os"
 	"time"
+
+	"database/sql"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 
-	"fmt"
 	"github.com/34South/envr"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/pkg/errors"
-	"os"
-	"database/sql"
 )
 
 // Attachment contains data about an uploaded file (attachment)- that is
 // its location in cloud storage and the entity with which it is associated.
+// The relevant fields will depend on the type of upload, and member or admin.
 type Attachment struct {
+	UserID         int    `json:"userId""`
 	FileSetID      int    `json:"fileSetId"`
 	EntityID       int    `json:"entityId"`
 	EntityName     string `json:"entityName"`
@@ -56,8 +62,7 @@ func (a Attachment) Register() error {
 
 	// Check for duplication
 	id, err := a.Exists()
-	if err != nil  {
-		fmt.Println(sql.ErrNoRows)
+	if err != nil {
 		return errors.New(".Register() " + err.Error())
 	}
 	if id > 0 {
@@ -68,11 +73,19 @@ func (a Attachment) Register() error {
 	var query string
 
 	switch a.EntityName {
+
 	case "ce_m_activity_attachment":
 		query = `INSERT INTO ce_m_activity_attachment ` +
 			`(ce_m_activity_id, fs_set_id, active, created_at, updated_at, clean_filename, cloudy_filename) ` +
 			`VALUES (%d, %d, 1, NOW(), NOW(), "%s", "%s")`
 		query = fmt.Sprintf(query, a.EntityID, a.FileSetID, a.CleanFilename, a.CloudyFilename)
+
+	case "wf_attachment":
+		query = `INSERT INTO wf_attachment ` +
+			`(wf_note_id, ad_user_id, fs_set_id, active, created_at, updated_at, clean_filename) ` +
+			`VALUES (%d, %d, %d, 1, NOW(), NOW(), "%s")`
+		query = fmt.Sprintf(query, a.EntityID, a.UserID, a.FileSetID, a.CleanFilename)
+
 	default:
 		return errors.New("Unknown entity name provided, cannot register the attachment")
 	}
@@ -83,13 +96,6 @@ func (a Attachment) Register() error {
 		return errors.New("Database error - " + err.Error())
 	}
 
-	return nil
-}
-
-// registerActivityAttachment registers an attachment for CPD activity, ie in the ce_m_activity_attachment table.
-// It first checks if there is an existing record for the same file name, and if so, will do an update instead.
-// Otherwise it will insert a new record
-func (a Attachment) registerActivityAttachment() error {
 	return nil
 }
 
@@ -105,6 +111,13 @@ func (a Attachment) Exists() (int, error) {
 			`ce_m_activity_id = %d AND fs_set_id = %d AND clean_filename = "%s" AND cloudy_filename = "%s" ` +
 			`LIMIT 1`
 		query = fmt.Sprintf(query, a.EntityID, a.FileSetID, a.CleanFilename, a.CloudyFilename)
+
+	case "wf_attachment":
+		query = `SELECT id FROM wf_attachment WHERE active = 1 AND ` +
+			`wf_note_id = %d AND fs_set_id = %d AND clean_filename = "%s" ` +
+			`LIMIT 1`
+		query = fmt.Sprintf(query, a.EntityID, a.FileSetID, a.CleanFilename)
+
 	default:
 		return id, errors.New(".Exists() - unknown entity name provided")
 	}
@@ -113,7 +126,7 @@ func (a Attachment) Exists() (int, error) {
 	err := datastore.MySQL.Session.QueryRow(query).Scan(&id)
 	// No rows is fine... that is what we are hoping for!
 	if err != nil && err != sql.ErrNoRows {
-		return id, errors.New("Database error - " + err.Error())
+		return id, errors.New(".Exists() db error - " + err.Error())
 	}
 
 	return id, nil

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/json"
+	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	mw_ "github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	m_ "github.com/mappcpd/web-services/internal/members"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
@@ -13,7 +13,7 @@ import (
 // MembersIDHandler fetches a member record by id
 func MembersProfile(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := _json.New(mw_.UserAuthToken.Token)
 
 	// Get user id from token
 	id := mw_.UserAuthToken.Claims.ID
@@ -40,7 +40,7 @@ func MembersProfile(w http.ResponseWriter, r *http.Request) {
 // MembersActivities fetches activity records for a member
 func MembersActivities(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := _json.New(mw_.UserAuthToken.Token)
 
 	a, err := m_.MemberActivitiesByMemberID(mw_.UserAuthToken.Claims.ID)
 
@@ -67,7 +67,7 @@ func MembersActivities(w http.ResponseWriter, r *http.Request) {
 // by gathering the CPD activities within the dates, adding them up, applying caps etc
 func MembersEvaluation(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.NewPayload(mw_.UserAuthToken.Token)
+	p := _json.New(mw_.UserAuthToken.Token)
 
 	// Collect the evaluation periods
 	es, err := m_.EvaluationsByMemberID(mw_.UserAuthToken.Claims.ID)

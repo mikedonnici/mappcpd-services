@@ -1,11 +1,14 @@
-package json
+/*
+	Package responder implements a consistent JSON response for api requests
+*/
+package responder
 
 import (
 	"encoding/json"
 	"net/http"
 
-	a_ "github.com/mappcpd/web-services/internal/auth"
-	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/mappcpd/web-services/internal/auth"
+	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
 // Payload represents a standard JSON format for ALL responses
@@ -44,15 +47,14 @@ type MongoMeta struct {
 	Query interface{} `json:"query" bson:"query"`
 }
 
-// NewPayLoad returns a pointer to a new Payload value. It received a token string which it will
+// New returns a pointer to a new Payload value. It received a token string which it will
 // check for validity and if ok will set a refresh token as part of the payload.
-func NewPayload(ts string) *Payload {
+func New(ts string) *Payload {
 
 	p := Payload{}
 
-	// todo fix import cycle issue caused by this code
 	// if universal UserAuthToken value is present, use this to set fresh token
-	t, err := j_.CheckJWT(ts)
+	t, err := jwt.Check(ts)
 	if err != nil {
 		// No panic here, we'll just not do a fresh token
 		return &p
@@ -69,12 +71,12 @@ func NewPayload(ts string) *Payload {
 
 	// Fresh token - re-check the Scope from db rather than copying it from the current
 	// token - in case permissions have been changed
-	scopes, err := a_.AuthScope(t.Claims.ID)
+	scopes, err := auth.AuthScope(t.Claims.ID)
 	if err != nil {
 		return &p
 	}
 
-	nt, err := j_.CreateJWT(t.Claims.ID, t.Claims.Name, scopes)
+	nt, err := jwt.CreateJWT(t.Claims.ID, t.Claims.Name, scopes)
 	if err != nil {
 		return &p
 	}
