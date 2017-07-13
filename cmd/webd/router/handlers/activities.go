@@ -461,8 +461,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 	p.Send(w)
 }
 
-// MembersActivitiesAttachmentRegister registers an uploaded file in the database. It creates an association between the
-// uploaded file and the relevant database entity thus creating the 'attachment'.
+// MembersActivitiesAttachmentRegister registers an uploaded file in the database.
 func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
@@ -537,5 +536,4 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 	p.Message = responder.Message{http.StatusOK, "success", "Attachment registered"}
 	p.Data = a
 	p.Send(w)
-
 }

@@ -29,7 +29,8 @@ func MemberSubRouter(prefix string) *mux.Router {
 	// Attachments
 	members.Methods("OPTIONS").Path("/activities/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.Preflight)
 	members.Methods("GET").Path("/activities/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.MembersActivitiesAttachmentRequest)
-	members.Methods("POST").Path("/activities/{id:[0-9]+}/attachments").HandlerFunc(handlers.MembersActivitiesAttachmentRegister)
+	// This is idempotent, hence PUT
+	members.Methods("PUT").Path("/activities/{id:[0-9]+}/attachments").HandlerFunc(handlers.MembersActivitiesAttachmentRegister)
 
 	members.Methods("GET").Path("/activities/recurring").HandlerFunc(handlers.MembersActivitiesRecurring)
 	members.Methods("POST").Path("/activities/recurring").HandlerFunc(handlers.MembersActivitiesRecurringAdd)

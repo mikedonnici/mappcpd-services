@@ -106,7 +106,7 @@ func (a *Attachment) Validate() error {
 // If the record already exists it cannot be registered again, however this is not really an error so Register()
 // can just populate the fields and carry on. From the caller's perspective this makes no difference - there is an uploaded
 // file and details about it are being recorded in the database. HOWEVER, what if the user ID is changes? In this case we could
-// force an update of the record. For now it will simple populate the fields.
+// force an update of the record. For now it will populate the fields which makes this operation IDEMPOTENT.
 func (a *Attachment) Register() error {
 
 	// Validate first

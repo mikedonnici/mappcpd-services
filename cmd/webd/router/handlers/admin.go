@@ -462,9 +462,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
-// AdminNotesAttachmentRegister registers a file attachment for a note. The client POSTS a single field: "volumeFilePath"
-// which is the full file path (key) prepended with the volume name. This value is sent to the client
-// in the previous step of requesting a signed url for file upload and looks like "volume-name/path/to/file/filename.ext".
+// AdminNotesAttachmentRegister registers a file attachment for a note.
 func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
@@ -476,7 +474,7 @@ func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		msg := "Missing or malformed id in url path - " + err.Error()
+		msg := "Error getting id from url path - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 	}
 	_, err = notes.NoteById(id)
@@ -494,7 +492,7 @@ func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	a.EntityID = id
 
-	// Decode post body fields: "cleanFilename" and "cloudyFilename" into Attachment
+	// Decode post body fields: "cleanFilename" and "cloudyFilename" into Attachment.
 	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
 		msg := "Could not decode json in request body - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
