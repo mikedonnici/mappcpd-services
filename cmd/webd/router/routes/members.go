@@ -1,4 +1,4 @@
-package router
+package routes
 
 import (
 	"github.com/gorilla/mux"
@@ -8,13 +8,13 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
 )
 
-func memberSubRouter() *mux.Router {
+func MemberSubRouter(prefix string) *mux.Router {
 
 	// Middleware for Members sub-router
 	r := mux.NewRouter().StrictSlash(true)
 
 	// members routes
-	members := r.PathPrefix(v1MemberBase).Subrouter()
+	members := r.PathPrefix(prefix).Subrouter()
 	members.Methods("GET").Path("/").HandlerFunc(handlers.Index)
 	members.Methods("GET").Path("/token").HandlerFunc(handlers.MembersToken)
 	members.Methods("OPTIONS").Path("/token").HandlerFunc(handlers.Preflight)
@@ -29,7 +29,7 @@ func memberSubRouter() *mux.Router {
 	// Attachments
 	members.Methods("OPTIONS").Path("/activities/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.Preflight)
 	members.Methods("GET").Path("/activities/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.MembersActivitiesAttachmentRequest)
-	members.Methods("POST").Path("/activities/{id:[0-9]+}/attachments").HandlerFunc(handlers.MembersActivitiesAttachmentAdd)
+	members.Methods("POST").Path("/activities/{id:[0-9]+}/attachments").HandlerFunc(handlers.MembersActivitiesAttachmentRegister)
 
 	members.Methods("GET").Path("/activities/recurring").HandlerFunc(handlers.MembersActivitiesRecurring)
 	members.Methods("POST").Path("/activities/recurring").HandlerFunc(handlers.MembersActivitiesRecurringAdd)
@@ -45,8 +45,8 @@ func memberSubRouter() *mux.Router {
 	return members
 }
 
-// memberMiddleware wraps the member sub router with appropriate middleware
-func memberMiddleware(r *mux.Router) *negroni.Negroni {
+// MemberMiddleware wraps the member sub router with appropriate middleware
+func MemberMiddleware(r *mux.Router) *negroni.Negroni {
 
 	// Recovery from panic
 	recovery := negroni.NewRecovery()

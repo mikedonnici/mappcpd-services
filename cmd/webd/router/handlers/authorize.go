@@ -8,8 +8,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
+	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
 // AuthorizeScope checks token claims 'scope' field for one or more string values and returns
@@ -17,21 +17,21 @@ import (
 // TODO: Authorize maybe should be some kind of middleware once we implement sub routers
 func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
 
-	p := _json.Payload{}
+	p := responder.Payload{}
 
 	// Get token string from header
 	a := r.Header.Get("Authorization")
-	t, err := j_.FromHeader(a)
+	t, err := jwt.FromHeader(a)
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return false
 	}
 
 	// Create an AuthToken value from the token string
-	at, err := j_.Check(t)
+	at, err := jwt.Check(t)
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return false
 	}
@@ -64,25 +64,28 @@ func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
 }
 
 // AuthorizeID checks the member id passed in matches the token ID. This is used when a
-// record linked to a member id has been fetched, and we want to check that the owner is making
-// the request for it.
+// request is made that related to a record owned by a member. For example:
+// GET /v1/m/activities/1234/attachments is requesting the attachment files for activity '1234'. In order to verify
+// that the logged in member owns the record we currently fetch the activity record and compare the member_id with the
+// user id in the token.
+// todo - faster way to verify owner of an entity
 func AuthorizeID(w http.ResponseWriter, r *http.Request, mid int) bool {
 
-	p := _json.Payload{}
+	p := responder.Payload{}
 
 	// Get token string from header
 	a := r.Header.Get("Authorization")
-	t, err := j_.FromHeader(a)
+	t, err := jwt.FromHeader(a)
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return false
 	}
 
 	// Create an AuthToken value from the token string
-	at, err := j_.Check(t)
+	at, err := jwt.Check(t)
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return false
 	}

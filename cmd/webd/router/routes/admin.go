@@ -1,4 +1,4 @@
-package router
+package routes
 
 import (
 	"github.com/gorilla/mux"
@@ -8,11 +8,11 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
 )
 
-// adminSubRouter adds end points for admin, and appropriate middleware
-func adminSubRouter() *mux.Router {
+// AdminSubRouter adds end points for admin, and appropriate middleware
+func AdminSubRouter(prefix string) *mux.Router {
 
 	r := mux.NewRouter().StrictSlash(true)
-	admin := r.PathPrefix(v1AdminBase).Subrouter()
+	admin := r.PathPrefix(prefix).Subrouter()
 
 	admin.Methods("GET").Path("/test").HandlerFunc(handlers.AdminTest)
 	admin.Methods("GET").Path("/idlist").HandlerFunc(handlers.AdminIDList)
@@ -31,8 +31,10 @@ func adminSubRouter() *mux.Router {
 	admin.Methods("GET").Path("/modules/{id:[0-9]+}").HandlerFunc(handlers.ModulesID)
 	admin.Methods("POST").Path("/modules").HandlerFunc(handlers.ModulesCollection)
 
-	// Attachment registration
-	admin.Methods("POST").Path("/attachments").HandlerFunc(handlers.AdminAttachmentAdd)
+	// Attachments
+	admin.Methods("OPTIONS").Path("/notes/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.Preflight)
+	admin.Methods("GET").Path("/notes/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.AdminNotesAttachmentRequest)
+	admin.Methods("POST").Path("/notes/{id:[0-9]+}/attachments").HandlerFunc(handlers.AdminNotesAttachmentRegister)
 
 	// Batch routes for bulk uploading
 	admin.Methods("POST").Path("/batch/resources").HandlerFunc(handlers.AdminBatchResourcesPost)
@@ -40,8 +42,8 @@ func adminSubRouter() *mux.Router {
 	return admin
 }
 
-// adminMiddleWare wraps the require middleware handlers around the router passed in
-func adminMiddleware(r *mux.Router) *negroni.Negroni {
+// AdminMiddleWare wraps the require middleware handlers around the router passed in
+func AdminMiddleware(r *mux.Router) *negroni.Negroni {
 
 	// Recovery from panic
 	recovery := negroni.NewRecovery()

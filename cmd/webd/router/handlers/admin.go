@@ -13,6 +13,7 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	"github.com/mappcpd/web-services/internal/attachments"
+	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/generic"
 	"github.com/mappcpd/web-services/internal/members"
 	"github.com/mappcpd/web-services/internal/notes"
@@ -386,47 +387,135 @@ func AdminBatchResourcesPost(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
-// AdminAttachmentAdd registers a file attachment for a database entity specified in the request body
-func AdminAttachmentAdd(w http.ResponseWriter, r *http.Request) {
+// AdminNotesAttachmentRequest handles a request for a signed url to upload a notes attachment
+func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	// Create an attachment
-	var a attachments.Attachment
+	upload := struct {
+		SignedRequest  string `json:"signedRequest"`
+		VolumeFilePath string `json:"volumeFilePath"`
+		FileName       string `json:"fileName"`
+		FileType       string `json:"fileType"`
+	}{
+		FileName: r.FormValue("filename"),
+		FileType: r.FormValue("filetype"),
+	}
 
-	// Set the admin id from the token
+	// Check we have required query params
+	if upload.FileName == "" || upload.FileType == "" {
+		msg := "Problems with query params, should have: ?filename=___&filetype=___"
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// This is admin so don't need the owner of the record however still check that the record exists
+	v := mux.Vars(r)
+	id, err := strconv.Atoi(v["id"])
+	if err != nil {
+		msg := "Missing or malformed id in url path - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+	}
+
+	_, err = notes.NoteById(id)
+	switch {
+	case err == sql.ErrNoRows:
+		msg := fmt.Sprintf("No note found with id %d -", id) + err.Error()
+		p.Message = responder.Message{http.StatusNotFound, "failed", msg}
+		p.Send(w)
+		return
+	case err != nil:
+		msg := "Database error - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// Get current fileset for note attachments
+	fs, err := fileset.NewNote()
+	if err != nil {
+		msg := "Could not determine the storage information for note attachments - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// Build FULL file path or 'key' in S3 parlance
+	filePath := fs.Path + strconv.Itoa(id) + "/" + upload.FileName
+
+	// Prepend the volume name to pass back to the client for subsequent file registration
+	upload.VolumeFilePath = fs.Volume + filePath
+
+	// get a signed request
+	url, err := attachments.S3PutRequest(filePath, fs.Volume)
+	if err != nil {
+		msg := "Error getting a signed request for upload " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+	upload.SignedRequest = url
+
+	p.Message = responder.Message{http.StatusOK, "success", "Signed request in data.signedRequest."}
+	p.Data = upload
+	p.Send(w)
+}
+
+// AdminNotesAttachmentRegister registers a file attachment for a note. The client POSTS a single field: "volumeFilePath"
+// which is the full file path (key) prepended with the volume name. This value is sent to the client
+// in the previous step of requesting a signed url for file upload and looks like "volume-name/path/to/file/filename.ext".
+func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
+
+	p := responder.New(middleware.UserAuthToken.Token)
+
+	a := attachments.New()
 	a.UserID = middleware.UserAuthToken.Claims.ID
 
-	// Decode post body into attachment fields
+	// Get the entity ID from URL path... This is admin so validate record exists but not ownership
+	v := mux.Vars(r)
+	id, err := strconv.Atoi(v["id"])
+	if err != nil {
+		msg := "Missing or malformed id in url path - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+	}
+	_, err = notes.NoteById(id)
+	switch {
+	case err == sql.ErrNoRows:
+		msg := fmt.Sprintf("No note found with id %d -", id) + err.Error()
+		p.Message = responder.Message{http.StatusNotFound, "failed", msg}
+		p.Send(w)
+		return
+	case err != nil:
+		msg := "Database error - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+	a.EntityID = id
+
+	// Decode post body fields: "cleanFilename" and "cloudyFilename" into Attachment
 	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
 		msg := "Could not decode json in request body - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 		p.Send(w)
 		return
 	}
-	fmt.Println(a)
 
-	// Check if attachment already exists before registering
-	id, err := a.Exists()
+	// Get current fileset for note attachments
+	fs, err := fileset.NewNote()
 	if err != nil {
-		msg := "Error checking for duplicate attachment - " + err.Error()
+		msg := "Could not determine the storage information for note attachments - " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
 		p.Send(w)
 		return
 	}
-	if id > 0 {
-		msg := "An attachment with the same file name is already registered. The sanitized file name is %s and the " +
-			"attachment record is %s.id = %d. If this is NOT a duplicate file try changing the original file name."
-		msg = fmt.Sprintf(msg, a.CleanFilename, a.EntityName, id)
-		p.Message = responder.Message{http.StatusConflict, "failed", msg}
-		p.Send(w)
-		return
-	}
+	a.FileSet = *fs
 
 	// Register the attachment
 	if err := a.Register(); err != nil {
 		msg := "Error registering attachment - " + err.Error()
-		p.Message = responder.Message{http.StatusForbidden, "failed", msg}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
 		p.Send(w)
 		return
 	}
@@ -434,5 +523,4 @@ func AdminAttachmentAdd(w http.ResponseWriter, r *http.Request) {
 	p.Message = responder.Message{http.StatusOK, "success", "Attachment registered"}
 	p.Data = a
 	p.Send(w)
-
 }

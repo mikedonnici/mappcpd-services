@@ -17,7 +17,6 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
 	"github.com/mappcpd/web-services/internal/activities"
-	//"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/members"
@@ -385,13 +384,11 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	// Return the URL Query string params for the caller's convenience, and signedURL
 	upload := struct {
-		Volume        string `json:"volume"`
-		Path          string `json:"path"`
-		FileName      string `json:"fileName"`
-		FileType      string `json:"fileType"`
-		SignedRequest string `json:"signedRequest"`
+		SignedRequest  string `json:"signedRequest"`
+		VolumeFilePath string `json:"volumeFilePath"`
+		FileName       string `json:"fileName"`
+		FileType       string `json:"fileType"`
 	}{
 		FileName: r.FormValue("filename"),
 		FileType: r.FormValue("filetype"),
@@ -409,17 +406,20 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
+		msg := "Missing or malformed id in url path - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 	}
 
 	a, err := members.MemberActivityByID(id)
 	switch {
 	case err == sql.ErrNoRows:
-		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
+		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()
+		p.Message = responder.Message{http.StatusNotFound, "failed", msg}
 		p.Send(w)
 		return
 	case err != nil:
-		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
+		msg := "Database error - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
 		p.Send(w)
 		return
 	}
@@ -431,27 +431,29 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Have taken some 'load' off the client - rather than the client having to know what file sets we have we can let
-	// the API work it out. We know that a CPD activity attachment will be registered in the ce_m_activity_attachment table
-	// so lookup the current file set for that entity
-	fs, err := fileset.New("ce_m_activity_attachment")
+	// Get current fileset for activity attachments
+	fs, err := fileset.NewActivity()
 	if err != nil {
 		msg := "Could not determine the storage information for activity attachments - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// Build FULL file path or 'key' in S3 parlance
+	filePath := fs.Path + strconv.Itoa(id) + "/" + upload.FileName
+
+	// Prepend the volume name to pass back to the client for subsequent file registration
+	upload.VolumeFilePath = fs.Volume + filePath
+
+	// get a signed request
+	url, err := attachments.S3PutRequest(filePath, fs.Volume)
+	if err != nil {
+		msg := "Error getting a signed request for upload " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
 		p.Send(w)
 		return
 	}
-	upload.Path = fs.Path
-	upload.Volume = fs.Volume
-
-	// passed all required checks so ok to get a signed request
-	url, err := attachments.S3PutRequest(upload.Path, upload.Volume)
-	if err != nil {
-		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
-		p.Send(w)
-		return
-	}
-
 	upload.SignedRequest = url
 
 	p.Message = responder.Message{http.StatusOK, "success", "Signed request in data.signedRequest."}
@@ -459,41 +461,75 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 	p.Send(w)
 }
 
-// MembersActivitiesAttachmentAdd registers an uploaded file in the database. It creates an association between the
+// MembersActivitiesAttachmentRegister registers an uploaded file in the database. It creates an association between the
 // uploaded file and the relevant database entity thus creating the 'attachment'.
-// Todo... this needs to be simplified as we don't need to pass the entity name or id in the POSt body for member
-func MembersActivitiesAttachmentAdd(w http.ResponseWriter, r *http.Request) {
+func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	// Get activity id from path... and make it an int
+	a := attachments.New()
+	// not required for this type of attachment but stick it on for good measure :)
+	a.UserID = middleware.UserAuthToken.Claims.ID
+
+	// Get the entity ID from URL path... This is admin so validate record exists but not ownership
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
+		msg := "Error getting id from url path - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Data = a
 		p.Send(w)
 		return
 	}
+	activity, err := members.MemberActivityByID(id)
+	switch {
+	case err == sql.ErrNoRows:
+		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()
+		p.Message = responder.Message{http.StatusNotFound, "failed", msg}
+		p.Data = a
+		p.Send(w)
+		return
+	case err != nil:
+		msg := "Database error - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Data = a
+		p.Send(w)
+		return
+	}
+	// CHECK OWNER!!
+	if middleware.UserAuthToken.Claims.ID != activity.MemberID {
+		p.Message = responder.Message{http.StatusUnauthorized, "failed", "Token does not belong to the owner of this resource"}
+		p.Data = a
+		p.Send(w)
+		return
+	}
+	a.EntityID = id
 
-	// The only thing we will need to do with the activity id is verify that it belongs
-	// the the same member that owns the JWT
-	// todo look up activity and verify owner...
-	fmt.Println("Look up activity id", id, " and verify the owner")
-
-	// decode post body into a struct
-	var a attachments.Attachment
-
+	// Decode post body fields: "cleanFilename" and "cloudyFilename" into Attachment
 	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
 		msg := "Could not decode json in request body - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Data = a
 		p.Send(w)
 		return
 	}
-	fmt.Println(a)
 
+	// Get current fileset for activity attachments
+	fs, err := fileset.NewActivity()
+	if err != nil {
+		msg := "Could not determine the storage information for activity attachments - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Data = a
+		p.Send(w)
+		return
+	}
+	a.FileSet = *fs
+
+	// Register the attachment
 	if err := a.Register(); err != nil {
 		msg := "Error registering attachment - " + err.Error()
-		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Data = a
 		p.Send(w)
 		return
 	}

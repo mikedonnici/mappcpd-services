@@ -8,12 +8,12 @@ import (
 
 	"net/http"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	j_ "github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
+	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
 // UserAuthToken is a global AuthToken that is set up by the middleware for convenience
-var UserAuthToken j_.AuthToken
+var UserAuthToken jwt.AuthToken
 
 // ValidateToken validate the JSON web token passed in the Authorization header. For now
 // a POST request to /auth simply returns, without checking the token, as this is
@@ -27,22 +27,22 @@ func ValidateToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc
 		return
 	}
 
-	p := _json.Payload{}
+	p := responder.Payload{}
 
 	// Get the token from the auth header, 'Bearer' seems useless but this is an OAuth2 standard
 	// Authorization: Bearer [jwt]
 	a := r.Header.Get("Authorization")
-	t, err := j_.FromHeader(a)
+	t, err := jwt.FromHeader(a)
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failure", err.Error()}
+		p.Message = responder.Message{http.StatusBadRequest, "failure", err.Error()}
 		p.Send(w)
 		return
 	}
 
 	// Set the global AuthToken
-	UserAuthToken, err = j_.Check(t)
+	UserAuthToken, err = jwt.Check(t)
 	if err != nil {
-		p.Message = _json.Message{http.StatusUnauthorized, "failure", "Authorization failed: " + err.Error()}
+		p.Message = responder.Message{http.StatusUnauthorized, "failure", "Authorization failed: " + err.Error()}
 		p.Send(w)
 		return
 	}
@@ -53,10 +53,10 @@ func ValidateToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc
 // AdminScope checks that the auth token belongs to an admin
 func AdminScope(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
-	p := _json.Payload{}
+	p := responder.Payload{}
 
 	if UserAuthToken.CheckScope("admin") == false {
-		p.Message = _json.Message{http.StatusUnauthorized, "failed", "Admin Scope Required: token does not belong to an admin user"}
+		p.Message = responder.Message{http.StatusUnauthorized, "failed", "Admin Scope Required: token does not belong to an admin user"}
 		p.Send(w)
 		return
 	}
@@ -74,10 +74,10 @@ func MemberScope(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) 
 		return
 	}
 
-	p := _json.Payload{}
+	p := responder.Payload{}
 
 	if UserAuthToken.CheckScope("member") == false {
-		p.Message = _json.Message{http.StatusUnauthorized, "failed", "Member Scope Required: token does not belong to a member user"}
+		p.Message = responder.Message{http.StatusUnauthorized, "failed", "Member Scope Required: token does not belong to a member user"}
 		p.Send(w)
 		return
 	}
@@ -98,12 +98,12 @@ func MemberScope(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) 
 				log.Println("Checking member id on path matches token")
 				mid, err := strconv.Atoi(vars[i+1])
 				if err != nil {
-					p.Message = _json.Message{http.StatusBadRequest, "failed", "Member id in path appears to be invalid"}
+					p.Message = responder.Message{http.StatusBadRequest, "failed", "Member id in path appears to be invalid"}
 					p.Send(w)
 					return
 				}
 				if UserAuthToken.Claims.ID != mid {
-					p.Message = _json.Message{http.StatusUnauthorized, "failed", "Member id in path does not match token"}
+					p.Message = responder.Message{http.StatusUnauthorized, "failed", "Member id in path does not match token"}
 					p.Send(w)
 					return
 				}

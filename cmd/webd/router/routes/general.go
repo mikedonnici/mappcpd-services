@@ -1,4 +1,4 @@
-package router
+package routes
 
 import (
 	"github.com/gorilla/mux"
@@ -8,14 +8,14 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
 )
 
-func generalSubRouter() *mux.Router {
+func GeneralSubRouter(prefix string) *mux.Router {
 
 	// Middleware for General sub-router just need a valid token
 	// as these are used by both admin and member scope
 	r := mux.NewRouter().StrictSlash(true)
 
 	// general routes
-	general := r.PathPrefix(v1GeneralBase).Subrouter()
+	general := r.PathPrefix(prefix).Subrouter()
 
 	// Activity (types)
 	general.Methods("GET").Path("/activities").HandlerFunc(handlers.Activities)
@@ -30,15 +30,11 @@ func generalSubRouter() *mux.Router {
 	general.Methods("GET").Path("/modules/{id:[0-9]+}").HandlerFunc(handlers.ModulesID)
 	general.Methods("POST").Path("/modules").HandlerFunc(handlers.ModulesCollection)
 
-	// Attachments
-	// general.Methods("OPTIONS").Path("/attachments/putrequest").HandlerFunc(handlers.Preflight)
-	//general.Methods("GET").Path("/attachments/putrequest").HandlerFunc(handlers.S3PutRequest)
-
 	return general
 }
 
-// generalMiddleware applies required middleware to 'general' endpoints
-func generalMiddleware(r *mux.Router) *negroni.Negroni {
+// GeneralMiddleware applies required middleware to 'general' endpoints
+func GeneralMiddleware(r *mux.Router) *negroni.Negroni {
 
 	// Recovery from panic
 	recovery := negroni.NewRecovery()

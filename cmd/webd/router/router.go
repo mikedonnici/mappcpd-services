@@ -9,7 +9,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 
-	_h "github.com/mappcpd/web-services/cmd/webd/router/handlers"
+	"github.com/mappcpd/web-services/cmd/webd/router/handlers"
+	"github.com/mappcpd/web-services/cmd/webd/router/routes"
 )
 
 const (
@@ -26,31 +27,31 @@ func Start() {
 	r := mux.NewRouter()
 
 	// Ping and preflight, no middleware required
-	r.Methods("GET").Path("/").HandlerFunc(_h.Index)
-	r.Methods("OPTIONS").HandlerFunc(_h.Preflight)
-	//r.Methods("OPTIONS").Path("/").HandlerFunc(_h.Preflight)
+	r.Methods("GET").Path("/").HandlerFunc(handlers.Index)
+	r.Methods("OPTIONS").HandlerFunc(handlers.Preflight)
+	//r.Methods("OPTIONS").Path("/").HandlerFunc(handlers.Preflight)
 
 	// Auth sub-router, no middleware required
-	rAuth := authSubRouter()
+	rAuth := routes.AuthSubRouter(v1AuthBase)
 	r.PathPrefix(v1AuthBase).Handler(rAuth)
 
 	// Admin sub-router and middleware
-	rAdmin := adminSubRouter()                          // add router...
-	rAdminMiddleware := adminMiddleware(rAdmin)         // ...plus middleware...
+	rAdmin := routes.AdminSubRouter(v1AdminBase)        // add router...
+	rAdminMiddleware := routes.AdminMiddleware(rAdmin)  // ...plus middleware...
 	r.PathPrefix(v1AdminBase).Handler(rAdminMiddleware) // ...and add to main router
 
 	// Reports sub-router, todo: add middleware to reports router
-	rReports := reportSubRouter()
+	rReports := routes.ReportSubRouter(v1ReportBase)
 	r.PathPrefix(v1ReportBase).Handler(rReports)
 
 	// Member sub-router
-	rMember := memberSubRouter()
-	rMemberMiddleware := memberMiddleware(rMember)
+	rMember := routes.MemberSubRouter(v1MemberBase)
+	rMemberMiddleware := routes.MemberMiddleware(rMember)
 	r.PathPrefix(v1MemberBase).Handler(rMemberMiddleware)
 
 	// General sub-router
-	rGeneral := generalSubRouter()
-	rGeneralMiddleware := generalMiddleware(rGeneral)
+	rGeneral := routes.GeneralSubRouter(v1GeneralBase)
+	rGeneralMiddleware := routes.GeneralMiddleware(rGeneral)
 	r.PathPrefix(v1GeneralBase).Handler(rGeneralMiddleware)
 
 	// Specify port when env var is not set - Heroku sets dynamically so cannot include in .env
