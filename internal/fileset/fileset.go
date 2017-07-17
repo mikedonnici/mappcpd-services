@@ -25,12 +25,19 @@ type FileSet struct {
 	Path   string `json:"path"`
 }
 
+// NewNote returns a pointer to a FileSet with relevant values for a Note attachment
 func NewNote() (*FileSet, error) {
 	return get("wf_attachment")
 }
 
+// NewActivity returns a pointer to a FileSet with relevant values for an Activity attachment
 func NewActivity() (*FileSet, error) {
 	return get("ce_m_activity_attachment")
+}
+
+// NewResource returns a pointer to a FileSet with relevant values for a Resource attachment
+func NewResource() (*FileSet, error) {
+	return get("ol_resource_file")
 }
 
 // New returns a pointer to an initialised FileSet value. It receives the setPath, eg '/notes/' which is the base

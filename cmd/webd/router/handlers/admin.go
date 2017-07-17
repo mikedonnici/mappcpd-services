@@ -522,3 +522,146 @@ func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 	p.Data = a
 	p.Send(w)
 }
+
+// AdminResourcesAttachmentRequest handles a request for a signed url to upload a resource attachment
+func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
+
+	p := responder.New(middleware.UserAuthToken.Token)
+
+	upload := struct {
+		SignedRequest  string `json:"signedRequest"`
+		VolumeFilePath string `json:"volumeFilePath"`
+		FileName       string `json:"fileName"`
+		FileType       string `json:"fileType"`
+	}{
+		FileName: r.FormValue("filename"),
+		FileType: r.FormValue("filetype"),
+	}
+
+	// Check we have required query params
+	if upload.FileName == "" || upload.FileType == "" {
+		msg := "Problems with query params, should have: ?filename=___&filetype=___"
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// This is admin so don't need the owner of the record however still check that the record exists
+	v := mux.Vars(r)
+	id, err := strconv.Atoi(v["id"])
+	if err != nil {
+		msg := "Missing or malformed id in url path - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+	}
+
+	_, err = resources.ResourceByID(id)
+	switch {
+	case err == sql.ErrNoRows:
+		msg := fmt.Sprintf("No resource found with id %d -", id) + err.Error()
+		p.Message = responder.Message{http.StatusNotFound, "failed", msg}
+		p.Send(w)
+		return
+	case err != nil:
+		msg := "Database error - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// Get current fileset for note attachments
+	fs, err := fileset.NewResource()
+	if err != nil {
+		msg := "Could not determine the storage information for resource attachments - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// Build FULL file path or 'key' in S3 parlance
+	filePath := fs.Path + strconv.Itoa(id) + "/" + upload.FileName
+
+	// Prepend the volume name to pass back to the client for subsequent file registration
+	upload.VolumeFilePath = fs.Volume + filePath
+
+	// get a signed request
+	url, err := attachments.S3PutRequest(filePath, fs.Volume)
+	if err != nil {
+		msg := "Error getting a signed request for upload " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+	upload.SignedRequest = url
+
+	p.Message = responder.Message{http.StatusOK, "success", "Signed request in data.signedRequest."}
+	p.Data = upload
+	p.Send(w)
+}
+
+// AdminResourcesAttachmentRegister registers a file attachment for a resource. If ?thumbnail=1 is passed on the
+// url then the resource file is designated as a thumbnail by setting thumbnail flag to 1 in db.
+func AdminResourcesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
+
+	p := responder.New(middleware.UserAuthToken.Token)
+
+	a := attachments.New()
+	a.UserID = middleware.UserAuthToken.Claims.ID
+
+	// Get the entity ID from URL path... This is admin so validate record exists but not ownership
+	v := mux.Vars(r)
+	id, err := strconv.Atoi(v["id"])
+	if err != nil {
+		msg := "Error getting id from url path - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+	}
+	_, err = resources.ResourceByID(id)
+	switch {
+	case err == sql.ErrNoRows:
+		msg := fmt.Sprintf("No resource found with id %d -", id) + err.Error()
+		p.Message = responder.Message{http.StatusNotFound, "failed", msg}
+		p.Send(w)
+		return
+	case err != nil:
+		msg := "Database error - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+	a.EntityID = id
+
+	// Decode post body fields: "cleanFilename" and "cloudyFilename" into Attachment.
+	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {
+		msg := "Could not decode json in request body - " + err.Error()
+		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	// Get current fileset for resource attachments
+	fs, err := fileset.NewResource()
+	if err != nil {
+		msg := "Could not determine the storage information for resource attachments - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+	a.FileSet = *fs
+
+	// Check if it is a thumbnail
+	var flag string
+	if r.FormValue("thumbnail") == "1" {
+		flag = "thumbnail"
+	}
+
+	// Register the attachment
+	if err := a.Register(flag); err != nil {
+		msg := "Error registering attachment - " + err.Error()
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
+		p.Send(w)
+		return
+	}
+
+	p.Message = responder.Message{http.StatusOK, "success", "Attachment registered"}
+	p.Data = a
+	p.Send(w)
+}

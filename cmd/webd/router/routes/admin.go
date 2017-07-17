@@ -31,11 +31,15 @@ func AdminSubRouter(prefix string) *mux.Router {
 	admin.Methods("GET").Path("/modules/{id:[0-9]+}").HandlerFunc(handlers.ModulesID)
 	admin.Methods("POST").Path("/modules").HandlerFunc(handlers.ModulesCollection)
 
-	// Attachments
+	// Note Attachments
 	admin.Methods("OPTIONS").Path("/notes/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.Preflight)
 	admin.Methods("GET").Path("/notes/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.AdminNotesAttachmentRequest)
-	// This is idempotent, hence PUT
 	admin.Methods("PUT").Path("/notes/{id:[0-9]+}/attachments").HandlerFunc(handlers.AdminNotesAttachmentRegister)
+
+	// Resource Attachments
+	admin.Methods("OPTIONS").Path("/resources/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.Preflight)
+	admin.Methods("GET").Path("/resources/{id:[0-9]+}/attachments/request").HandlerFunc(handlers.AdminResourcesAttachmentRequest)
+	admin.Methods("PUT").Path("/resources/{id:[0-9]+}/attachments").HandlerFunc(handlers.AdminResourcesAttachmentRegister)
 
 	// Batch routes for bulk uploading
 	admin.Methods("POST").Path("/batch/resources").HandlerFunc(handlers.AdminBatchResourcesPost)

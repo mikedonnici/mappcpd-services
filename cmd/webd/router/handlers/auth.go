@@ -1,10 +1,8 @@
 package handlers
 
 import (
-
 	"encoding/json"
 	"net/http"
-
 
 	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
 	"github.com/mappcpd/web-services/cmd/webd/router/middleware"

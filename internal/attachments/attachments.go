@@ -107,7 +107,8 @@ func (a *Attachment) Validate() error {
 // can just populate the fields and carry on. From the caller's perspective this makes no difference - there is an uploaded
 // file and details about it are being recorded in the database. HOWEVER, what if the user ID is changes? In this case we could
 // force an update of the record. For now it will populate the fields which makes this operation IDEMPOTENT.
-func (a *Attachment) Register() error {
+// 'flags' is a hack to pass in an optional setting - at this stage just to set thumbnail = 1 for a resource file.
+func (a *Attachment) Register(flags ...string) error {
 
 	// Validate first
 	if err := a.Validate(); err != nil {
@@ -140,6 +141,16 @@ func (a *Attachment) Register() error {
 			`(wf_note_id, ad_user_id, fs_set_id, active, created_at, updated_at, clean_filename) ` +
 			`VALUES (%d, %d, %d, 1, NOW(), NOW(), "%s")`
 		query = fmt.Sprintf(query, a.EntityID, a.UserID, a.FileSet.ID, a.CleanFilename)
+
+	case "ol_resource_file":
+		var thumbnail int
+		if flags[0] == "thumbnail" {
+			thumbnail = 1
+		}
+		query = `INSERT INTO ol_resource_file ` +
+			`(ol_resource_id, ad_user_id, fs_set_id, active, thumbnail, created_at, updated_at, clean_filename, cloudy_filename) ` +
+			`VALUES (%d, %d, %d, 1, %d, NOW(), NOW(), "%s", "%s")`
+		query = fmt.Sprintf(query, a.EntityID, a.UserID, a.FileSet.ID, thumbnail, a.CleanFilename, a.CloudyFilename)
 
 	default:
 		return errors.New("Error registering attachment - unknown entity name")
@@ -180,6 +191,12 @@ func (a *Attachment) Exists() error {
 			`wf_note_id = %d AND fs_set_id = %d AND clean_filename = "%s" ` +
 			`LIMIT 1`
 		query = fmt.Sprintf(query, a.EntityID, a.FileSet.ID, a.CleanFilename)
+
+	case "ol_resource_file":
+		query = `SELECT id FROM ol_resource_file WHERE active = 1 AND ` +
+			`ol_resource_id = %d AND fs_set_id = %d AND clean_filename = "%s" AND cloudy_filename = "%s" ` +
+			`LIMIT 1`
+		query = fmt.Sprintf(query, a.EntityID, a.FileSet.ID, a.CleanFilename, a.CloudyFilename)
 
 	default:
 		return errors.New("Unknown entity: " + a.FileSet.Entity)
