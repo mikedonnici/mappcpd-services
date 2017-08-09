@@ -6,15 +6,20 @@ MappCPD worker that fetches articles from [Pubmed](https://www.ncbi.nlm.nih.gov/
 
 See [MappCPD Architecture](https://github.com/mappcpd/architecture/wiki) for more info.
 
-**Config vars:**
+
+## Configuration
+
+**Note:** As the web services are deployed together, and there are overlapping env vars for each of the services, the environment can be configured globally. See [web services configuration](/web-services#configuration).  
+
+**Env vars**
 
 ```bash
 # Admin auth credentials
-MAPPCPD_ADMIN_PASS="demo-admin"
-MAPPCPD_ADMIN_USER"demo-admin"
+MAPPCPD_ADMIN_PASS="demo-user"
+MAPPCPD_ADMIN_USER"demo-pass"
 
-# The correct API
-MAPPCPD_API_URL="https://mappcpd-demo-api.herokuapp.com"
+# API
+MAPPCPD_API_URL="https://mappcpd-api.com"
 
 # Pubmed return batch size - too big can time out
 MAPPCPD_PUBMED_RETMAX=200
@@ -23,8 +28,7 @@ MAPPCPD_PUBMED_RETMAX=200
 BATCH_FILE="https://s3-ap-southeast-1.amazonaws.com/demo-mappcpd/public/pubmedr/pubmed.json"
 ```
 
-The option for a remote batch config file was added so that the config did not have to be uploaded with the repo. 
-It contains an array of one or more Pubmed fetch configurations, eg:
+The option for a remote batch config file was added so that the config did not have to be uploaded with the repo. It contains an array of one or more Pubmed fetch configurations, eg:
 
 ```json
 [{
@@ -71,8 +75,7 @@ Fields in the config:
 `resourceTypeID` : id of the resource type from primary database `ol_resource_type` table, used to provide facet search for *video*, *audio*, *document* etc.
 
 
-### Pubmed Notes
-
+## Pubmed Notes
 
 The Pubmed query that fetches the article abstract (efetch) supports XML and *not* JSON. Go can access nested XML 
 fields nicely so this works well.
@@ -190,7 +193,7 @@ Note... these might be useful as well... strongest evidence:
 
 NOT medline[sb]) AND english[la] AND (systematic[sb] OR ((clinical[tiab] AND trial[tiab]) OR clinical trial[pt] OR random*[tiab] OR random allocation[mh] OR therapeutic use[sh])) AND free full text[sb]
 
-### References
+## References
 
 General: 
 https://www.ncbi.nlm.nih.gov/books/NBK25499/
