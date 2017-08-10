@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/mappcpd/web-services.svg?branch=master)](https://travis-ci.org/mappcpd/web-services)
 
-Set of web services supporting [MappCPD](https://mappcpd.com).
+Set of web services that extend the existing [MappCPD](https://mappcpd.com) monolithic [architecture](https://github.com/mappcpd/architecture/wiki).
 
 * [cmd/](/cmd/README.md) - executable packages
   * [pubmedr/](/cmd/pubmedr/README.md) - worker to fetch pubmed articles
