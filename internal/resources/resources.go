@@ -130,11 +130,11 @@ func ResourceByID(id int) (*Resource, error) {
 		fmt.Println(msg, err)
 		//os.Exit(1)
 	}
-	r.PubDate.Date, err = time.Parse(constants.MySQLTimestampFormat, presentedOn)
+	r.PubDate.Date, err = time.Parse(constants.MySQLDateFormat, presentedOn)
 	if err != nil {
-		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse updated_at", id)
+		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse presented_on", id)
 		fmt.Println(msg, err)
-		//os.Exit(1)
+		os.Exit(1)
 	}
 
 	// Convert year, month and day strings to int
