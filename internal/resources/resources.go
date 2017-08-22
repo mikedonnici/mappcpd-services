@@ -23,7 +23,7 @@ import (
 
 // Resource record
 type Resource struct {
-	_id          string                 `json:"_id" bson:"_id"`
+	OID          bson.ObjectId          `json:"_id,omitempty" bson:"_id,omitempty"`
 	ID           int                    `json:"id" bson:"id"`
 	CreatedAt    time.Time              `json:"createdAt" bson:"createdAt"`
 	UpdatedAt    time.Time              `json:"updatedAt" bson:"updatedAt"`

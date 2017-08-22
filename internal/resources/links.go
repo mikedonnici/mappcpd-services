@@ -11,7 +11,7 @@ import (
 )
 
 type Link struct {
-	_id            bson.ObjectId `json:"_id" bson:"_id"`
+	OID            bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
 	CreatedAt      time.Time     `json:"createdAt" bson:"createdAt"`
 	UpdatedAt      time.Time     `json:"updatedAt" bson:"updatedAt"`
 	ShortUrl       string        `json:"shortUrl" bson:"shortUrl"`
@@ -30,7 +30,7 @@ func (l *Link) DocSave() error {
 		return err
 	}
 
-	// Selector for Upsert - no MySQL id here so use the long url, could use _id
+	// Selector for Upsert - no MySQL id here so use the long url, could use UUID
 	s := map[string]string{"longUrl": l.LongUrl}
 	// Upsert
 	_, err = lc.Upsert(s, &l)
