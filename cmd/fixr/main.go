@@ -53,13 +53,17 @@ func main() {
 	}
 
 	// Select resources that start with 'http%' so don't break relative URLs
-	query := "SELECT id, name, short_url, resource_url FROM ol_resource " +
+	query := "SELECT id, name, COALESCE(short_url, ''), resource_url FROM ol_resource " +
 		"WHERE `active` = 1 AND `primary` = 1 AND resource_url LIKE 'http%' "
 
 	rows, err := db.Query(query)
 	for rows.Next() {
 
 		l := link{}
+
+		// Note the short_url value from the primary record can be NULL. When this is the case the .Scan method
+		// below bombs out. URL can be
+
 
 		err := rows.Scan(&l.id, &l.title, &l.shortURL, &l.longURL)
 		if err != nil {
