@@ -8,23 +8,23 @@ import (
 
 	"database/sql"
 
-	"github.com/mappcpd/web-services/internal/resources"
 	"github.com/34South/envr"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/mappcpd/web-services/internal/resources"
+	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/pkg/errors"
 )
 
 var db *sql.DB
 var ddb *mgo.Session
 
 type link struct {
-	id       int
-	title    string
+	id        int
+	title     string
 	shortPath string
-	shortURL string
-	longURL  string
+	shortURL  string
+	longURL   string
 }
 
 func init() {
@@ -73,9 +73,7 @@ func main() {
 		l.shortPath = fmt.Sprintf("%v%v", os.Getenv("MAPPCPD_SHORT_LINK_PREFIX"), l.id)
 		// The short_url should be
 		expectedShortURL := fmt.Sprintf("%v/%v", os.Getenv("MAPPCPD_SHORT_LINK_URL"), l.shortPath)
-		fmt.Println("Short path is:", l.shortPath)
-		fmt.Println("Short URL should be:", expectedShortURL)
-
+		fmt.Printf("/%s -> %s", l.shortPath, expectedShortURL)
 
 		// There are two scenarios:
 		// 1. short_url already has the expected value in the primary store
@@ -86,12 +84,14 @@ func main() {
 
 		// Set in primary record, if not the expected value...
 		if l.shortURL != expectedShortURL {
-			fmt.Println("Short url is missing / invalid in primary db")
+			fmt.Println("...no short url - will create one and then sync")
 			l.shortURL = expectedShortURL
 			err := setShortURL(l.id, l.shortURL)
 			if err != nil {
 				fmt.Println(errors.Cause(err))
 			}
+		} else {
+			fmt.Println("... short url as expected - will sync if required")
 		}
 
 		// Check for changes and sync if required...
@@ -102,15 +102,15 @@ func main() {
 	}
 }
 
-// setShortURL sets the value of the short_url field in the ol_resource (primary) record
-func setShortURL(id int, shortURL string ) error {
+// setShortURL sets the value of the short_url field in the ol_resource (primary) record. It also updates the
+// updated_at value to ensure this record will be picked up for sync later on (by mongr)
+func setShortURL(id int, shortURL string) error {
 
-		query := `UPDATE ol_resource SET short_url = "%v" WHERE id = %v LIMIT 1`
-		query = fmt.Sprintf(query, shortURL, id)
-		fmt.Println("Update SQL:", query)
-		_, err := db.Exec(query)
+	query := `UPDATE ol_resource SET short_url = "%v", updated_at = NOW() WHERE id = %v LIMIT 1`
+	query = fmt.Sprintf(query, shortURL, id)
+	_, err := db.Exec(query)
 
-		return errors.Wrap(err, "sql updated failed")
+	return errors.Wrap(err, "sql updated failed")
 }
 
 // checkSync looks for differences between the primary record and the Links doc, and
@@ -161,7 +161,6 @@ func checkSync(l link) error {
 
 	return nil
 }
-
 
 // getLinkDoc fetches a doc from the Links collection.If the doc is not found it
 // returns a valid, but empty, value of type resources.Link.
