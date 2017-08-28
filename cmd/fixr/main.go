@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"strconv"
 )
 
 var db *sql.DB
@@ -27,6 +29,8 @@ type link struct {
 	longURL   string
 }
 
+var backdays int
+
 func init() {
 	envr.New("fixrEnv", []string{
 		"MAPPCPD_MYSQL_URL",
@@ -35,11 +39,20 @@ func init() {
 		"MAPPCPD_SHORT_LINK_URL",
 		"MAPPCPD_SHORT_LINK_PREFIX",
 	}).Auto()
+
+	// set backdays from flag
+	flag.IntVar(&backdays, "b", 1, "Specify backdays as an integer > 0")
 }
 
 func main() {
 
-	fmt.Println("Fixing...")
+	// Flag check
+	flag.Parse()
+	if backdays == 1 {
+		fmt.Println("Backdays not specified with -b flag, defaulting to 1")
+	} else {
+		fmt.Println("Checking records updated within the last", backdays, "days")
+	}
 
 	var err error // no shadowing!
 	db, err = sql.Open("mysql", os.Getenv("MAPPCPD_MYSQL_URL"))
@@ -54,7 +67,8 @@ func main() {
 
 	// Select resources that start with 'http%' so don't break relative URLs
 	query := "SELECT id, name, COALESCE(short_url, ''), resource_url FROM ol_resource " +
-		"WHERE `active` = 1 AND `primary` = 1 AND resource_url LIKE 'http%' "
+		"WHERE `active` = 1 AND `primary` = 1 AND resource_url LIKE 'http%' " +
+		"AND updated_at >= NOW() - INTERVAL " + strconv.Itoa(backdays) + " DAY"
 
 	rows, err := db.Query(query)
 	for rows.Next() {
@@ -63,8 +77,6 @@ func main() {
 
 		// Note the short_url value from the primary record can be NULL. When this is the case the .Scan method
 		// below bombs out. URL can be
-
-
 		err := rows.Scan(&l.id, &l.title, &l.shortURL, &l.longURL)
 		if err != nil {
 			msg := fmt.Sprintf("Error scanning row with id %v", l.id, " - skipping this record")

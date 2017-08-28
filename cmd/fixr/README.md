@@ -31,8 +31,12 @@ MAPPCPD_SHORT_LINK_PREFIX="r"
 
 ## Usage
 
-No flags or args at this stage:
+Use the `-b` flag to specify *backdays* - ie, how far back to include records based on `updated_at`. Default to 1.
 
 ```bash
+# run fixr on records updated within the last 1 day (default)
 $ fixr
+
+# run fixr on records updated within the last 3 days
+$ fixr -b 3 
 ```
