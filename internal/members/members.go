@@ -736,6 +736,7 @@ func UpdateMemberDoc(m *Member, w *sync.WaitGroup) {
 }
 
 // SyncMember synchronises the Member record from MySQL -> MongoDB
+// Todo - this should not DECIDE on sync based on updated date... should just do one job
 func SyncMember(m *Member) {
 
 	// Fetch the current Doc (if there) and compare updatedAt
@@ -745,11 +746,11 @@ func SyncMember(m *Member) {
 	}
 
 	msg := fmt.Sprintf("Member id %v - MySQL updated at %s, MongoDB updated at %s", m.ID, m.UpdatedAt, m2.UpdatedAt)
-	if m.UpdatedAt.Equal(m2.UpdatedAt) {
-		msg += " - NO need to sync"
-		log.Println(msg)
-		return
-	}
+	//if m.UpdatedAt.Equal(m2.UpdatedAt) {
+	//	msg += " - NO need to sync"
+	//	log.Println(msg)
+	//	return
+	//}
 	msg += " - syncing..."
 	log.Println(msg)
 
