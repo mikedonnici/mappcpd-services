@@ -42,12 +42,12 @@ $ mongr
 $ mongr -c all
 
 # Sync all members updated in last 7 days
-$ mongr -b 7 -c members   
+$ mongr -b 7 -c only members   
 
 # Sync single resource record, id 65473
-$mongr -c resources 65473
+$mongr -c only resources 65473
 
 # Sync two member records with id 1234 and 5678
-$mongr -c members 1234,5678 
+$mongr -c only members 1234,5678 
 ```
 
