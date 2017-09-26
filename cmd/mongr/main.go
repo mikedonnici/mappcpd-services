@@ -82,6 +82,8 @@ func init() {
 	apiModules = api + "/v1/a/modules/"
 }
 
+const doSync = true
+
 func main() {
 
 	flag.Parse()
@@ -109,9 +111,12 @@ func all() {
 	test()
 	auth()
 	filter()
-	syncData("members", "")
-	syncData("modules", "")
-	syncData("resources", "")
+	if doSync == true {
+		syncData("members", "")
+		syncData("modules", "")
+		syncData("resources", "")
+	}
+
 }
 
 func only() {
@@ -119,12 +124,14 @@ func only() {
 	test()
 	auth()
 	filter()
-	// Here we need some further args specified - these are accessed thus:
+
+	// Need args to specify what to sync
 	args := flag.Args()
 	var col string
 	if len(args) > 0 {
 		col = args[0]
 	}
+	fmt.Println("Collection", col)
 	var ids string
 	if len(args) > 1 {
 		ids = args[1]
@@ -133,13 +140,19 @@ func only() {
 	switch col {
 	case "members":
 		fmt.Print(col)
-		syncData(col, ids)
+		if doSync == true {
+			syncData(col, ids)
+		}
 	case "modules":
 		fmt.Print(col)
-		syncData(col, ids)
+		if doSync == true {
+			syncData(col, ids)
+		}
 	case "resources":
 		fmt.Print(col)
-		syncData(col, ids)
+		if doSync == true {
+			syncData(col, ids)
+		}
 	default:
 		fmt.Println(" ???? - need to specify 'members', 'modules' or 'resources'")
 		os.Exit(1)

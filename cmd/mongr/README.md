@@ -30,7 +30,7 @@ $ mongr -b [int] -c [collection]
 
 `-b` - include records that were updated up to this many days back, default '1'
 
-`-c` - collections to sync - 'none' does an auth check, 'all' syncs or 'only' followed by 'name:all' or 'name:id1,id2,id3' to be more specific.
+`-c` - collections to sync - 'none' does an auth check, 'all' syncs or 'only' followed by '[collectioname]' or '[collectioname] id1,id2,id3' to specify list of IDs - note no spaces in this string.
 
 **Examples**
 
@@ -41,10 +41,13 @@ $ mongr
 # Sync everything updated within last 24 hours
 $ mongr -c all
 
-# Sync members updated in last 7 days
-$ mongr -c members:all -b 7  
+# Sync all members updated in last 7 days
+$ mongr -b 7 -c members   
 
-# Sync a single resource record, id 65473
-$mongr -c resources:65473 
+# Sync single resource record, id 65473
+$mongr -c resources 65473
+
+# Sync two member records with id 1234 and 5678
+$mongr -c members 1234,5678 
 ```
 
