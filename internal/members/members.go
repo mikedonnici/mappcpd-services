@@ -29,10 +29,14 @@ import (
 
 // Member defines struct for member record
 type Member struct {
-	_id            string          `json:"_id" bson:"_id"`
-	ID             int             `json:"id" bson:"id"`
-	CreatedAt      time.Time       `json:"createdAt" bson:"createdAt"`
-	UpdatedAt      time.Time       `json:"updatedAt" bson:"updatedAt"`
+	_id       string    `json:"_id" bson:"_id"`
+	ID        int       `json:"id" bson:"id"`
+	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
+
+	// Active refers to the members status in relation to the organisation, ie ms_m_status.ms_status_id = 1 (MySQL)
+	// In this model this really belongs in the memberships, however is here from simplicity.
+	Active         bool            `json:"active" bson:"active""`
 	Title          string          `json:"title" bson:"title"`
 	FirstName      string          `json:"firstName" bson:"firstName"`
 	MiddleNames    string          `json:"middleNames" bson:"middleNames"`
@@ -108,6 +112,40 @@ type Position struct {
 	Description string `json:"description" bson:"description"`
 	Start       string `json:"start" bson:"start"`
 	End         string `json:"end" bson:"end"`
+}
+
+// SetActive sets the Active boolean value
+func (m *Member) SetActive() error {
+
+	// Assume inactive unless otherwise
+	m.Active = false
+
+	// store result from db query
+	var active int
+
+	query := `SELECT ms_status_id from ms_m_status WHERE
+	active = 1 AND current = 1 AND member_id = ?`
+	err := datastore.MySQL.Session.QueryRow(query, m.ID).Scan(&active)
+	switch {
+	case err == sql.ErrNoRows:
+		// for the no rows case spit out a message but we don't need to bomb out with a 500
+		// otherwise no record will be returned to the caller
+		msg := fmt.Sprintf(".SetActive() could not find a record with 'current'/'active' = 1 for member id %v - will assume members 'active' status is false - ", m.ID)
+		log.Println(msg, err)
+		return nil
+
+	case err != nil:
+		msg := ".SetActive() failed"
+		log.Println(msg, err)
+		return errors.Wrap(err, msg)
+	}
+
+	// Found a record, if it has a value of 1 then member is active, otherwise it remains as false
+	if active == 1 {
+		m.Active = true
+	}
+
+	return nil
 }
 
 // SetTitle sets the title (Mr, Prof, Dr) and Post nominal, if any
@@ -550,6 +588,13 @@ func MemberByID(id int) (*Member, error) {
 	// Convert MySQL date time strings to time.Time
 	m.CreatedAt, _ = utility.DateTime(createdAt)
 	m.UpdatedAt, _ = utility.DateTime(updatedAt)
+
+	err = m.SetActive()
+	if err != nil {
+		msg := "MemberByID() failed to set Active status"
+		log.Println(msg, err)
+		return &m, errors.Wrap(err, msg)
+	}
 
 	err = m.SetTitle()
 	if err != nil {
