@@ -99,9 +99,6 @@ func init() {
 		"MAPPCPD_ADMIN_PASS",
 		"MAPPCPD_API_URL",
 		"SENDGRID_API_KEY",
-		"SENDGRID_LIST_ID",
-		"SENDGRID_SENDER_ID",
-		"SENDGRID_SUPPRESSION_GROUP_ID",
 	}).Auto()
 
 	api = os.Getenv("MAPPCPD_API_URL")
@@ -114,9 +111,10 @@ func init() {
 
 func main() {
 
-	// First make sure we have a valid configuration
+	// Ensure -cfg flag
 	flag.Parse()
 	if configFile == "" {
+		fmt.Println("Specify a local or remote configuration file")
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
@@ -238,13 +236,28 @@ func main() {
 	}
 }
 
-// read reads the config file and sets up the campaignConfig properties
+// read reads the config file, either remote via http, or on the local file system,
+// and then sets values for campaignConfig properties
 func (cc *campaignConfig) read(configFile string) error {
 
-	// read read file
-	xb, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		return err
+	var xb []byte
+	var err error
+
+	// Remote file
+	if strings.Index(configFile, "http") == 0 {
+		res, _ := http.Get(configFile)
+		defer res.Body.Close()
+		xb, err = ioutil.ReadAll(res.Body)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		// Local file
+		xb, err = ioutil.ReadFile(configFile)
+		if err != nil {
+			return err
+		}
 	}
 
 	// decode
@@ -461,8 +474,30 @@ func createTemplate() (string, error) {
 	// return string
 	var h string
 
+	// Read the template into a string
+	var xb []byte
+	var err error
+
+	// Remote file
+	if strings.Index(cfg.HTMLTemplate, "http") == 0 {
+		res, _ := http.Get(cfg.HTMLTemplate)
+		defer res.Body.Close()
+		xb, err = ioutil.ReadAll(res.Body)
+		if err != nil {
+			return h, err
+		}
+	} else {
+		// Local file
+		xb, err = ioutil.ReadFile(cfg.HTMLTemplate)
+		if err != nil {
+			return h, err
+		}
+	}
+	ts := string(xb)
+
+	// Create the template
 	tpl := template.New("layout")
-	tpl, err := tpl.ParseFiles("./cmd/mailr/template.html")
+	tpl, err = tpl.Parse(ts)
 	if err != nil {
 		return h, errors.New("Error parsing HTML template -" + err.Error())
 	}
@@ -508,7 +543,7 @@ func createTemplate() (string, error) {
 	}
 
 	var t bytes.Buffer
-	if err := tpl.ExecuteTemplate(&t, "template.html", data.Data); err != nil {
+	if err := tpl.ExecuteTemplate(&t, "layout", data.Data); err != nil {
 		return h, err
 	}
 

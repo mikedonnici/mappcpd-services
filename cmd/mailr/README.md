@@ -2,73 +2,93 @@
 
 A utility for running sending email broadcasts based on a stored template. 
 
->As this is a non-system communication we *maybe* should use the Campaign Monitor API so that the user can opt out, and for stats. Alternatively, could use the SendGrid API which provides similar features. Need to check the usage limits etc. Either way, try to design this so it is not heavily BOUND to either.
+>Note this was going to be abstracted from the third-party platform however, in the interest of expediency, have used [SendGrid](https://sendgrid.com) api. This allows for each broadcast to be monitored as a 'campaign', and for users to opt out if they wish.
 
 ## How it works
 
-1. Each hour (or less?) mailr checks for scheduled Communications, ie with nextAt in te past. These are stored in a Comminucations collection and look like this:
+A config file is read in which sets up the campaign. Depending on the options the command will do the following:
+1. Authenticate with the MappCPD API to generate a token
+1. Fetch all active members from MapPCPD
+1. Update the SendGrid recipient list with active users
+1. Fetch all recipients from SendGrid recipient list
+1. Add all recipients to the SendGrid *segment* list
+1. Parse the specified HTML template, and fetch content (list of resources)
+1. Create a campaign at SendGrid with HTML template
+1. Send a test email
+1. Send the campaign at specified time   
 
-```json
-{
-  "_id": "df234tfq....",
-  "createdAt": "DATETIME",
-  "updatedAt": "DATETIME",
-  "nextAt": "DATETIME",
-  "frequency": "days?",
-  "name": "Weekly resources update",
-  "description": "Notifies members of new resources added to library",
-  "layoutTemplate": "<html>... {{ content }} ...</html>",
-  "contentTemplate": "<div> {{ item }} </div>",
-  "contentSelector": "API call that will fetch the content array",
-  "recipientSelector": "API call that will fetch the list of users we need?"
+**Todo**
+
+* handle removing inactive members!!
+* separate layout template from functions to generate content that is embedded into the template  
  
-}
-```
-2. The contentSelector API call is made to fetch content items - if there are none this is recorded and the job exits.
-
-3. The recipientSelector API call is made to ensure there are recipients - if there are none this is recorded and the job exits.
-
-4. Foreach recipient, the html content is created and then POST'd to the third-party email platform of choice. 
-
----
-
 
 ## Configuration
 
-This utility accesses the datastores directly so does not require API access.
+This utility accesses the MappCPD API, so requires access to:
 
 **Env vars**
 
 ```bash
-# MySQL connection string
-MAPPCPD_MYSQL_URL="dbuser:dbpass@tcp(db.hostname.com:3306)/dbname"
+# Admin auth credentials
+MAPPCPD_ADMIN_PASS="admin-user"
+MAPPCPD_ADMIN_USER"admin-pass"
 
-# MongoDB connection string
-MAPPCPD_MONGO_URL="mongodb://mongodb.hostname.com/mongodbname"
+# API
+MAPPCPD_API_URL="https://mappcpd-api.com"
 
-# MongoDB database name
-MAPPCPD_MONGO_DBNAME="mongodbname"
-
-# URL for the short link (linkr) service 
-MAPPCPD_SHORT_LINK_URL="https://mapp.to"
-
-# This is a bit of a hack and will be removed at some stage, but is required to 
-# prepend the record id in a short link. For example, resource with is 1234 is
-# referenced by the short link service as "/r1234". The prefix was put in place
-# to distinguish short links for different collections, that may have 
-# overlapping id numbers. For now, just stick an "r" here.
-MAPPCPD_SHORT_LINK_PREFIX="r"
+# SendGrid API key
+SENDGRID_API_KEY=435243nmb245b2kj4h51kj
 ```
+
+JSON config file: 
+
+```json
+{
+  "authenticate": true,
+  "updateMasterList": false,
+  "updateSegmentList": false,
+  "createCampaign": true,
+  "testCampaign": false,
+  "sendCampaign": false,
+  "testEmail": "michael.donnici@csanz.edu.au",
+  "appendDate": true,
+  "appendDateFormat": "2 Jan 2006",
+  "campaignTitle": "CSANZ HeartOne Update",
+  "emailSubject": "CSANZ HeartOne Update",
+  "senderId": 167946,
+  "listIds": [
+    1985845
+  ],
+  "suppressionGroupId": 4933,
+  "htmlTemplate": "./cmd/mailr/template.html",
+  "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]"
+}
+```
+
+**Explanation of config options**
+
+* authenticate
+* updateMasterList
+* updateSegmentList
+* createCampaign
+* testCampaign
+* sendCampaign
+* testEmail
+* appendDate
+* appendDateFormat
+* campaignTitle
+* emailSubject
+* senderId
+* listIds
+* suppressionGroupId
+* htmlTemplate
+* plainContent
 
 ## Usage
 
-Use the `-b` flag to specify *backdays* - ie, how far back to include records based on `updated_at`. Default to 1.
+Use the `-cfg` flag to specify a remote or local config file:
 
 ```bash
-# run fixr on records updated within the last 1 day (default)
-$ fixr
-
-# run fixr on records updated within the last 3 days
-$ fixr -b 3 
+$ mailr -cfg https://cdn.somewhere.com/mailr/options.json 
 ```
-
