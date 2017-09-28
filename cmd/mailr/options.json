@@ -1,0 +1,19 @@
+{
+  "authenticate": true,
+  "updateMasterList": false,
+  "updateSegmentList": false,
+  "createCampaign": true,
+  "testCampaign": false,
+  "sendCampaign": false,
+  "test": true,
+  "testEmail": "michael.donnici@csanz.edu.au",
+  "appendDate": true,
+  "appendDateFormat": "2 Jan 2006",
+  "campaignTitle": "CSANZ HeartOne Update",
+  "emailSubject": "CSANZ HeartOne Update",
+  "senderId": 167946,
+  "listIds": [1985845],
+  "suppressionGroupId": 4933,
+  "htmlTemplate": "./cmd/mailr/template.html",
+  "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]"
+}
