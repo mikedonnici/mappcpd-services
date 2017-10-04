@@ -57,9 +57,7 @@ JSON config file:
   "campaignTitle": "CSANZ HeartOne Update",
   "emailSubject": "CSANZ HeartOne Update",
   "senderId": 167946,
-  "listIds": [
-    1985845
-  ],
+  "segmentList": 1985845,
   "suppressionGroupId": 4933,
   "htmlTemplate": "./cmd/mailr/template.html",
   "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]"
@@ -68,22 +66,57 @@ JSON config file:
 
 **Explanation of config options**
 
-* authenticate
-* updateMasterList
-* updateSegmentList
-* createCampaign
-* testCampaign
-* sendCampaign
-* testEmail
-* appendDate
-* appendDateFormat
-* campaignTitle
-* emailSubject
-* senderId
-* listIds
-* suppressionGroupId
-* htmlTemplate
-* plainContent
+The config file allows each step in the process to be switched on and off for testing.  
+
+**authenticate**
+Authenticate with the MappCPD API and get a token.
+ 
+**updateMasterList**
+Fetch all the *active* members using the MappCPD API, and update the recipient master list at SendGrid. 
+
+**updateSegmentList**
+Add all of recipients in the master list to the segment list specified in the config, in this example id 1985845.
+ 
+**createCampaign**
+Creates a campaign at SendGrid based on the specified HTML template.
+
+**testCampaign**
+Send a test to the specified email
+
+**sendCampaign**
+Send the campaign, *testCampaign* must be set to *false*
+ 
+**testEmail**
+Send the test to this email address.
+
+**appendDate**
+Append the date to the campaign title and email subject.
+
+**appendDateFormat**
+Format the appended date
+
+**campaignTitle**
+Set the campaign title at SendGrid.
+
+**emailSubject**
+Sepcify the email subject
+
+**senderId**
+Specify the SendGrid sender ID
+
+**segmentListId**
+Specify the segment list id to which the campaign will be sent. Note it is possible 
+ to send to more than one segment list so this could be an array. However, in our case there is only one list so it is a single list id for simplicity.
+
+**suppressionGroupId**
+SendGrid suppression group id that will store the ids of the recipients who unsubscribe. 
+
+**htmlTemplate**
+The remote/local location of the HTML template.
+
+**plainContent**
+The (token) plain text version. 
+
 
 ## Usage
 

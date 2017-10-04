@@ -20,7 +20,6 @@ import (
 
 // campaignConfig maps to a JSON read file for setting up the email campaign
 type campaignConfig struct {
-
 	// steps to run
 
 	// Authenticate with the MappCPD API
@@ -51,7 +50,7 @@ type campaignConfig struct {
 	CampaignTitle      string `json:"campaignTitle"`
 	EmailSubject       string `json:"emailSubject"`
 	SenderID           int    `json:"senderId"`
-	ListIDs            []int  `json:"listIds"`
+	SegmentListID      int    `json:"segmentListIds`
 	SuppressionGroupID int    `json:"suppressionGroupId"`
 	// todo make this a url
 	HTMLTemplate string `json:"htmlTemplate"`
@@ -71,13 +70,21 @@ type recipient struct {
 
 // sendgridCampaign maps to the POST body for creating a new campaign via the SendGrid API
 type sendgridCampaign struct {
-	Title              string `json:"title"`
-	Subject            string `json:"subject"`
-	SenderID           int    `json:"sender_id"`
+	Title    string `json:"title"`
+	Subject  string `json:"subject"`
+	SenderID int    `json:"sender_id"`
+	// this needs to be an array to POST to SendGrid
 	ListIDs            []int  `json:"list_ids"`
 	SuppressionGroupID int    `json:"suppression_group_id"`
 	HTMLContent        string `json:"html_content"`
 	PlainContent       string `json:"plain_content"`
+}
+
+// ResourceItems are items that appear int the generated HTML template
+type ResourceItems []struct {
+	ResourceType string `json:"type"`
+	Name         string `json:"name"`
+	Link         string `json:"shortUrl"`
 }
 
 // Configuration
@@ -143,11 +150,13 @@ func main() {
 		fmt.Println("done")
 
 		fmt.Print("Updating recipients master list at SendGrid... ")
+
 		// Overwrite master list TEMPORARY!!
 		recipients = []recipient{
 			{Title: "Mr", FirstName: "Mike", LastName: "Donnici", Email: "michael@mesa.net.au"},
-			{Title: "Prof.", FirstName: "Richmond", LastName: "Jeremy", Email: "michael.donnici@csanz.edu.au"},
+			{Title: "Prof.", FirstName: "Richmond", LastName: "Jeremy", Email: " michael.donnici@csanz.edu.au"},
 		}
+
 		if err := syncRecipients(); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -177,7 +186,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		fmt.Print("Update segment list with recipient ids...")
+		fmt.Print("Update segment list with recipient ids... ")
 		if err := updatedRecipientList(ids); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -193,7 +202,8 @@ func main() {
 	if cfg.CreateCampaign == true {
 
 		fmt.Println("Create campaign:")
-		fmt.Print("Generate HTML template...")
+
+		fmt.Print("Generate HTML template... ")
 		t, err := createTemplate()
 		if err != nil {
 			fmt.Println(err)
@@ -201,11 +211,11 @@ func main() {
 		}
 		fmt.Println("done")
 
-		fmt.Print("Create SendGrid campaign with this template...")
+		// set up the campaign properties
 		sc := sendgridCampaign{}
 		// Copy the values from the config value
 		sc.SenderID = cfg.SenderID
-		sc.ListIDs = cfg.ListIDs
+		sc.ListIDs = append(sc.ListIDs, cfg.SegmentListID)
 		sc.SuppressionGroupID = cfg.SuppressionGroupID
 		sc.Title = cfg.CampaignTitle
 		sc.Subject = cfg.EmailSubject
@@ -216,8 +226,23 @@ func main() {
 		}
 		sc.HTMLContent = t // from above
 		sc.PlainContent = cfg.PlainContent
+
+		// Now we have the full title so check for duplicate
+		fmt.Print("Check for duplicate campaign... ")
+		id, err := campaignExists(sc.Title)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if id > 0 {
+			fmt.Printf("found duplicate campaign with title: '%s' (id %v) - cannot continue\n", sc.Title, id)
+			os.Exit(0)
+		}
+		fmt.Println("done")
+
 		// Create the campaign and store the SendGrid campaign ID the campaignConfig value
 		// for subsequent access
+		fmt.Print("Create SendGrid campaign with this template... ")
 		cfg.CampaignID, err = createCampaign(sc)
 		if err != nil {
 			fmt.Println(err)
@@ -226,14 +251,30 @@ func main() {
 		fmt.Println("done - CampaignID is", cfg.CampaignID)
 	}
 
+	// Make sure not trying to test AND send
+	if cfg.SendCampaign == true && cfg.TestCampaign == true {
+		fmt.Println("Cannot test AND send campaign - set one option to false.")
+		os.Exit(1)
+	}
+
 	if cfg.TestCampaign == true {
-		fmt.Printf("Send test for campaign ID %v to %v...", cfg.CampaignID, cfg.TestEmail)
+		fmt.Printf("Send test for campaign ID %v to %v... ", cfg.CampaignID, cfg.TestEmail)
 		if err := sendTestCampaign(cfg.CampaignID); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
 		fmt.Println("done")
 	}
+
+	if cfg.SendCampaign == true && cfg.TestCampaign == false {
+		fmt.Printf("Sending campaign ID %v... ", cfg.CampaignID)
+		if err := sendCampaignNow(cfg.CampaignID); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		fmt.Println("done")
+	}
+
 }
 
 // read reads the config file, either remote via http, or on the local file system,
@@ -274,7 +315,7 @@ func auth() error {
 	type AuthResponse struct {
 		Status  int
 		Message string
-		Data    struct {
+		Data struct {
 			Token     string
 			IssuedAt  time.Time
 			ExpiresAt time.Time
@@ -317,11 +358,13 @@ func getActiveMembers() error {
 	}
 	var mr = memberResponse{}
 
-	// selector
+	// selector - includes a filter for email addresses that match 'noemailaddress'
+	// which is obviously a cludge
 	b :=
 		`{
 			"query": {
-				"active": true
+				"active": true,
+				"contact.emailPrimary": {"$regex": "^((?!noemailaddress).)*$"}
 			},
 			"projection": {
 				"_id": false,
@@ -330,7 +373,7 @@ func getActiveMembers() error {
 				"lastName": true,
 				"contact.emailPrimary": true
 			},
-			"limit": 10
+			"limit": 1000
 		}`
 
 	req, err := http.NewRequest("POST", apiActiveMembers, strings.NewReader(b))
@@ -442,9 +485,10 @@ func getRecipientIDs() ([]string, error) {
 // updateRecipientList ensures all the recipients (ids) are on the list
 func updatedRecipientList(ids []string) error {
 
-	url := "https://api.sendgrid.com/v3/contactdb/lists/" + os.Getenv("SENDGRID_LIST_ID") + "/recipients"
+	url := "https://api.sendgrid.com/v3/contactdb/lists/" + strconv.Itoa(cfg.SegmentListID) + "/recipients"
 	xb, err := json.Marshal(ids)
 	//fmt.Println(string(xb))
+	//os.Exit(0)
 	if err != nil {
 		return errors.New("Problem marshaling ids - " + err.Error())
 	}
@@ -462,7 +506,7 @@ func updatedRecipientList(ids []string) error {
 	}
 	defer res.Body.Close()
 	// DEBUG ////////////////////
-	// fmt.Println(res.Status)
+	fmt.Println(res.Status)
 	////////////////////////////
 
 	return nil
@@ -502,48 +546,22 @@ func createTemplate() (string, error) {
 		return h, errors.New("Error parsing HTML template -" + err.Error())
 	}
 
-	// selector
-	sevenDaysAgo := time.Now().AddDate(0,0,-7).Format(time.RFC3339)
-	b := `{
-  			"find": {
-				"createdAt": {
-					"$gte": "` + sevenDaysAgo + `"
-				}
-			},
-  			"select": {"_id": 0, "name": 1, "type": 1, "shortUrl": 1},
-  			"limit": 30,
-			"sort" : "-id"
-		  }`
-	//fmt.Println(b)
-
-	req, err := http.NewRequest("POST", apiResources, strings.NewReader(b))
+	// Select items that were added recently and, if none, a random selection?
+	items, err := getResourceItems()
 	if err != nil {
-		return h, errors.New("Problem with NewRequest() - " + err.Error())
-	}
-	req.Header.Add("Content-Type", "application/json")
-	req.Header.Add("Authorization", "Bearer "+token)
-
-	res, err := httpClient.Do(req)
-	if err != nil {
-		return h, errors.New("Problem making request - " + err.Error())
-	}
-	defer res.Body.Close()
-	//printResponseBody(res.Body)
-
-	// decode response body...
-	var data = struct {
-		Data []struct {
-			ResourceType string `json:"type"`
-			Name         string `json:"name"`
-			Link         string `json:"shortUrl"`
-		} `json:"data"`
-	}{}
-	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
 		return h, err
 	}
 
+	// EXIT if no items... do NOT want to send a blank email
+	if len(items) == 0 {
+		fmt.Println("There are no resource items to show - cannot send a blank email")
+		os.Exit(0)
+	}
+
+
+
 	var t bytes.Buffer
-	if err := tpl.ExecuteTemplate(&t, "layout", data.Data); err != nil {
+	if err := tpl.ExecuteTemplate(&t, "layout", items); err != nil {
 		return h, err
 	}
 
@@ -611,6 +629,29 @@ func sendTestCampaign(campaignID int) error {
 	return nil
 }
 
+func sendCampaignNow(campaignID int) error {
+
+	url := "https://api.sendgrid.com/v3/campaigns/" + strconv.Itoa(campaignID) + "/schedules/now"
+	// No body required
+	//b := `{"to": "` + cfg.TestEmail + `"}`
+
+	req, err := http.NewRequest("POST", url, nil)
+	if err != nil {
+		return errors.New("Problem with NewRequest() - " + err.Error())
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+os.Getenv("SENDGRID_API_KEY"))
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return errors.New("Problem making request - " + err.Error())
+	}
+	defer res.Body.Close()
+	// printResponseBody(res.Body)
+
+	return nil
+}
+
 // printResponseBody is a utility function to print the response from API requests
 func printResponseBody(body io.ReadCloser) {
 	xb, err := ioutil.ReadAll(body)
@@ -630,4 +671,94 @@ func pause(s int) {
 		time.Sleep(duration)
 		fmt.Print(".")
 	}
+}
+
+func getResourceItems() (ResourceItems, error) {
+
+	// First try last 7 days...
+	sevenDaysAgo := time.Now().AddDate(0, 0, -7).Format(time.RFC3339)
+	b := `{
+  			"find": {
+				"createdAt": {
+					"$gte": "` + sevenDaysAgo + `"
+				}
+			},
+  			"select": {"_id": 0, "name": 1, "type": 1, "shortUrl": 1},
+  			"limit": 30,
+			"sort" : "-id"
+		  }`
+	//fmt.Println(b)
+
+	req, err := http.NewRequest("POST", apiResources, strings.NewReader(b))
+	if err != nil {
+		return nil, errors.New("Problem with NewRequest() - " + err.Error())
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+token)
+
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return nil, errors.New("Problem making request - " + err.Error())
+	}
+	defer res.Body.Close()
+	//printResponseBody(res.Body)
+
+	// decode response body...
+	var data = struct {
+		ResourceItems `json:"data"`
+	}{}
+	if err := json.NewDecoder(res.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+
+	return data.ResourceItems, nil
+}
+
+// campaignExists checks for a campaign by name, and returns the id of the campaign if it exists
+func campaignExists(campaignTitle string) (int, error)  {
+
+	// return campaign id
+	var id int
+
+	// map response body
+	b := struct {
+		Result []struct{
+			ID int `json:"id"`
+			Title string `json:"title"`
+		} `json:"result"`
+	}{}
+
+	// request
+	url := "https://api.sendgrid.com/v3/campaigns"
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return id, errors.New("Problem with NewRequest() - " + err.Error())
+	}
+	req.Header.Add("Content-Type", "application/json")
+	req.Header.Add("Authorization", "Bearer "+os.Getenv("SENDGRID_API_KEY"))
+
+	// response
+	res, err := httpClient.Do(req)
+	if err != nil {
+		return id, errors.New("Problem making request - " + err.Error())
+	}
+	defer res.Body.Close()
+	//printResponseBody(res.Body)
+
+	// decode response body
+	if err := json.NewDecoder(res.Body).Decode(&b); err != nil {
+		return id, err
+	}
+
+	// loop through results and look for a matching title
+	if len(b.Result) > 0 {
+		for _, v := range b.Result {
+			if strings.ToLower(v.Title) == strings.ToLower(campaignTitle) {
+				return v.ID, nil
+			}
+		}
+	}
+
+	// no match, no error
+	return id, nil
 }
