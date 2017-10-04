@@ -54,7 +54,8 @@ func main() {
 		fmt.Println("Checking records updated within the last", backdays, "days")
 	}
 
-	var err error // no shadowing!
+	var err error // don't shadow
+
 	db, err = sql.Open("mysql", os.Getenv("MAPPCPD_MYSQL_URL"))
 	if err != nil {
 		log.Fatalln("Could not connect to MySQL server:", os.Getenv("MAPPCPD_MYSQL_URL"))
@@ -64,6 +65,15 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to establish a session with Mongo server - " + err.Error())
 	}
+
+	// Sync active flag from primary db to Resources and Links
+	fmt.Println("Syncing active flag... ")
+	if err := syncActiveFlag(); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	os.Exit(0)
+	fmt.Println("done")
 
 	// Select resources that start with 'http%' so don't break relative URLs
 	query := "SELECT id, name, COALESCE(short_url, ''), resource_url FROM ol_resource " +
@@ -76,7 +86,7 @@ func main() {
 		l := link{}
 
 		// Note the short_url value from the primary record can be NULL. When this is the case the .Scan method
-		// below bombs out. URL can be
+		// below bombs out.
 		err := rows.Scan(&l.id, &l.title, &l.shortURL, &l.longURL)
 		if err != nil {
 			msg := fmt.Sprintf("Error scanning row with id %v", l.id, " - skipping this record")
@@ -218,6 +228,118 @@ func sync(ld resources.Link, shortPath string) error {
 	if err != nil {
 		return errors.Wrap(err, "upsert failed")
 	}
+
+	return nil
+}
+
+
+// getResourceIDs fetches all of the resource ids with the specified active (soft-delete) status, from the primary db.
+func getResourceIDs(active bool) ([]int, error) {
+
+	var ids []int
+
+	// active is stored as 0/1 in MySQL, true/false in MongoDB
+	var a int
+	if active == true {
+		a = 1
+	} else {
+		a = 0
+	}
+
+	// Only resources with proper urls, even though there are very few with relative urls
+	// Don't need back days - need to check everything.
+	query := "SELECT id from ol_resource WHERE resource_url LIKE 'http%' AND active = ?"
+	rows, err := db.Query(query, a)
+	if err != nil {
+		return nil, errors.New("Error executing query - " + err.Error())
+	}
+	for rows.Next() {
+		var id int
+		err := rows.Scan(&id)
+		if err != nil {
+			return nil, errors.New("Error scanning row - " + err.Error())
+		}
+		ids = append(ids, id)
+	}
+
+	return ids, nil
+}
+
+// syncActiveFlag ensures that the active status is the same for resources stored in MySQL and in MongoDB. The
+// // most efficient way to do this is just to deal with the inactive records as these should be in the minority.
+func syncActiveFlag() error {
+
+	// Fetch all inactive resources ids from primary db
+	inactiveIDs, err := getResourceIDs(false)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Found", len(inactiveIDs), "inactive resources")
+
+	// Set the corresponding Resources docs active field to 'false'
+	if err := setResourcesActiveField(inactiveIDs, false); err != nil {
+		return err
+	}
+	// Set the corresponding Links docs active field to 'false'
+	if err := setLinksActiveField(inactiveIDs, false); err != nil {
+		return err
+	}
+
+	// Now the same process in reverse, ie fetch inactive Resources and Links docs...
+
+	return nil
+}
+
+// setResourcesActiveField sets the active field for Resources docs identified by the ids list
+func setResourcesActiveField(ids []int, active bool) error {
+
+	if len(ids) == 0 {
+		fmt.Println("No ids passed in to setResourcesActiveField()... nothing to do.")
+		return nil
+	}
+
+	fmt.Println("Setting", len(ids), "Resources to active:", active)
+	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Resources")
+	s := bson.M{"id": bson.M{"$in": ids}}
+	u := bson.M{"$set": bson.M{"active": false}}
+	ci, err := c.UpdateAll(s, u)
+	if err != nil {
+		return errors.Wrap(err, "Mongo query error")
+	}
+
+	fmt.Println(ci.Updated, "records were updated")
+
+	return nil
+}
+
+// setLinksActiveField sets the active field for Links docs identified by the ids list. There is no id field
+// in Links docs so use the shortUrl by pre-pending 'r', so id 1789 becomes 'r1789'
+func setLinksActiveField(ids []int, active bool) error {
+
+	if len(ids) == 0 {
+		fmt.Println("No ids passed in to setLinksActiveField()... nothing to do.")
+		return nil
+	}
+
+	// prepend ids with 'r' to create selector
+	var rids []string
+	for _, v := range ids {
+		rid := os.Getenv("MAPPCPD_SHORT_LINK_PREFIX") + strconv.Itoa(v)
+		rids = append(rids, rid)
+	}
+
+	fmt.Println(rids)
+
+	fmt.Println("Setting", len(rids), "Links to active:", active)
+	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Links")
+	s := bson.M{"shortUrl": bson.M{"$in": rids}}
+	u := bson.M{"$set": bson.M{"active": false}}
+	ci, err := c.UpdateAll(s, u)
+	if err != nil {
+		return errors.Wrap(err, "Mongo query error")
+	}
+
+	fmt.Println(ci.Updated, "records were updated")
 
 	return nil
 }

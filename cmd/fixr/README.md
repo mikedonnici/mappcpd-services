@@ -1,10 +1,16 @@
 # fixr
 
-A general utility for checking and fixing various data issues. At this stage it only deals with setting and syncing the short link in the primary datastore and  the corresponding Link doc. This ensures the short link redirection service will work properly.
+A general utility for checking and fixing various data issues. Performs the following tasks:
+
+1. Sets the short url field in the primary data store (`ol_resource.short_url`), and the corresponding doc in the `Links`
+collection, to ensure short link redirection will work.
+1. Synchronises the `old_resource.active` field from primary db with `active` fields in `Resources` and `Links` collections.
+1. Removes docs in `Resources` and `Links` collections that have been hard-deleted from primary db.
+
 
 ## Configuration
 
-This utility accesses the datastores directly so does not require API access.
+This utility accesses the data stores directly, so does not require API access.
 
 **Env vars**
 
