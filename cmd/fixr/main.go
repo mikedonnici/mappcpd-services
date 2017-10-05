@@ -58,40 +58,52 @@ func main() {
 
 	db, err = sql.Open("mysql", os.Getenv("MAPPCPD_MYSQL_URL"))
 	if err != nil {
-		log.Fatalln("Could not connect to MySQL server:", os.Getenv("MAPPCPD_MYSQL_URL"))
+		log.Fatalln("Could not connect to MySQL server:", os.Getenv("MAPPCPD_MYSQL_URL"), "-", errors.Cause(err))
 	}
 
 	ddb, err = mgo.Dial(os.Getenv("MAPPCPD_MONGO_URL"))
 	if err != nil {
-		log.Fatal("Failed to establish a session with Mongo server - " + err.Error())
+		log.Fatal("Could not connect to Mongo server:", os.Getenv("MAPPCPD_MONGO_URL"), "-", errors.Cause(err))
 	}
 
-	// Sync active flag from primary db to Resources and Links
-	fmt.Println("Syncing active flag... ")
-	if err := syncActiveFlag(); err != nil {
-		fmt.Println(err)
+	fmt.Println("Checking short links-------------------------------- ")
+	if err := checkShortLinks(); err != nil {
+		fmt.Println(errors.Cause(err))
 		os.Exit(1)
 	}
-	os.Exit(0)
-	fmt.Println("done")
+	fmt.Println("--- done")
+
+
+	// Sync active flag from primary db to Resources and Links
+	fmt.Println("Syncing active flag ----------------------------------")
+	if err := syncActiveFlag(); err != nil {
+		fmt.Println(errors.Cause(err))
+		os.Exit(1)
+	}
+	fmt.Println("--- done")
+
+}
+
+// checkShortLinks checks all the Resource records for a short link, and if incorrect or not found, fixes them.
+func checkShortLinks() error {
 
 	// Select resources that start with 'http%' so don't break relative URLs
+	// Note the short_url value from the primary record can be NULL.
+	// When this is the case the .Scan method below bombs out - hence use of COALESCE.
 	query := "SELECT id, name, COALESCE(short_url, ''), resource_url FROM ol_resource " +
 		"WHERE `active` = 1 AND `primary` = 1 AND resource_url LIKE 'http%' " +
 		"AND updated_at >= NOW() - INTERVAL " + strconv.Itoa(backdays) + " DAY"
 
 	rows, err := db.Query(query)
+	if err != nil {
+		return err
+	}
+
 	for rows.Next() {
-
 		l := link{}
-
-		// Note the short_url value from the primary record can be NULL. When this is the case the .Scan method
-		// below bombs out.
 		err := rows.Scan(&l.id, &l.title, &l.shortURL, &l.longURL)
 		if err != nil {
-			msg := fmt.Sprintf("Error scanning row with id %v", l.id, " - skipping this record")
-			fmt.Println(msg)
-			continue
+			return err
 		}
 
 		// Work out what we expect, or need to set up for a short link
@@ -99,7 +111,7 @@ func main() {
 		l.shortPath = fmt.Sprintf("%v%v", os.Getenv("MAPPCPD_SHORT_LINK_PREFIX"), l.id)
 		// The short_url should be
 		expectedShortURL := fmt.Sprintf("%v/%v", os.Getenv("MAPPCPD_SHORT_LINK_URL"), l.shortPath)
-		fmt.Printf("/%s -> %s", l.shortPath, expectedShortURL)
+		// fmt.Printf("/%s -> %s", l.shortPath, expectedShortURL)
 
 		// There are two scenarios:
 		// 1. short_url already has the expected value in the primary store
@@ -110,22 +122,23 @@ func main() {
 
 		// Set in primary record, if not the expected value...
 		if l.shortURL != expectedShortURL {
+			fmt.Printf("/%s -> %s", l.shortPath, expectedShortURL)
 			fmt.Println("...no short url - will create one and then sync")
 			l.shortURL = expectedShortURL
 			err := setShortURL(l.id, l.shortURL)
 			if err != nil {
-				fmt.Println(errors.Cause(err))
+				return err
 			}
-		} else {
-			fmt.Println("... short url as expected - will sync if required")
 		}
 
 		// Check for changes and sync if required...
 		err = checkSync(l)
 		if err != nil {
-			fmt.Println(errors.Cause(err))
+			return err
 		}
 	}
+
+	return nil
 }
 
 // setShortURL sets the value of the short_url field in the ol_resource (primary) record. It also updates the
@@ -265,8 +278,8 @@ func getResourceIDs(active bool) ([]int, error) {
 	return ids, nil
 }
 
-// syncActiveFlag ensures that the active status is the same for resources stored in MySQL and in MongoDB. The
-// // most efficient way to do this is just to deal with the inactive records as these should be in the minority.
+// syncActiveFlag ensures that the active status is the same for resources stored in MySQL and in MongoDB.
+// The primary DB is the authoritative source so always use the ol_resource.active field value.
 func syncActiveFlag() error {
 
 	// Fetch all inactive resources ids from primary db
@@ -285,7 +298,21 @@ func syncActiveFlag() error {
 		return err
 	}
 
-	// Now the same process in reverse, ie fetch inactive Resources and Links docs...
+	// Fetch all active resources ids from primary db
+	activeIDs, err := getResourceIDs(true)
+	if err != nil {
+		return err
+	}
+	fmt.Println("Found", len(activeIDs), "active resources")
+
+	// Set the corresponding Resources docs active field to 'true'
+	if err := setResourcesActiveField(activeIDs, true); err != nil {
+		return err
+	}
+	// Set the corresponding Links docs active field to 'false'
+	if err := setLinksActiveField(activeIDs, true); err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -298,16 +325,15 @@ func setResourcesActiveField(ids []int, active bool) error {
 		return nil
 	}
 
-	fmt.Println("Setting", len(ids), "Resources to active:", active)
+	fmt.Printf("Setting %v Resources to active: %v", len(ids), active)
 	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Resources")
 	s := bson.M{"id": bson.M{"$in": ids}}
-	u := bson.M{"$set": bson.M{"active": false}}
+	u := bson.M{"$set": bson.M{"active": active}}
 	ci, err := c.UpdateAll(s, u)
 	if err != nil {
 		return errors.Wrap(err, "Mongo query error")
 	}
-
-	fmt.Println(ci.Updated, "records were updated")
+	fmt.Println("...", ci.Updated, "records were updated")
 
 	return nil
 }
@@ -328,18 +354,16 @@ func setLinksActiveField(ids []int, active bool) error {
 		rids = append(rids, rid)
 	}
 
-	fmt.Println(rids)
-
-	fmt.Println("Setting", len(rids), "Links to active:", active)
+	fmt.Printf("Setting %v Links to active: %v", len(ids), active)
 	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Links")
 	s := bson.M{"shortUrl": bson.M{"$in": rids}}
-	u := bson.M{"$set": bson.M{"active": false}}
+	u := bson.M{"$set": bson.M{"active": active}}
 	ci, err := c.UpdateAll(s, u)
 	if err != nil {
 		return errors.Wrap(err, "Mongo query error")
 	}
 
-	fmt.Println(ci.Updated, "records were updated")
+	fmt.Println("...", ci.Updated, "records were updated")
 
 	return nil
 }
