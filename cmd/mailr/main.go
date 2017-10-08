@@ -315,7 +315,7 @@ func auth() error {
 	type AuthResponse struct {
 		Status  int
 		Message string
-		Data struct {
+		Data    struct {
 			Token     string
 			IssuedAt  time.Time
 			ExpiresAt time.Time
@@ -558,8 +558,6 @@ func createTemplate() (string, error) {
 		os.Exit(0)
 	}
 
-
-
 	var t bytes.Buffer
 	if err := tpl.ExecuteTemplate(&t, "layout", items); err != nil {
 		return h, err
@@ -715,15 +713,15 @@ func getResourceItems() (ResourceItems, error) {
 }
 
 // campaignExists checks for a campaign by name, and returns the id of the campaign if it exists
-func campaignExists(campaignTitle string) (int, error)  {
+func campaignExists(campaignTitle string) (int, error) {
 
 	// return campaign id
 	var id int
 
 	// map response body
 	b := struct {
-		Result []struct{
-			ID int `json:"id"`
+		Result []struct {
+			ID    int    `json:"id"`
 			Title string `json:"title"`
 		} `json:"result"`
 	}{}

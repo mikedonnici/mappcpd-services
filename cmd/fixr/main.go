@@ -73,7 +73,6 @@ func main() {
 	}
 	fmt.Println("--- done")
 
-
 	// Sync active flag from primary db to Resources and Links
 	fmt.Println("Syncing active flag ----------------------------------")
 	if err := syncActiveFlag(); err != nil {
@@ -244,7 +243,6 @@ func sync(ld resources.Link, shortPath string) error {
 
 	return nil
 }
-
 
 // getResourceIDs fetches all of the resource ids with the specified active (soft-delete) status, from the primary db.
 func getResourceIDs(active bool) ([]int, error) {
