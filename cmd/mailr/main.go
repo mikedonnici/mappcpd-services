@@ -37,27 +37,35 @@ type campaignConfig struct {
 	// Test campaign only must be false for SendCampaign to work
 	TestCampaign bool `json:"testCampaign"`
 
-	// Send campaign, todo must be true and have a scheduled date
+	// Send campaign
 	SendCampaign bool `json:"sendCampaign"`
+	// todo add option to schedule send
 
+	// If test is set to true then test email goes to this address
 	TestEmail string `json:"testEmail"`
 
 	// Add a date to the campaign title and the email subject
 	AppendDate       bool   `json:appendDate`
 	AppendDateFormat string `json:"appendDateFormat"`
 
-	// Campaign specific
+	// SendGrid campaign-specific properties
 	CampaignTitle      string `json:"campaignTitle"`
 	EmailSubject       string `json:"emailSubject"`
 	SenderID           int    `json:"senderId"`
 	SegmentListID      int    `json:"segmentListIds`
 	SuppressionGroupID int    `json:"suppressionGroupId"`
-	// todo make this a url
+	// CampaignID gets set *after* the campaign is created at SendGrid
+	CampaignID int
+
+	// HTML template can be local or remote, plain template is a string
 	HTMLTemplate string `json:"htmlTemplate"`
 	PlainContent string `json:"plainContent"`
 
-	// CampaignID gets set when the campaign is created at SendGrid
-	CampaignID int
+	// Include items added within the last x days
+	BackDays int `json:"backDays"`
+
+	// Specify maximum items to be displayed
+	MaxContentItems int `json:"maxContentItems"`
 }
 
 // recipient is formatted for posting to SendGrid
@@ -152,10 +160,10 @@ func main() {
 		fmt.Print("Updating recipients master list at SendGrid... ")
 
 		// Overwrite master list TEMPORARY!!
-		recipients = []recipient{
-			{Title: "Mr", FirstName: "Mike", LastName: "Donnici", Email: "michael@mesa.net.au"},
-			{Title: "Prof.", FirstName: "Richmond", LastName: "Jeremy", Email: " michael.donnici@csanz.edu.au"},
-		}
+		//recipients = []recipient{
+		//	{Title: "Mr", FirstName: "Mike", LastName: "Donnici", Email: "michael@mesa.net.au"},
+		//	{Title: "Prof.", FirstName: "Richmond", LastName: "Jeremy", Email: " michael.donnici@csanz.edu.au"},
+		//}
 
 		if err := syncRecipients(); err != nil {
 			fmt.Println(err)
@@ -372,8 +380,7 @@ func getActiveMembers() error {
 				"firstName": true,
 				"lastName": true,
 				"contact.emailPrimary": true
-			},
-			"limit": 1000
+			}
 		}`
 
 	req, err := http.NewRequest("POST", apiActiveMembers, strings.NewReader(b))
@@ -554,7 +561,7 @@ func createTemplate() (string, error) {
 
 	// EXIT if no items... do NOT want to send a blank email
 	if len(items) == 0 {
-		fmt.Println("There are no resource items to show - cannot send a blank email")
+		fmt.Println("There are no items to show - cannot send a blank email")
 		os.Exit(0)
 	}
 
@@ -674,18 +681,18 @@ func pause(s int) {
 func getResourceItems() (ResourceItems, error) {
 
 	// First try last 7 days...
-	sevenDaysAgo := time.Now().AddDate(0, 0, -7).Format(time.RFC3339)
+	backDate := time.Now().AddDate(0, 0, -(cfg.BackDays)).Format(time.RFC3339)
 	b := `{
   			"find": {
 				"createdAt": {
-					"$gte": "` + sevenDaysAgo + `"
+					"$gte": "` + backDate + `"
 				}
 			},
   			"select": {"_id": 0, "name": 1, "type": 1, "shortUrl": 1},
-  			"limit": 30,
+  			"limit": ` + strconv.Itoa(cfg.MaxContentItems) + `,
 			"sort" : "-id"
 		  }`
-	//fmt.Println(b)
+	// fmt.Println(b)
 
 	req, err := http.NewRequest("POST", apiResources, strings.NewReader(b))
 	if err != nil {

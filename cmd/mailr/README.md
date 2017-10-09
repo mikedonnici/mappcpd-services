@@ -54,7 +54,9 @@ JSON config file:
   "segmentList": 1985845,
   "suppressionGroupId": 4933,
   "htmlTemplate": "cmd/mailr/template.html",
-  "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]"
+  "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]",
+  "backDays": 7,
+  "maxContentItems": 20
 }
 ```
 
@@ -108,6 +110,12 @@ The remote/local location of the HTML template.
 
 **plainContent**
 The (token) plain text version. 
+
+**backDays**
+When checking time-based items for inclusion, allow them to be a maximum of this many days old. 
+
+**maxContentItems**
+Maximum number of (repeating) items to include in the campaign email.
 
 
 ## Usage
