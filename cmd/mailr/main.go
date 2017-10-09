@@ -34,7 +34,7 @@ type campaignConfig struct {
 	// Create campaign at SendGrid, from the specified HTML template
 	CreateCampaign bool `json:"createCampaign"`
 
-	// Test campaign only must be false for SendCampaign to work
+	// Test campaign only - must be false for SendCampaign to work
 	TestCampaign bool `json:"testCampaign"`
 
 	// Send campaign
