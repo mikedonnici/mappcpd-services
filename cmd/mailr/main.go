@@ -61,9 +61,6 @@ type campaignConfig struct {
 	HTMLTemplate string `json:"htmlTemplate"`
 	PlainContent string `json:"plainContent"`
 
-	// Include items added within the last x days
-	BackDays int `json:"backDays"`
-
 	// Specify maximum items to be displayed
 	MaxContentItems int `json:"maxContentItems"`
 }
@@ -680,14 +677,11 @@ func pause(s int) {
 
 func getResourceItems() (ResourceItems, error) {
 
-	// First try last 7 days...
-	backDate := time.Now().AddDate(0, 0, -(cfg.BackDays)).Format(time.RFC3339)
+	// Select recent articles based on the Pubmed publish date - this is the most reliable
+	// way to ensure they are actually recent articles. Often they are added to Pubmed much later
+	// than their published date indicates.
 	b := `{
-  			"find": {
-				"createdAt": {
-					"$gte": "` + backDate + `"
-				}
-			},
+  			"find": {},
   			"select": {"_id": 0, "name": 1, "type": 1, "shortUrl": 1},
   			"limit": ` + strconv.Itoa(cfg.MaxContentItems) + `,
 			"sort" : "-pubDate.date"

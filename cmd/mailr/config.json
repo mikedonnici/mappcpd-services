@@ -15,6 +15,5 @@
   "suppressionGroupId": 4933,
   "htmlTemplate": "cmd/mailr/template.html",
   "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]",
-  "backDays": 700,
-  "maxContentItems": 5
+  "maxContentItems": 20
 }
