@@ -8,20 +8,14 @@ A utility for running sending email broadcasts based on a stored template.
 
 A config file is read in which sets up the campaign. Depending on the options the command will do the following:
 1. Authenticate with the MappCPD API to generate a token
-1. Fetch all active members from MapPCPD
+1. Fetch all active members from MappCPD
 1. Update the SendGrid recipient list with active users
 1. Fetch all recipients from SendGrid recipient list
 1. Add all recipients to the SendGrid *segment* list
 1. Parse the specified HTML template, and fetch content (list of resources)
 1. Create a campaign at SendGrid with HTML template
 1. Send a test email
-1. Send the campaign at specified time   
-
-**Todo**
-
-* handle removing inactive members!!
-* separate layout template from functions to generate content that is embedded into the template  
- 
+1. Send the campaign *immediately*   
 
 ## Configuration
 
@@ -59,12 +53,10 @@ JSON config file:
   "senderId": 167946,
   "segmentList": 1985845,
   "suppressionGroupId": 4933,
-  "htmlTemplate": "./cmd/mailr/template.html",
+  "htmlTemplate": "cmd/mailr/template.html",
   "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]"
 }
 ```
-
-**Explanation of config options**
 
 The config file allows each step in the process to be switched on and off for testing.  
 
@@ -123,5 +115,51 @@ The (token) plain text version.
 Use the `-cfg` flag to specify a remote or local config file:
 
 ```bash
-$ mailr -cfg https://cdn.somewhere.com/mailr/options.json 
+# local config
+$ mailr -cfg cmd/mailr/config.json
+
+# remote config
+$ mailr -cfg https://cdn.somewhere.com/mailr/config.json 
 ```
+
+## Running on Heroku
+If the config file is pushed to the Heroku repo the command can be run as per the `local config` example above, that is: `mailr -cfg cmd/mailr/config.json`.
+
+This is because the pre-compiled files are sitting on the heroku instance, along with the `bin` directory that contains the compiled executables.
+
+To confirm this run `bash` on the heroku app:
+
+```bash
+# local machine
+$ heroku login
+$ heroku --app mappcpd-deployment-web-services run bash
+
+# heroku instance
+$ pwd
+/app
+
+$ ls
+Procfile  README.md  bin  cmd  internal  test  vendor
+
+$ ls cmd/mailr/
+README.md  config.json  main.go  template.html
+```
+
+Having said that, it is obviously a pain to commit changes to test things out, so it is more convenient to store both the config and the html template in a remote location, and call `mailr` thus:
+
+```bash
+$ heroku run --app mappcpd-csanz-web-services mailr -cfg https://raw.githubusercontent.com/cardiacsociety/h1-cfg/master/mailr/config.json
+``` 
+
+`config.json` specifies the html template url:
+
+```json
+{
+  "htmlTemplate": "https://raw.githubusercontent.com/cardiacsociety/h1-cfg/master/mailr/template.html"
+}
+```
+
+
+## Todo 
+
+* handle removal of inactive (in MappCPD) members
