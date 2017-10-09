@@ -690,7 +690,7 @@ func getResourceItems() (ResourceItems, error) {
 			},
   			"select": {"_id": 0, "name": 1, "type": 1, "shortUrl": 1},
   			"limit": ` + strconv.Itoa(cfg.MaxContentItems) + `,
-			"sort" : "-id"
+			"sort" : "-pubDate.date"
 		  }`
 	// fmt.Println(b)
 
@@ -707,6 +707,7 @@ func getResourceItems() (ResourceItems, error) {
 	}
 	defer res.Body.Close()
 	//printResponseBody(res.Body)
+	//os.Exit(0)
 
 	// decode response body...
 	var data = struct {
