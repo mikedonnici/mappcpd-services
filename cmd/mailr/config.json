@@ -11,7 +11,7 @@
   "campaignTitle": "CSANZ HeartOne Update",
   "emailSubject": "CSANZ HeartOne Update",
   "senderId": 167946,
-  "segmentListId": 1985845,
+  "segmentListId": 2126425,
   "suppressionGroupId": 4933,
   "htmlTemplate": "cmd/mailr/template.html",
   "plainContent": "Weblink: [weblink]\r\n\r\nUnsubscribe: [unsubscribe]",

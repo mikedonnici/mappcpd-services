@@ -159,7 +159,14 @@ func main() {
 		// Overwrite master list TEMPORARY!!
 		//recipients = []recipient{
 		//	{Title: "Mr", FirstName: "Mike", LastName: "Donnici", Email: "michael@mesa.net.au"},
-		//	{Title: "Prof.", FirstName: "Richmond", LastName: "Jeremy", Email: " michael.donnici@csanz.edu.au"},
+		//	{Title: "Prof", FirstName: "Richmond", LastName: "Jeremy", Email: "Richmond.Jeremy@cardiology.sydney"},
+		//	{Title: "Dr", FirstName: "Paul", LastName: "Bridgman", Email: "paul.bridgman@cdhb.health.nz"},
+		//	{Title: "Prof", FirstName: "Jenny", LastName: "Deague", Email: "deaguej@ramsayhealth.com.au"},
+		//	{Title: "Mr", FirstName: "Kevin", LastName: "White", Email: "mrandmrswhiteinoz@gmail.com"},
+		//	{Title: "Dr", FirstName: "Jennifer", LastName: "Cooke", Email: "jennifer_cooke@yahoo.com"},
+		//	{Title: "Dr", FirstName: "Divina", LastName: "Brillante", Email: "divina.brillante@sesiahs.health.nsw.gov.au"},
+		//	{Title: "Dr", FirstName: "Aravinda", LastName: "Thiagalingam", Email: "aravinda.thiagalingam@sydney.edu.au"},
+		//	{Title: "Prof", FirstName: "Phillip", LastName: "Newton", Email: "p.newton@westernsydney.edu.au"},
 		//}
 
 		if err := syncRecipients(); err != nil {
@@ -258,7 +265,13 @@ func main() {
 
 	// Make sure not trying to test AND send
 	if cfg.SendCampaign == true && cfg.TestCampaign == true {
-		fmt.Println("Cannot test AND send campaign - set one option to false.")
+		fmt.Println("Cannot test AND send campaign - set one option to false in config.")
+		os.Exit(1)
+	}
+
+	// Can't 'test' without first 'creating'
+	if cfg.SendCampaign != true && cfg.TestCampaign == true {
+		fmt.Println("Cannot test a campaign that has not been created - check config.")
 		os.Exit(1)
 	}
 
