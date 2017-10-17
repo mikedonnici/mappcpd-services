@@ -270,7 +270,7 @@ func main() {
 	}
 
 	// Can't 'test' without first 'creating'
-	if cfg.SendCampaign != true && cfg.TestCampaign == true {
+	if cfg.CreateCampaign != true && cfg.TestCampaign == true {
 		fmt.Println("Cannot test a campaign that has not been created - check config.")
 		os.Exit(1)
 	}
