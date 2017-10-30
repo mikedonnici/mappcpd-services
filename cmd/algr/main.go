@@ -149,6 +149,9 @@ func indexMembers() {
 	indexDocs(&xm)
 }
 
+// indexResources manages the resources index. Note the Mongo collection now has a bool field called 'active'
+// which mirrors the flag (0/1) field used in MySQL for soft deletes. So any record with active=false should be
+// removed from the index.
 func indexResources() {
 
 	if strings.ToLower(resourcesIndex) == "off" {
@@ -160,10 +163,24 @@ func indexResources() {
 	xr := Docs{
 		Index: resourcesIndex,
 	}
-	q := `{"find": {"primary": true, "updatedAt": {"$gte": "` + backDate + `"}}}`
+	q := `{"find": {"active": true, primary": true, "updatedAt": {"$gte": "` + backDate + `"}}}`
 	fetchDocs(apiResources, q, &xr)
-	fmt.Println("Index resource docs...")
+	fmt.Println("Update resources index...")
 	indexDocs(&xr)
+
+	// Remove inactive resources from index
+	q = `{"find": {"active": false}}`
+	fetchDocs(apiResources, q, &xr)
+	fmt.Println("Removing inactive resources...")
+	var objectIDs []string
+	for _, v := range xr.Data {
+		fmt.Println("(", "_id", v["_id"], ") id", v["id"], v["name"])
+		objectIDs = append(objectIDs, v["_id"].(string))
+	}
+	fmt.Println(objectIDs)
+	if err := deleteObjects(objectIDs, xr.Index); err != nil {
+		fmt.Println("Error deleting resource objects -", err)
+	}
 }
 
 func indexModules() {
@@ -253,4 +270,16 @@ func indexBatch(xo []algoliasearch.Object, indexName string) {
 	}
 
 	fmt.Println("Algolia taskID:", batch.TaskID, "completed indexing of", len(batch.ObjectIDs), "objects for index:", indexName)
+}
+
+// deleteObjects removes objects from an algolia index, identified by an array of ObjectID strings
+func deleteObjects(objectIDs []string, indexName string) error {
+	client := algoliasearch.NewClient(os.Getenv("MAPPCPD_ALGOLIA_APP_ID"), os.Getenv("MAPPCPD_ALGOLIA_API_KEY"))
+	index := client.InitIndex(indexName)
+	res, err := index.DeleteObjects(objectIDs)
+	if err != nil {
+		return err
+	}
+	fmt.Println(res)
+	return nil
 }
