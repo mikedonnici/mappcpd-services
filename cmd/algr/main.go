@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"flag"
 
 	"encoding/json"
 	"net/http"
@@ -58,7 +59,6 @@ func init() {
 		"MAPPCPD_ADMIN_PASS",
 		"MAPPCPD_ALGOLIA_APP_ID",
 		"MAPPCPD_ALGOLIA_API_KEY",
-		"MAPPCPD_ALGOLIA_BACK_DAYS",
 		"MAPPCPD_ALGOLIA_BATCH_SIZE",
 		"MAPPCPD_API_URL",
 		"MAPPCPD_ALGOLIA_MEMBERS_INDEX",
@@ -82,16 +82,15 @@ func init() {
 		log.Fatalln("Could not set batch size:", err)
 	}
 
-	// set backDate from BACK_DAYS
+	// set backDate from -b flag
+	d := flag.Int("b", 2, "Specifies number of days back to check for updated records")
 	t := time.Now()
-	d, err := strconv.Atoi(os.Getenv("MAPPCPD_ALGOLIA_BACK_DAYS"))
-	if err != nil {
-		log.Fatalln(err)
-	}
-	backDate = t.AddDate(0, 0, -d).Format(time.RFC3339)
+	backDate = t.AddDate(0, 0, -(*d)).Format(time.RFC3339)
 }
 
 func main() {
+	flag.Parse()
+
 	log.Println("Running algr...")
 	log.Println("Test connection to API...")
 	test()
