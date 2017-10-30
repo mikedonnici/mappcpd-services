@@ -7,27 +7,34 @@ MappCPD worker that leverages the [API](/cmd/webd/README.md) to maintains [Algol
 **Env Vars**
 
 ```bash
-# Admin auth credentials 
-ADMIN_PASS="demo-admin"
-ADMIN_USER="demo-pass"
+# Admin auth credentials
+MAPPCPD_ADMIN_PASS="demo-user"
+MAPPCPD_ADMIN_USER"demo-pass"
 
-# Algolia creds, with write access
-ALG_API_KEY="abc......."
-ALG_APP_ID="ABCDEFG..."
+# API
+MAPPCPD_API_URL="https://mappcpd-api.com"
+
+# Algolia creds - need write access
+MAPPCPD_ALGOLIA_APP_ID=MZ......
+MAPPCPD_ALGOLIA_API_KEY=7e2................
+MAPPCPD_ALGOLIA_MEMBERS_INDEX=mappcpd_demo_MEMBERS
+MAPPCPD_ALGOLIA_MODULES_INDEX=mappcpd_demo_MODULES
+MAPPCPD_ALGOLIA_RESOURCES_INDEX=mappcpd_demo_RESOURCES
+MAPPCPD_ALGOLIA_BATCH_SIZE=1000
 
 # Index names, setting to "OFF" will skip 
 MEMBERS_INDEX="mappcpd_demo_MEMBERS"
 MODULES_INDEX="mappcpd_demo_MODULES"
 RESOURCES_INDEX="mappcpd_demo_RESOURCES" 
-
-# Include records that have been modified up to this many days ago
-# Set high for first run, then can be run daily with a value of '1'
-# Note this refers to `updateAt` in the MongoDB doc, not `updated_at` in MySQL. 
-BACK_DAYS=1
-
-# How many at a time... 100 seems ok
-BATCH_SIZE=100
-
-# API
-MAPPCPD_API_URL="https://mappcpd-api.com"
 ```
+
+## Usage
+
+```bash
+$ algr -b [int]
+```
+
+**Flags** 
+
+`-b` - include records with a modification date up to *this many* days back - default 2
+
