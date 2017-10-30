@@ -162,7 +162,7 @@ func indexResources() {
 	xr := Docs{
 		Index: resourcesIndex,
 	}
-	q := `{"find": {"active": true, primary": true, "updatedAt": {"$gte": "` + backDate + `"}}}`
+	q := `{"find": {"primary": true, "updatedAt": {"$gte": "` + backDate + `"}}}`
 	fetchDocs(apiResources, q, &xr)
 	fmt.Println("Update resources index...")
 	indexDocs(&xr)
@@ -173,10 +173,8 @@ func indexResources() {
 	fmt.Println("Removing inactive resources...")
 	var objectIDs []string
 	for _, v := range xr.Data {
-		fmt.Println("(", "_id", v["_id"], ") id", v["id"], v["name"])
 		objectIDs = append(objectIDs, v["_id"].(string))
 	}
-	fmt.Println(objectIDs)
 	if err := deleteObjects(objectIDs, xr.Index); err != nil {
 		fmt.Println("Error deleting resource objects -", err)
 	}
@@ -275,10 +273,10 @@ func indexBatch(xo []algoliasearch.Object, indexName string) {
 func deleteObjects(objectIDs []string, indexName string) error {
 	client := algoliasearch.NewClient(os.Getenv("MAPPCPD_ALGOLIA_APP_ID"), os.Getenv("MAPPCPD_ALGOLIA_API_KEY"))
 	index := client.InitIndex(indexName)
-	res, err := index.DeleteObjects(objectIDs)
+	batch, err := index.DeleteObjects(objectIDs)
 	if err != nil {
 		return err
 	}
-	fmt.Println(res)
+	fmt.Println("Algolia taskID:", batch.TaskID, "completed removal of", len(batch.ObjectIDs), "objects for index:", indexName)
 	return nil
 }
