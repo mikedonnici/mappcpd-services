@@ -81,24 +81,25 @@ func init() {
 	if err != nil {
 		log.Fatalln("Could not set batch size:", err)
 	}
-
-	// set backDate from -b flag
-	d := flag.Int("b", 2, "Specifies number of days back to check for updated records")
-	t := time.Now()
-	backDate = t.AddDate(0, 0, -(*d)).Format(time.RFC3339)
 }
 
 func main() {
+
+	// set backDate from -b flag
+	d := flag.Int("b", 2, "Specifies number of days back to check for updated records")
 	flag.Parse()
+	t := time.Now()
+	backDate = t.AddDate(0, 0, -(*d)).Format(time.RFC3339)
+
 
 	log.Println("Running algr...")
 	log.Println("Test connection to API...")
 	test()
 	log.Println("Authenticating...")
 	auth()
-	indexMembers()
+	//indexMembers()
 	indexResources()
-	indexModules()
+	//indexModules()
 }
 
 func test() {
@@ -164,8 +165,13 @@ func indexResources() {
 	}
 	q := `{"find": {"primary": true, "updatedAt": {"$gte": "` + backDate + `"}}}`
 	fetchDocs(apiResources, q, &xr)
+
+	// reshape the Resources Docs for algolia
+	reshapeResources(xr.Data)
+	return
+
 	fmt.Println("Update resources index...")
-	indexDocs(&xr)
+	// indexDocs(&xr)
 
 	// Remove inactive resources from index
 	q = `{"find": {"active": false}}`
@@ -279,4 +285,46 @@ func deleteObjects(objectIDs []string, indexName string) error {
 	}
 	fmt.Println("Algolia taskID:", batch.TaskID, "completed removal of", len(batch.ObjectIDs), "objects for index:", indexName)
 	return nil
+}
+
+// reshapeResources modifies the resource values into a more suitable format for the Algolia index
+func reshapeResources(data []map[string]interface{}) []map[string]interface{} {
+
+	var d []map[string]interface{}
+
+	for _, v := range data {
+
+		pubDate := v["pubDate"].(map[string]interface{})
+		publishedAt := pubDate["date"]
+		publishedAtTS := timeStampFromDate(pubDate["date"].(string))
+
+		//timeStampFromDate(v["pubDate"]["date"])
+		r := map[string]interface{}{
+			"_id": v["_id"],
+			"id": v["id"],
+			"createdAt": v["createdAt"],
+			"updatedAt": v["updatedAt"],
+			"publishedAt": publishedAt,
+			"publishedAtTimestamp": publishedAtTS,
+			"type": v["type"],
+			"name": v["name"],
+			"description": v["description"],
+			"shortUrl": v["shortUrl"],
+			"resourceUrl": v["resourceUrl"],
+
+		}
+		d = append(d, r)
+	}
+	fmt.Println(d)
+
+	return d
+}
+
+func timeStampFromDate(date string) int64 {
+	fmt.Println("Have date string", date)
+	t, err := time.Parse(time.RFC3339, date)
+	if err != nil {
+		fmt.Println("Error parsing date string", err)
+	}
+	return t.Unix()
 }
