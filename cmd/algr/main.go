@@ -97,9 +97,9 @@ func main() {
 	test()
 	log.Println("Authenticating...")
 	auth()
-	//indexMembers()
+	indexMembers()
 	indexResources()
-	//indexModules()
+	indexModules()
 }
 
 func test() {
@@ -167,11 +167,10 @@ func indexResources() {
 	fetchDocs(apiResources, q, &xr)
 
 	// reshape the Resources Docs for algolia
-	reshapeResources(xr.Data)
-	return
+	xr.Data = reshapeResources(xr.Data)
 
 	fmt.Println("Update resources index...")
-	// indexDocs(&xr)
+	indexDocs(&xr)
 
 	// Remove inactive resources from index
 	q = `{"find": {"active": false}}`
@@ -309,19 +308,18 @@ func reshapeResources(data []map[string]interface{}) []map[string]interface{} {
 			"type": v["type"],
 			"name": v["name"],
 			"description": v["description"],
+			"keywords": v["keywords"],
 			"shortUrl": v["shortUrl"],
 			"resourceUrl": v["resourceUrl"],
 
 		}
 		d = append(d, r)
 	}
-	fmt.Println(d)
 
 	return d
 }
 
 func timeStampFromDate(date string) int64 {
-	fmt.Println("Have date string", date)
 	t, err := time.Parse(time.RFC3339, date)
 	if err != nil {
 		fmt.Println("Error parsing date string", err)
