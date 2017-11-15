@@ -16,7 +16,7 @@ type Activity struct {
 
 // ActivityCredit holds the detail about how the credit is calculated for the activity
 type ActivityCredit struct {
-	QuantityFixed bool `json:"quantityFixed"`
+	QuantityFixed   bool    `json:"quantityFixed"`
 	Quantity        float32 `json:"quantity" bson:"quantity"`
 	UnitCode        string  `json:"unitCode" bson:"unitCode"`
 	UnitName        string  `json:"unitName" bson:"unitName"`
@@ -88,7 +88,6 @@ func ActivityByID(id int) (Activity, error) {
 		return a, err
 	}
 
-
 	return a, nil
 }
 
@@ -147,7 +146,6 @@ func ActivityCreditData(activityUnitID int) (ActivityCredit, error) {
 
 	return u, err
 }
-
 
 // Save an activity to MySQL
 func (a Activity) Save() error {

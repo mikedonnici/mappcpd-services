@@ -110,45 +110,12 @@ func MemberActivityByID(id int) (*MemberActivityDoc, error) {
 	return &a, nil
 }
 
-// MemberActivityRowByID fetches an ActivityRow value by ID
-func MemberActivityRowByID(id int) (*MemberActivityRow, error) {
-
-	// Create ActivityRow value
-	a := MemberActivityRow{ID: id}
-
-	// Coalesce any NULL-able fields
-	query := `SELECT
-		cma.member_id,
-		ca.id,
-		cma.evidence,
-		cma.activity_on,
-		cma.quantity,
-		COALESCE(cma.description, '')
-		FROM ce_m_activity cma
-		LEFT JOIN ce_activity ca ON cma.ce_activity_id = ca.id
-		WHERE cma.id = ?`
-
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
-		&a.MemberID,
-		&a.ActivityID,
-		&a.Evidence,
-		&a.Date,
-		&a.Quantity,
-		&a.Description,
-	)
-	if err != nil {
-		return &a, err
-	}
-
-	return &a, nil
-}
-
 // MemberActivitiesByMemberID fetches activities for a particular member
 func MemberActivitiesByMemberID(id int) ([]MemberActivityDoc, error) {
 
 	activities := MemberActivities{}
 
-	sql := fmt.Sprintf("SELECT id from ce_m_activity WHERE member_id = %v", id)
+	sql := fmt.Sprintf("SELECT id from ce_m_activity WHERE member_id = %v ORDER BY activity_on DESC", id)
 	rows, err := datastore.MySQL.Session.Query(sql)
 	if err != nil {
 		return activities, err

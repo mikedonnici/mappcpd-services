@@ -151,7 +151,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 
 // MembersActivitiesUpdate updates an existing activity for the logged in member.
 // First we fetch the existing record into an Activity, and then replace the update fields with
-// // new values - this will be validated in the same way as a new activity and can also
+// new values - this will be validated in the same way as a new activity and can also
 // update one to many fields.
 func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 
@@ -165,7 +165,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the original activity record
-	a, err := members.MemberActivityRowByID(id)
+	a, err := members.MemberActivityByID(id)
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -184,9 +184,21 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// activity update posted in JSON body
-	au := members.MemberActivityRow{}
-	err = json.NewDecoder(r.Body).Decode(&au)
+	// Original activity - from above we have a MemberActivityDoc but need a subset of this - ie MemberActivityRow
+	oa := members.MemberActivityRow{
+		ID: a.ID,
+		MemberID: a.MemberID,
+		ActivityID: a.Activity.ID,
+		Evidence: 0,
+		Date: a.Date,
+		Quantity: a.CreditData.Quantity,
+		UnitCredit: a.CreditData.UnitCredit,
+		Description: a.Description,
+	}
+
+	// new activity - ie, updated version posted in JSON body
+	na := members.MemberActivityRow{}
+	err = json.NewDecoder(r.Body).Decode(&na)
 	if err != nil {
 		msg := "Error decoding JSON: " + err.Error() + ". Check the format of request body."
 		p.Message = responder.Message{http.StatusBadRequest, "failure", msg}
@@ -197,21 +209,25 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	// Merge the original into the new record to fill in any blanks. The merge package
 	// will only overwrite 'zero' values, so the updates are kept, and the nil values
 	// back filled with the original values
-	err = mergo.Merge(&au, a)
+	fmt.Println("Original:", oa)
+	fmt.Println("New:", na)
+	err = mergo.Merge(&na, oa)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("Error merging activity fields: ", err)
 	}
+	fmt.Println("Original:", oa)
+	fmt.Println("New:", na)
 
 	// Update the activity record
-	err = members.UpdateMemberActivity(au)
+	err = members.UpdateMemberActivity(na)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	// Fetch the updated record for response
-	ar, err := members.MemberActivityByID(id)
+	// updated record - fetch for response
+	ur, err := members.MemberActivityByID(id)
 	if err != nil {
 		msg := "Could not fetch the updated record"
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", msg + " " + err.Error()}
@@ -221,7 +237,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 
 	msg := fmt.Sprintf("Updated activity (id: %v) for member (id: %v)", id, middleware.UserAuthToken.Claims.ID)
 	p.Message = responder.Message{http.StatusOK, "success", msg}
-	p.Data = ar
+	p.Data = ur
 	p.Send(w)
 }
 
