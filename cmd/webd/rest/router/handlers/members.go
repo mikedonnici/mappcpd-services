@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"net/http"
 
-	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	"github.com/mappcpd/web-services/internal/members"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )

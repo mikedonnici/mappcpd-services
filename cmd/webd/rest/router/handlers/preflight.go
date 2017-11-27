@@ -6,7 +6,7 @@ import (
 
 	"net/http"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
+	_json "github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
 )
 
 // Index responds as a ping / test for API connection

@@ -3,8 +3,8 @@ package handlers
 import (
 	"net/http"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	_mw "github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	_json "github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
+	_mw "github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
 	r_ "github.com/mappcpd/web-services/internal/reports"
 )

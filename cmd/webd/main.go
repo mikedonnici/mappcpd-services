@@ -2,15 +2,14 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/34South/envr"
-
-	r_ "github.com/mappcpd/web-services/cmd/webd/router"
-	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/cmd/webd/graphql"
+	"github.com/mappcpd/web-services/cmd/webd/rest"
 )
 
-func main() {
-
+func init() {
 	msg := fmt.Sprint("Initialising environment...")
 	env := envr.New("myEnv", []string{
 		"MAPPCPD_API_URL",
@@ -23,15 +22,20 @@ func main() {
 		"MAPPCPD_SHORT_LINK_PREFIX",
 		"AWS_ACCESS_KEY_ID",
 		"AWS_SECRET_ACCESS_KEY",
+		"GRAPHQL_SERVER",
 	}).Auto()
 	if env.Ready {
 		msg += "ready!"
 	}
 	fmt.Println(msg)
+}
 
-	// Connect to the databases
-	ds_.Connect()
-
-	// Crank up the router
-	r_.Start()
+func main() {
+	// starts the GraphQL server if env var GRAPHQL_SERVER = true,
+	// otherwise will start the REST server
+	if os.Getenv("GRAPHQL_SERVER") == "true" {
+		graphql.Start()
+	} else {
+		rest.Start()
+	}
 }

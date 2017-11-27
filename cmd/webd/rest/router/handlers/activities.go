@@ -14,8 +14,8 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	"github.com/mappcpd/web-services/internal/activities"
 	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/fileset"
@@ -186,13 +186,13 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// Original activity - from above we have a MemberActivityDoc but need a subset of this - ie MemberActivityRow
 	oa := members.MemberActivityRow{
-		ID: a.ID,
-		MemberID: a.MemberID,
-		ActivityID: a.Activity.ID,
-		Evidence: 0,
-		Date: a.Date,
-		Quantity: a.CreditData.Quantity,
-		UnitCredit: a.CreditData.UnitCredit,
+		ID:          a.ID,
+		MemberID:    a.MemberID,
+		ActivityID:  a.Activity.ID,
+		Evidence:    0,
+		Date:        a.Date,
+		Quantity:    a.CreditData.Quantity,
+		UnitCredit:  a.CreditData.UnitCredit,
 		Description: a.Description,
 	}
 

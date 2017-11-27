@@ -9,8 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	mw_ "github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	_json "github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
+	mw_ "github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	m_ "github.com/mappcpd/web-services/internal/modules"
 	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
 )

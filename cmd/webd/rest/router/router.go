@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/rs/cors"
 
-	"github.com/mappcpd/web-services/cmd/webd/router/handlers"
-	"github.com/mappcpd/web-services/cmd/webd/router/routes"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/routes"
 )
 
 const (

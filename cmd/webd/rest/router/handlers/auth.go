@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	"github.com/mappcpd/web-services/internal/auth"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 )

@@ -1,13 +1,13 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-	"flag"
 
 	"encoding/json"
 	"net/http"
@@ -90,7 +90,6 @@ func main() {
 	flag.Parse()
 	t := time.Now()
 	backDate = t.AddDate(0, 0, -(*d)).Format(time.RFC3339)
-
 
 	log.Println("Running algr...")
 	log.Println("Test connection to API...")
@@ -299,19 +298,18 @@ func reshapeResources(data []map[string]interface{}) []map[string]interface{} {
 
 		//timeStampFromDate(v["pubDate"]["date"])
 		r := map[string]interface{}{
-			"_id": v["_id"],
-			"id": v["id"],
-			"createdAt": v["createdAt"],
-			"updatedAt": v["updatedAt"],
-			"publishedAt": publishedAt,
+			"_id":                  v["_id"],
+			"id":                   v["id"],
+			"createdAt":            v["createdAt"],
+			"updatedAt":            v["updatedAt"],
+			"publishedAt":          publishedAt,
 			"publishedAtTimestamp": publishedAtTS,
-			"type": v["type"],
-			"name": v["name"],
-			"description": v["description"],
-			"keywords": v["keywords"],
-			"shortUrl": v["shortUrl"],
-			"resourceUrl": v["resourceUrl"],
-
+			"type":                 v["type"],
+			"name":                 v["name"],
+			"description":          v["description"],
+			"keywords":             v["keywords"],
+			"shortUrl":             v["shortUrl"],
+			"resourceUrl":          v["resourceUrl"],
 		}
 		d = append(d, r)
 	}

@@ -10,8 +10,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/mappcpd/web-services/cmd/webd/router/handlers/responder"
-	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/generic"

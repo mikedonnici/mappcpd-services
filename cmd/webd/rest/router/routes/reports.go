@@ -3,7 +3,7 @@ package routes
 import (
 	"github.com/gorilla/mux"
 
-	"github.com/mappcpd/web-services/cmd/webd/router/handlers"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers"
 )
 
 // ReportSubRouter sets up a router for report endpoints - no middleware for now

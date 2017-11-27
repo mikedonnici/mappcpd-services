@@ -4,8 +4,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/urfave/negroni"
 
-	"github.com/mappcpd/web-services/cmd/webd/router/handlers"
-	"github.com/mappcpd/web-services/cmd/webd/router/middleware"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 )
 
 func GeneralSubRouter(prefix string) *mux.Router {
