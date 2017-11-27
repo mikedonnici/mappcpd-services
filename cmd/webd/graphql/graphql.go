@@ -3,6 +3,7 @@ package graphql
 import (
 	"fmt"
 	"io"
+	"os"
 	"net/http"
 )
 
@@ -11,5 +12,10 @@ func Start() {
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		io.WriteString(w, "GraphQL server!")
 	})
-	http.ListenAndServe(":5000", nil)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "5000"
+	}
+	http.ListenAndServe(":"+port, nil)
 }
