@@ -786,6 +786,7 @@ func DocMembersAll(q map[string]interface{}, p map[string]interface{}) ([]interf
 	return r, nil
 }
 
+// todo ... deprecate this func in favour of one that returns []Member?
 func DocMembersLimit(q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
 
 	members, err := datastore.MongoDB.MembersCol()
@@ -825,6 +826,26 @@ func DocMembersOne(q map[string]interface{}, p map[string]interface{}) (Member, 
 	}
 
 	return m, nil
+}
+
+func SearchMembersCollection(q map[string]interface{}, p map[string]interface{}, l int) ([]Member, error) {
+
+	members, err := datastore.MongoDB.MembersCol()
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert string date filters to time.Time
+	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+
+	// Run query and return results
+	var xm []Member
+	err = members.Find(q).Select(p).Limit(l).All(&xm)
+	if err != nil {
+		return nil, err
+	}
+
+	return xm, nil
 }
 
 // SaveDoc method upserts Member doc to MongoDB
