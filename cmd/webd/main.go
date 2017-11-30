@@ -67,7 +67,6 @@ func main() {
 		serverPort = os.Getenv("PORT")
 	}
 
-
 	if serverType == "graphql" {
 		graphql.Start(serverPort)
 	}

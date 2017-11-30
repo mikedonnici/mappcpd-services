@@ -17,10 +17,11 @@ func Start(port string) {
 
 	rootQuery := graphql.NewObject(
 		graphql.ObjectConfig{
-			Name:        "RootQuery",
-			Description: "...",
+			Name: "RootQuery",
 			Fields: graphql.Fields{
-				"members": queries.Members,
+				"member": queries.Member,
+				//"member":  queries.Member,
+				//"members": queries.Members,
 			},
 		})
 
