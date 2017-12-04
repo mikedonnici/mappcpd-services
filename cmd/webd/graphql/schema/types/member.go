@@ -13,42 +13,59 @@ var Member = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "Member",
 	Description: "Fields accessible by a Member user",
 	Fields: graphql.Fields{
-		"_id": &graphql.Field{
-			Type: graphql.String,
-		},
 		"id": &graphql.Field{
 			Type: graphql.String,
 		},
 		"active": &graphql.Field{
 			Type: graphql.Boolean,
 		},
-		"profile": profile,
-		//"activities": activities,
+		"title": &graphql.Field{
+			Type: graphql.String,
+		},
+		"firstName": &graphql.Field{
+			Type: graphql.String,
+		},
+		"middleNames": &graphql.Field{
+			Type: graphql.String,
+		},
+		"lastName": &graphql.Field{
+			Type: graphql.String,
+		},
+		"postNominal": &graphql.Field{
+			Type: graphql.String,
+		},
+		"dateOfBirth": &graphql.Field{
+			Type: graphql.String,
+		},
+		"email": &graphql.Field{
+			Type: graphql.String,
+		},
+		"mobile": &graphql.Field{
+			Type: graphql.String,
+		},
+		"locations": &graphql.Field{
+			Type: graphql.NewList(Location),
+		},
+		"qualifications": &graphql.Field{
+			Type: graphql.NewList(Qualification),
+		},
+		"positions": &graphql.Field{
+			Type: graphql.NewList(Position),
+		},
+
+		// these require sub queries to fetch
+		"activities": activities,
 	},
 })
 
-
-var profile = &graphql.Field{
-	Name:        "Profile",
-	Description: "Fetch member profile",
-	Type:        Profile,
-	// No args as we will extract the id from the token
+// activities field
+var activities = &graphql.Field{
+	Name:        "Activities",
+	Description: "Fetches member activities ",
+	Type:        graphql.NewList(Activity),
+	// Todo - add args to filter the list in some way
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-		src := p.Source.(data.MemberViewer)
-		// todo ... security check here
-		return data.GetMemberProfile(src.ID)
+		src := p.Source.(data.Member)
+		return data.GetMemberActivities(src.ID)
 	},
 }
-
-//var activities = &graphql.Field{
-//	Name:        "Activities",
-//	Description: "Fetches member activities ",
-//	Type:        Profile,
-//	// Todo - add args to filter the list in some way
-//	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-//		src := p.Source.(data.MemberViewer)
-//		fmt.Println(src.ID)
-//		// todo ... security check here
-//		return data.GetMemberProfile(src.ID)
-//	},
-//}

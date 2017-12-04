@@ -20,6 +20,7 @@ func Start(port string) {
 			Name: "RootQuery",
 			Fields: graphql.Fields{
 				"member": queries.Member,
+				"memberActivity": queries.MemberActivity,
 				//"member":  queries.Member,
 				//"members": queries.Members,
 			},

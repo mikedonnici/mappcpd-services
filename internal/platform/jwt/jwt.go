@@ -10,6 +10,9 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
+// todo - tokenLifeHours should be configurable via env var
+const tokenLifeHours = 168 // 1 week
+
 // The key for signing the JWTs - using the MYSQL_URL string for now so it will be host specific
 var signingKey = []byte(os.Getenv("MAPPCPD_MYSQL_URL"))
 
@@ -40,7 +43,7 @@ func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 		scope,
 		jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour * 4).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * tokenLifeHours).Unix(),
 			Issuer:    os.Getenv("MAPPCPD_API_URL"),
 		},
 	}

@@ -9,7 +9,7 @@ import (
 var Members = &graphql.Field{
 	Name:        "Members",
 	Description: "Fetch a list of members",
-	Type:        graphql.NewList(types.Profile),
+	Type:        graphql.NewList(types.Member),
 	// todo - implement search arg
 	//Args: graphql.FieldConfigArgument{
 	//	"id": &graphql.ArgumentConfig{
