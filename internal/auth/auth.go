@@ -11,13 +11,13 @@ import (
 
 // AuthMember checks login & pass against db. Check for md5() or encrypted string.
 // Latter is a workaround to allow the old member app to get a token for file uploads.
-func AuthMember(u, p string) (int64, string, error) {
+func AuthMember(u, p string) (int, string, error) {
 
 	query := `SELECT id, concat(first_name, ' ', last_name) as name
 		  FROM member WHERE primary_email = "%s" AND (password = MD5("%s") OR password = "%s")`
 	query = fmt.Sprintf(query, u, p, p)
 
-	var id int64
+	var id int
 	var name string
 	var errMsg error
 	err := datastore.MySQL.Session.QueryRow(query).Scan(&id, &name)
@@ -38,7 +38,7 @@ func AuthMember(u, p string) (int64, string, error) {
 }
 
 // AuthScope gets the authorizations scopes or 'roles' for a user by user (member) id.
-func AuthScope(id int64) ([]string, error) {
+func AuthScope(id int) ([]string, error) {
 
 	// TODO - Actually look up scopes - how?
 	ss := []string{"member"}
@@ -48,13 +48,13 @@ func AuthScope(id int64) ([]string, error) {
 
 // AdminAuth authenticates an admin user against the db. It received username and password
 // strings and returns the id and name of the authenticated admin
-func AdminAuth(u, p string) (int64, string, error) {
+func AdminAuth(u, p string) (int, string, error) {
 
 	query := `SELECT id, name, active, locked FROM ad_user WHERE
 	          username = "%s" AND (password = MD5("%s") OR password = "%s")`
 	query = fmt.Sprintf(query, u, p, p)
 
-	var id int64
+	var id int
 	var name string
 	var active int
 	var locked int
@@ -89,7 +89,7 @@ func AdminAuth(u, p string) (int64, string, error) {
 }
 
 // AdminAuthScope gets the authorizations scopes or 'roles' for an admin user by user id.
-func AdminAuthScope(id int64) ([]string, error) {
+func AdminAuthScope(id int) ([]string, error) {
 
 	// TODO - Actually look up scopes - how?
 	ss := []string{"admin", "a", "b", "c"}

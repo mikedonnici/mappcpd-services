@@ -317,7 +317,7 @@ func reshapeResources(data []map[string]interface{}) []map[string]interface{} {
 	return d
 }
 
-func timeStampFromDate(date string) int64 {
+func timeStampFromDate(date string) int {
 	t, err := time.Parse(time.RFC3339, date)
 	if err != nil {
 		fmt.Println("Error parsing date string", err)

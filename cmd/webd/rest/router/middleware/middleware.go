@@ -102,7 +102,7 @@ func MemberScope(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) 
 					p.Send(w)
 					return
 				}
-				if UserAuthToken.Claims.ID != int64(mid) {
+				if UserAuthToken.Claims.ID != int(mid) {
 					p.Message = responder.Message{http.StatusUnauthorized, "failed", "Member id in path does not match token"}
 					p.Send(w)
 					return

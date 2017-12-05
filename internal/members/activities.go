@@ -15,8 +15,8 @@ import (
 // MemberActivityDoc is the document format for an activity that is
 // recorded by a member - that is, a CPD diary entry
 type MemberActivityDoc struct {
-	ID          int64                       `json:"id" bson:"id"`
-	MemberID    int64                       `json:"memberId" bson:"memberId"`
+	ID          int                       `json:"id" bson:"id"`
+	MemberID    int                       `json:"memberId" bson:"memberId"`
 	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
 	Date        string                      `json:"date" bson:"date"`
@@ -31,10 +31,10 @@ type MemberActivityDoc struct {
 // MemberActivityRow represents the minimum data to add or update a Member Activity.
 // 'Row' implies a representation of the relevant SQL table row.
 type MemberActivityRow struct {
-	ID          int64   `json:"ID"`
-	MemberID    int64   `json:"memberID"`
-	ActivityID  int64   `json:"activityID" validate:"required,min=1"`
-	Evidence    int64   `json:"evidence"`
+	ID          int   `json:"ID"`
+	MemberID    int   `json:"memberID"`
+	ActivityID  int   `json:"activityID" validate:"required,min=1"`
+	Evidence    int   `json:"evidence"`
 	Date        string  `json:"date" validate:"required"`
 	Quantity    float64 `json:"quantity" validate:"required"`
 	UnitCredit  float64 `json:"unitCredit"`
@@ -45,7 +45,7 @@ type MemberActivityRow struct {
 type MemberActivities []MemberActivityDoc
 
 // MemberActivityByID fetches a member activity record by id
-func MemberActivityByID(id int64) (*MemberActivityDoc, error) {
+func MemberActivityByID(id int) (*MemberActivityDoc, error) {
 
 	// Create Activity value
 	a := MemberActivityDoc{ID: id}
@@ -111,7 +111,7 @@ func MemberActivityByID(id int64) (*MemberActivityDoc, error) {
 }
 
 // MemberActivitiesByMemberID fetches activities for a particular member
-func MemberActivitiesByMemberID(id int64) ([]MemberActivityDoc, error) {
+func MemberActivitiesByMemberID(id int) ([]MemberActivityDoc, error) {
 
 	activities := MemberActivities{}
 
@@ -122,11 +122,11 @@ func MemberActivitiesByMemberID(id int64) ([]MemberActivityDoc, error) {
 	}
 	defer rows.Close()
 
-	var activityIDs []int64
+	var activityIDs []int
 
 	for rows.Next() {
 
-		var id int64
+		var id int
 		rows.Scan(&id)
 		activityIDs = append(activityIDs, id)
 
@@ -145,7 +145,7 @@ func MemberActivitiesByMemberID(id int64) ([]MemberActivityDoc, error) {
 func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
-	id := map[string]int64{"id": a.ID}
+	id := map[string]int{"id": a.ID}
 
 	// Get pointer to the collection
 	c, err := datastore.MongoDB.ActivitiesCol()
@@ -165,7 +165,7 @@ func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 }
 
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
-func AddMemberActivity(a MemberActivityRow) (int64, error) {
+func AddMemberActivity(a MemberActivityRow) (int, error) {
 
 	fmt.Printf("%#v", a)
 
@@ -200,7 +200,7 @@ func AddMemberActivity(a MemberActivityRow) (int64, error) {
 		return 0, err
 	}
 
-	return id, nil
+	return int(id), nil
 }
 
 // UpdateMemberActivity updates an existing member activity record in the MySQL db

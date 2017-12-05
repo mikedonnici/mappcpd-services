@@ -19,14 +19,14 @@ type Recurring struct {
 	//ID         string              `json:"_id" bson:"_id"`
 	CreatedAt  time.Time           `json:"createdAt" bson:"createdAt"`
 	UpdatedAt  time.Time           `json:"updatedAt" bson:"updatedAt"`
-	MemberID   int64               `json:"memberId" bson:"memberId" validate:"required,min=1"`
+	MemberID   int               `json:"memberId" bson:"memberId" validate:"required,min=1"`
 	Activities []RecurringActivity `json:"activities" bson:"activities"`
 }
 
 // RecurringActivity represents an individual recurring activity.
 type RecurringActivity struct {
 	ID          bson.ObjectId `json:"_id" bson:"_id"`
-	ActivityID  int64         `json:"activityId" bson:"activityId" validate:"required,min=1"`
+	ActivityID  int         `json:"activityId" bson:"activityId" validate:"required,min=1"`
 	CreatedAt   time.Time     `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time     `json:"updatedAt" bson:"updatedAt"`
 	Quantity    float64       `json:"quantity" validate:"required"`
@@ -37,7 +37,7 @@ type RecurringActivity struct {
 
 // MemberRecurring initialises a value of type Recurring and returns a pointer to same.
 // It checks for an existing doc belonging to member (id), and if not found initialises a new one.
-func MemberRecurring(id int64) (*Recurring, error) {
+func MemberRecurring(id int) (*Recurring, error) {
 
 	// Initialise value with member id...
 	r := Recurring{MemberID: id}
@@ -73,7 +73,7 @@ func (r *Recurring) Save() error {
 	}
 
 	// Upsert the record, the selector is the member id
-	mid := map[string]int64{"memberId": r.MemberID}
+	mid := map[string]int{"memberId": r.MemberID}
 	_, err = c.Upsert(mid, r)
 	if err != nil {
 		fmt.Println("Recurring.Save() upsert failed -", err)

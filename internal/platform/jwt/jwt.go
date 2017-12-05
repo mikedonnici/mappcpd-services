@@ -24,14 +24,14 @@ type AuthToken struct {
 }
 
 type TokenClaims struct {
-	ID    int64    `json:"id"`
+	ID    int    `json:"id"`
 	Name  string   `json:"name"`
 	Scope []string `json:"scope"`
 	jwt.StandardClaims
 }
 
 // CreateJWT creates a JWT
-func CreateJWT(id int64, name string, scope []string) (AuthToken, error) {
+func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 
 	// Return token
 	at := AuthToken{}
@@ -99,7 +99,7 @@ func Check(t string) (AuthToken, error) {
 		// set the values in  AuthToken.Claims .. tricky
 		// type problems here almost broke my brain...
 		// These are TokenCLaims - ie custom claims
-		at.Claims.ID = int64(claims["id"].(float64))
+		at.Claims.ID = int(claims["id"].(float64))
 		at.Claims.Name = claims["name"].(string)
 
 		// Scope needs to be a []string but when we unpack the token
@@ -170,7 +170,7 @@ func (t *AuthToken) setDates() {
 	if ok && tok.Valid {
 
 		// The dates in Claims are stored as float64
-		// we want friendly date strings so need int64 first!
+		// we want friendly date strings so need int first!
 		iat := int64(claims["iat"].(float64))
 		exp := int64(claims["exp"].(float64))
 

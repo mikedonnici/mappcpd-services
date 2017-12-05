@@ -10,18 +10,18 @@ import (
 
 // MemberActivity is a simpler representation of the member activity than the nested one in the current REST api.
 type MemberActivity struct {
-	ID          int64     `json:"id"`
+	ID          int     `json:"id"`
 	Date        time.Time `json:"date"`
 	Credit      float64   `json:"credit"`
-	CategoryID  int64     `json:"categoryId"`
+	CategoryID  int     `json:"categoryId"`
 	Category    string    `json:"category"`
-	TypeID      int64     `json:"typeId"`
+	TypeID      int     `json:"typeId"`
 	Type        string    `json:"type"`
 	Description string    `json:"description"`
 }
 
 // GetMemberActivities fetches activities for a member
-func GetMemberActivities(memberID int64) ([]MemberActivity, error) {
+func GetMemberActivities(memberID int) ([]MemberActivity, error) {
 	var xa []MemberActivity
 
 	// This returns a nested struct which we can simplify
@@ -45,7 +45,7 @@ func GetMemberActivities(memberID int64) ([]MemberActivity, error) {
 
 // Unpack an object into a value of type MemberActivity
 func (ma *MemberActivity) Unpack(obj map[string]interface{}) {
-	if val, ok := obj["id"].(int64); ok {
+	if val, ok := obj["id"].(int); ok {
 		fmt.Println("Unpack id:", val)
 		ma.ID = val
 	}
@@ -63,11 +63,11 @@ func (ma *MemberActivity) Unpack(obj map[string]interface{}) {
 	}
 	if val, ok := obj["categoryId"].(int); ok {
 		fmt.Println("Unpack categoryId:", val)
-		ma.CategoryID = int64(val)
+		ma.CategoryID = int(val)
 	}
 	if val, ok := obj["typeId"].(int); ok {
 		fmt.Println("Unpack typeId:", val)
-		ma.TypeID = int64(val)
+		ma.TypeID = int(val)
 	}
 	if val, ok := obj["description"].(string); ok {
 		fmt.Println("Unpack description:", val)
@@ -80,7 +80,7 @@ func (ma *MemberActivity) Unpack(obj map[string]interface{}) {
 
 // GetMemberActivity fetches a single activities by id.
 // It verifies that the activity is owned by the member by memberID.
-func GetMemberActivity(memberID, activityID int64) (MemberActivity, error) {
+func GetMemberActivity(memberID, activityID int) (MemberActivity, error) {
 
 	fmt.Println("here")
 
@@ -111,7 +111,7 @@ func GetMemberActivity(memberID, activityID int64) (MemberActivity, error) {
 }
 
 // AddMemberActivity adds a member activity
-func AddMemberActivity(memberID int64, memberActivity MemberActivity) (MemberActivity, error) {
+func AddMemberActivity(memberID int, memberActivity MemberActivity) (MemberActivity, error) {
 
 	// Create the required type for the insert
 	// todo: add evidence and categoryId

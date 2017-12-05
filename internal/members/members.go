@@ -30,7 +30,7 @@ import (
 // Member defines struct for member record
 type Member struct {
 	_id       string    `json:"_id" bson:"_id"`
-	ID        int64     `json:"id" bson:"id"`
+	ID        int     `json:"id" bson:"id"`
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 
@@ -535,7 +535,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []notes.Note {
 
 // MemberByID fetches a member record by id, populates a Member value
 // with some of the data and returns a pointer to Member
-func MemberByID(id int64) (*Member, error) {
+func MemberByID(id int) (*Member, error) {
 
 	// Set up a new empty Member
 	m := Member{ID: id}
@@ -711,7 +711,7 @@ func UpdateMember(m map[string]interface{}) error {
 func UpdateMemberDoc(m *Member, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
-	mid := map[string]int64{"id": m.ID}
+	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
 	mc, err := datastore.MongoDB.MembersCol()
@@ -852,7 +852,7 @@ func SearchMembersCollection(q map[string]interface{}, p map[string]interface{},
 func (m *Member) SaveDoc() error {
 
 	// Make selector for Upsert
-	mid := map[string]int64{"id": m.ID}
+	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
 	mc, err := datastore.MongoDB.MembersCol()
@@ -875,7 +875,7 @@ func (m *Member) SaveDoc() error {
 func (m *Member) UpdateDoc() error {
 
 	// Selector
-	mid := map[string]int64{"id": m.ID}
+	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
 	mc, err := datastore.MongoDB.MembersCol()

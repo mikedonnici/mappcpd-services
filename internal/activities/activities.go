@@ -7,7 +7,7 @@ import (
 // ActivityType describes the type of activity, eg online learning. This is NOT the same
 // as the category which is a much broader grouping.
 type Activity struct {
-	ID          int64          `json:"id" bson:"id"`
+	ID          int          `json:"id" bson:"id"`
 	Code        string         `json:"code" bson:"code"`
 	Name        string         `json:"name" bson:"name"`
 	Description string         `json:"description" bson:"description"`
@@ -26,7 +26,7 @@ type ActivityCredit struct {
 
 // ActivityCategory stored details about the category
 type ActivityCategory struct {
-	ID          int64  `json:"id" bson:"id"`
+	ID          int  `json:"id" bson:"id"`
 	Code        string `json:"code" bson:"code"`
 	Name        string `json:"name" bson:"name"`
 	Description string `json:"description" bson:"description"`
@@ -50,7 +50,7 @@ func ActivityList() (Activities, error) {
 	for rows.Next() {
 		at := Activity{}
 		// map ce_activity.ce_activity_unit_id
-		var ceActivityUnitID int64
+		var ceActivityUnitID int
 		rows.Scan(&at.ID, &ceActivityUnitID, &at.Code, &at.Name, &at.Description)
 		at.Credit, err = ActivityCreditData(ceActivityUnitID)
 		if err != nil {
@@ -68,7 +68,7 @@ func ActivityByID(id int) (Activity, error) {
 	var a Activity
 
 	// map ce_activity.ce_activity_unit_id
-	var ceActivityUnitID int64
+	var ceActivityUnitID int
 
 	query := "SELECT id, ce_activity_unit_id, code, name, description FROM ce_activity WHERE active = 1 AND id = ?"
 	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
@@ -96,7 +96,7 @@ func ActivityByID(id int) (Activity, error) {
 // of 'hours', each of which is worth 1 CPD credit point. It received the
 // id of the activity (type) and returns the value as a float.
 // Note that it will also return an error if the activity (type) is not active
-func ActivityUnitCredit(id int64) (float64, error) {
+func ActivityUnitCredit(id int) (float64, error) {
 
 	var p float64
 	query := `SELECT points_per_unit FROM ce_activity
@@ -115,7 +115,7 @@ func ActivityUnitCredit(id int64) (float64, error) {
 //
 // It receives an argument that is the id of the activity unit record, that is,
 // from the ce_activity_unit table.
-func ActivityCreditData(activityUnitID int64) (ActivityCredit, error) {
+func ActivityCreditData(activityUnitID int) (ActivityCredit, error) {
 
 	u := ActivityCredit{}
 	u.QuantityFixed = false

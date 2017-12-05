@@ -65,7 +65,7 @@ var MemberActivity = &graphql.Field{
 
 			activityID, ok := p.Args["activityId"].(int)
 			if ok {
-				return data.GetMemberActivity(memberID, int64(activityID))
+				return data.GetMemberActivity(memberID, int(activityID))
 			}
 		}
 
