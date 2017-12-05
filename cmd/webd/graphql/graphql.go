@@ -19,7 +19,7 @@ func Start(port string) {
 		graphql.ObjectConfig{
 			Name: "RootQuery",
 			Fields: graphql.Fields{
-				"member": queries.Member,
+				"member":         queries.Member,
 				"memberActivity": queries.MemberActivity,
 				//"member":  queries.Member,
 				//"members": queries.Members,

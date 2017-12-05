@@ -24,11 +24,11 @@ import (
 // Resource record
 type Resource struct {
 	OID          bson.ObjectId          `json:"_id,omitempty" bson:"_id,omitempty"`
-	ID           int                    `json:"id" bson:"id"`
+	ID           int64                  `json:"id" bson:"id"`
 	CreatedAt    time.Time              `json:"createdAt" bson:"createdAt"`
 	UpdatedAt    time.Time              `json:"updatedAt" bson:"updatedAt"`
 	PubDate      PubDate                `json:"pubDate" bson:"pubDate"`
-	TypeID       int                    `json:"typeId" bson:"typeId"`
+	TypeID       int64                  `json:"typeId" bson:"typeId"`
 	Type         string                 `json:"type" bson:"type"`
 	Primary      bool                   `json:"primary" bson:"primary"`
 	Name         string                 `json:"name" bson:"name"`
@@ -50,7 +50,7 @@ type PubDate struct {
 type Resources []Resource
 
 // ResourceByID fetches a resource by id, from the MySQL db
-func ResourceByID(id int) (*Resource, error) {
+func ResourceByID(id int64) (*Resource, error) {
 
 	// Set up a new empty Member
 	r := Resource{ID: id}
@@ -293,7 +293,7 @@ func SyncResource(r *Resource) {
 func UpdateResourceDoc(r *Resource, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
-	id := map[string]int{"id": r.ID}
+	id := map[string]int64{"id": r.ID}
 
 	// Get pointer to the collection
 	mc, err := datastore.MongoDB.ResourcesCol()
@@ -431,7 +431,7 @@ func (r *Resource) Save() (int64, error) {
 
 	id, err := res.LastInsertId()
 	// Set the ID now we have it, for any subsequent convenience
-	r.ID = int(id)
+	r.ID = id
 
 	// A little useful output for the logs...
 	fmt.Println("Added a new resource with ID", r.ID)
@@ -448,7 +448,7 @@ func (r *Resource) Save() (int64, error) {
 }
 
 // Update performs an update operation on a Resource record in MySQL
-func (r *Resource) Update(id int) error {
+func (r *Resource) Update(id int64) error {
 
 	// Only difference with Save() query is that created_at is not included
 	query := "UPDATE ol_resource SET ol_resource_type_id = %v, active = %v, `primary` = %v," +
@@ -500,7 +500,7 @@ func (r *Resource) SetShortURL() error {
 			fmt.Println("SetShortURL no Links doc so will create one...")
 			l.CreatedAt = time.Now()
 			l.UpdatedAt = time.Now()
-			l.ShortUrl = "r" + strconv.Itoa(r.ID)
+			l.ShortUrl = "r" + strconv.FormatInt(r.ID, 10)
 			l.LongUrl = r.ResourceURL
 			l.Title = r.Name
 			err := l.DocSave()
@@ -515,7 +515,7 @@ func (r *Resource) SetShortURL() error {
 	}
 
 	// Finally, update the ol_resource.short_url value
-	shortUrl := os.Getenv("MAPPCPD_SHORT_LINK_URL") + "/" + os.Getenv("MAPPCPD_SHORT_LINK_PREFIX") + strconv.Itoa(r.ID)
+	shortUrl := os.Getenv("MAPPCPD_SHORT_LINK_URL") + "/" + os.Getenv("MAPPCPD_SHORT_LINK_PREFIX") + strconv.FormatInt(r.ID, 10)
 	query := fmt.Sprintf("UPDATE ol_resource SET short_url = \"%v\" WHERE id = %v", shortUrl, r.ID)
 	fmt.Println("SetShortLinkURL():", query)
 	_, err = datastore.MySQL.Session.Exec(query)
@@ -531,9 +531,9 @@ func (r *Resource) SetShortURL() error {
 // This is here to help prevent the addition of duplicate resources. In the .Save() func if a duplicate is found,
 // that is, a duplicate resource_url, .Update() will be run instead. This means the id is required so we know which record
 // to update. It is possible there could be more than one duplicate so, for now, return the FIRST duplicate with QueryRow()
-func DuplicateResourceURL(url string) int {
+func DuplicateResourceURL(url string) int64 {
 
-	var c int
+	var c int64
 
 	// Don't allow this to match an empty url string
 	if url == "" {

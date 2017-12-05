@@ -7,7 +7,7 @@ import (
 // Member struct - a simpler representation than members.Member
 // This is used as a 'viewer' field and the id is passed down to child queries.
 type Member struct {
-	ID             int                      `json:"id"`
+	ID             int64                    `json:"id"`
 	Active         bool                     `json:"active"`
 	Title          string                   `json:"title"`
 	FirstName      string                   `json:"firstName"`
@@ -23,7 +23,7 @@ type Member struct {
 }
 
 // GetMember fetches the basic member record
-func GetMember(id int) (Member, error) {
+func GetMember(id int64) (Member, error) {
 	var m Member
 	mp, err := GetMemberProfile(id)
 	if err != nil {
@@ -47,7 +47,7 @@ func GetMember(id int) (Member, error) {
 }
 
 // GetMemberProfile fetches a single member record by id
-func GetMemberProfile(memberID int) (members.Member, error) {
+func GetMemberProfile(memberID int64) (members.Member, error) {
 	// MemberByID returns a pointer to a members.Member so dereference in return
 	m, err := members.MemberByID(memberID)
 	return *m, err

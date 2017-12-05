@@ -15,13 +15,13 @@ import (
 // MemberActivityDoc is the document format for an activity that is
 // recorded by a member - that is, a CPD diary entry
 type MemberActivityDoc struct {
-	ID          int                         `json:"id" bson:"id"`
-	MemberID    int                         `json:"memberId" bson:"memberId"`
+	ID          int64                       `json:"id" bson:"id"`
+	MemberID    int64                       `json:"memberId" bson:"memberId"`
 	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
 	Date        string                      `json:"date" bson:"date"`
 	DateISO     time.Time                   `json:"dateISO" bson:"dateISO"`
-	Credit      float32                     `json:"credit" bson:"credit"`
+	Credit      float64                     `json:"credit" bson:"credit"`
 	Description string                      `json:"description" bson:"description"`
 	Category    activities.ActivityCategory `json:"category" bson:"category"`
 	Activity    activities.Activity         `json:"activity" bson:"activity"`
@@ -31,13 +31,13 @@ type MemberActivityDoc struct {
 // MemberActivityRow represents the minimum data to add or update a Member Activity.
 // 'Row' implies a representation of the relevant SQL table row.
 type MemberActivityRow struct {
-	ID          int     `json:"ID"`
-	MemberID    int     `json:"memberID"`
-	ActivityID  int     `json:"activityID" validate:"required,min=1"`
-	Evidence    int     `json:"evidence"`
+	ID          int64   `json:"ID"`
+	MemberID    int64   `json:"memberID"`
+	ActivityID  int64   `json:"activityID" validate:"required,min=1"`
+	Evidence    int64   `json:"evidence"`
 	Date        string  `json:"date" validate:"required"`
-	Quantity    float32 `json:"quantity" validate:"required"`
-	UnitCredit  float32 `json:"unitCredit"`
+	Quantity    float64 `json:"quantity" validate:"required"`
+	UnitCredit  float64 `json:"unitCredit"`
 	Description string  `json:"description" validate:"required"`
 }
 
@@ -45,7 +45,7 @@ type MemberActivityRow struct {
 type MemberActivities []MemberActivityDoc
 
 // MemberActivityByID fetches a member activity record by id
-func MemberActivityByID(id int) (*MemberActivityDoc, error) {
+func MemberActivityByID(id int64) (*MemberActivityDoc, error) {
 
 	// Create Activity value
 	a := MemberActivityDoc{ID: id}
@@ -111,7 +111,7 @@ func MemberActivityByID(id int) (*MemberActivityDoc, error) {
 }
 
 // MemberActivitiesByMemberID fetches activities for a particular member
-func MemberActivitiesByMemberID(id int) ([]MemberActivityDoc, error) {
+func MemberActivitiesByMemberID(id int64) ([]MemberActivityDoc, error) {
 
 	activities := MemberActivities{}
 
@@ -122,11 +122,11 @@ func MemberActivitiesByMemberID(id int) ([]MemberActivityDoc, error) {
 	}
 	defer rows.Close()
 
-	var activityIDs []int
+	var activityIDs []int64
 
 	for rows.Next() {
 
-		var id int
+		var id int64
 		rows.Scan(&id)
 		activityIDs = append(activityIDs, id)
 
@@ -145,7 +145,7 @@ func MemberActivitiesByMemberID(id int) ([]MemberActivityDoc, error) {
 func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
-	id := map[string]int{"id": a.ID}
+	id := map[string]int64{"id": a.ID}
 
 	// Get pointer to the collection
 	c, err := datastore.MongoDB.ActivitiesCol()

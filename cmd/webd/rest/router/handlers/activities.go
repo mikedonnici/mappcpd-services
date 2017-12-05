@@ -86,7 +86,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Response
-	a, err := members.MemberActivityByID(id)
+	a, err := members.MemberActivityByID(int64(id))
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -135,7 +135,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the new record for return
-	ar, err := members.MemberActivityByID(int(aid))
+	ar, err := members.MemberActivityByID(int64(aid))
 	if err != nil {
 		msg := "Could not fetch the new record"
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", msg + " " + err.Error()}
@@ -165,7 +165,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the original activity record
-	a, err := members.MemberActivityByID(id)
+	a, err := members.MemberActivityByID(int64(id))
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -227,7 +227,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// updated record - fetch for response
-	ur, err := members.MemberActivityByID(id)
+	ur, err := members.MemberActivityByID(int64(id))
 	if err != nil {
 		msg := "Could not fetch the updated record"
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", msg + " " + err.Error()}
@@ -426,7 +426,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 	}
 
-	a, err := members.MemberActivityByID(id)
+	a, err := members.MemberActivityByID(int64(id))
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()
@@ -496,7 +496,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 		p.Send(w)
 		return
 	}
-	activity, err := members.MemberActivityByID(id)
+	activity, err := members.MemberActivityByID(int64(id))
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()
@@ -518,7 +518,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 		p.Send(w)
 		return
 	}
-	a.EntityID = id
+	a.EntityID = int64(id)
 
 	// Decode post body fields: "cleanFilename" and "cloudyFilename" into Attachment
 	if err := json.NewDecoder(r.Body).Decode(&a); err != nil {

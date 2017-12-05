@@ -4,8 +4,8 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/types"
 
+	"github.com/mappcpd/web-services/cmd/webd/graphql/data"
 )
-
 
 // AddMemberActivity records a new activity for a member
 var AddMemberActivity = &graphql.Field{
@@ -13,16 +13,24 @@ var AddMemberActivity = &graphql.Field{
 	Description: "Add a member activity",
 	Type:        types.Activity,
 	Args: graphql.FieldConfigArgument{
-		"position": &graphql.ArgumentConfig{
-			Type:        types.PositionInput,
+		"memberActivity": &graphql.ArgumentConfig{
+			Type:        types.MemberActivityInput,
 			Description: "A position object",
 		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-		position, ok := p.Args["position"].(map[string]interface{})
+		maObj, ok := p.Args["memberActivity"].(map[string]interface{})
 		if ok {
-			dp := data.Position{}
-			dp.Unpack(position)
+			ma := data.MemberActivity{}
+			ma.Unpack(maObj)
+
+			newId, err := data.AddMemberActivity(501, ma)
+			if err != nil {
+				return ma, err
+			}
+
+			// Return the newly created record
+
 			return data.AddPosition(dp), nil
 		}
 		return nil, nil

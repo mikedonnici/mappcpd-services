@@ -24,14 +24,14 @@ type AuthToken struct {
 }
 
 type TokenClaims struct {
-	ID    int      `json:"id"`
+	ID    int64    `json:"id"`
 	Name  string   `json:"name"`
 	Scope []string `json:"scope"`
 	jwt.StandardClaims
 }
 
 // CreateJWT creates a JWT
-func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
+func CreateJWT(id int64, name string, scope []string) (AuthToken, error) {
 
 	// Return token
 	at := AuthToken{}
@@ -99,7 +99,7 @@ func Check(t string) (AuthToken, error) {
 		// set the values in  AuthToken.Claims .. tricky
 		// type problems here almost broke my brain...
 		// These are TokenCLaims - ie custom claims
-		at.Claims.ID = int(claims["id"].(float64))
+		at.Claims.ID = int64(claims["id"].(float64))
 		at.Claims.Name = claims["name"].(string)
 
 		// Scope needs to be a []string but when we unpack the token

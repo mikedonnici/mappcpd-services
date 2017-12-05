@@ -148,13 +148,13 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
 	// Response
-	m, err := members.MemberByID(id)
+	m, err := members.MemberByID(int64(id))
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -185,7 +185,7 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		// need type assertion as j["id"] is float64 when decoded from JSON
-		jid := int(j["id"].(float64))
+		jid := int64(j["id"].(float64))
 		fmt.Printf("%v %T - %v %T", m.ID, m.ID, jid, jid)
 		if m.ID != jid {
 			p.Message = responder.Message{http.StatusBadRequest, "failed", "ID on the request URL does not match the ID in the Body"}
@@ -200,8 +200,8 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		m, _ = members.MemberByID(id) // Re-fetch
-		members.SyncMember(m)         // Sync to doc db
+		m, _ = members.MemberByID(int64(id)) // Re-fetch
+		members.SyncMember(m)                // Sync to doc db
 
 		p.Message = responder.Message{http.StatusOK, "success", "MySQLConnection record updated and copied to MongoDB"}
 		p.Data = m
@@ -217,7 +217,7 @@ func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
@@ -244,7 +244,7 @@ func AdminNotes(w http.ResponseWriter, r *http.Request) {
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
@@ -271,13 +271,13 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
 	// Get the Member record
-	m, err := members.MemberByID(id)
+	m, err := members.MemberByID(int64(id))
 	// Response
 	switch {
 	case err == sql.ErrNoRows:
@@ -412,7 +412,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 
 	// This is admin so don't need the owner of the record however still check that the record exists
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		msg := "Missing or malformed id in url path - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
@@ -442,7 +442,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build FULL file path or 'key' in S3 parlance
-	filePath := fs.Path + strconv.Itoa(id) + "/" + upload.FileName
+	filePath := fs.Path + strconv.FormatInt(id, 10) + "/" + upload.FileName
 
 	// Prepend the volume name to pass back to the client for subsequent file registration
 	upload.VolumeFilePath = fs.Volume + filePath
@@ -472,7 +472,7 @@ func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
 	// Get the entity ID from URL path... This is admin so validate record exists but not ownership
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		msg := "Error getting id from url path - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
@@ -548,7 +548,7 @@ func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 
 	// This is admin so don't need the owner of the record however still check that the record exists
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		msg := "Missing or malformed id in url path - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
@@ -578,7 +578,7 @@ func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Build FULL file path or 'key' in S3 parlance
-	filePath := fs.Path + strconv.Itoa(id) + "/" + upload.FileName
+	filePath := fs.Path + strconv.FormatInt(id, 10) + "/" + upload.FileName
 
 	// Prepend the volume name to pass back to the client for subsequent file registration
 	upload.VolumeFilePath = fs.Volume + filePath
@@ -609,7 +609,7 @@ func AdminResourcesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
 	// Get the entity ID from URL path... This is admin so validate record exists but not ownership
 	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		msg := "Error getting id from url path - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}

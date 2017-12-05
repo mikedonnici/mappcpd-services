@@ -13,8 +13,8 @@ type Evaluation struct {
 
 // MemberEvaluation represents an Evaluation belonging to a Member
 type MemberEvaluation struct {
-	ID             int                  `json:"id" bson:"id"`
-	MemberID       int                  `json:"memberId" bson:"memberId"`
+	ID             int64                `json:"id" bson:"id"`
+	MemberID       int64                `json:"memberId" bson:"memberId"`
 	Name           string               `json:"name" bson:"name"`
 	StartDate      string               `json:"startDate" bson:"startDate"`
 	EndDate        string               `json:"endDate" bson:"endDate"`
@@ -27,14 +27,14 @@ type MemberEvaluation struct {
 // that was recorded within an evaluation period
 type EvaluationActivity struct {
 	Activity string  `json:"activity" bson:"activity"`
-	Total    float32 `json:"total" bson:"total"`
-	Cap      float32 `json:"cap" bson:"cap"`
-	Credit   float32 `json:"credit" bson:"credit"`
+	Total    float64 `json:"total" bson:"total"`
+	Cap      float64 `json:"cap" bson:"cap"`
+	Credit   float64 `json:"credit" bson:"credit"`
 }
 
 // EvaluationsByMemberID fetches all evaluation records for a member
 // Received a member id, return a []MemberEvaluation
-func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
+func EvaluationsByMemberID(id int64) ([]MemberEvaluation, error) {
 
 	es := []MemberEvaluation{}
 
@@ -118,7 +118,7 @@ func (e *MemberEvaluation) evaluate() error {
 // for each activity type within the evaluation
 func (e *MemberEvaluation) creditObtained() error {
 
-	var c float32
+	var c float64
 	for _, v := range e.Activities {
 		c += v.Credit
 	}

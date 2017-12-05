@@ -55,7 +55,7 @@ var MemberActivity = &graphql.Field{
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		var memberID, activityID int
+		var memberID, activityID int64
 
 		t, ok := p.Args["token"].(string)
 		if ok {
@@ -65,7 +65,7 @@ var MemberActivity = &graphql.Field{
 			}
 			memberID = at.Claims.ID
 
-			activityID, ok = p.Args["activityId"].(int)
+			activityID, ok = p.Args["activityId"].(int64)
 			if ok {
 				return data.GetMemberActivity(memberID, activityID)
 			}
@@ -74,4 +74,3 @@ var MemberActivity = &graphql.Field{
 		return nil, nil
 	},
 }
-

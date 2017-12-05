@@ -7,7 +7,7 @@ package queries
 //	"github.com/mappcpd/web-services/internal/platform/jwt"
 //)
 
-//// Activity query field fetches a single activity that belongs to a member
+//// MemberActivity query field fetches a single activity that belongs to a member
 //// identified by the token.
 //var Member = &graphql.Field{
 //	Name:        "Member",

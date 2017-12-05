@@ -43,7 +43,7 @@ func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
 		if s[i] == "self" {
 			// Get the ID off the url...
 			v := mux.Vars(r)
-			id, err := strconv.Atoi(v["id"])
+			id, err := strconv.ParseInt(v["id"], 10, 0)
 			if err != nil {
 				log.Printf("Authorize() error: %s", err.Error())
 				return false
@@ -69,7 +69,7 @@ func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
 // that the logged in member owns the record we currently fetch the activity record and compare the member_id with the
 // user id in the token.
 // todo - faster way to verify owner of an entity
-func AuthorizeID(w http.ResponseWriter, r *http.Request, mid int) bool {
+func AuthorizeID(w http.ResponseWriter, r *http.Request, mid int64) bool {
 
 	p := responder.Payload{}
 

@@ -21,7 +21,7 @@ func ResourcesID(w http.ResponseWriter, req *http.Request) {
 	p := _json.New(mw_.UserAuthToken.Token)
 	// Request - convert id from string to int type
 	v := mux.Vars(req)
-	id, err := strconv.Atoi(v["id"])
+	id, err := strconv.ParseInt(v["id"], 10, 0)
 	if err != nil {
 		p.Message = _json.Message{http.StatusBadRequest, "failed", err.Error()}
 	}

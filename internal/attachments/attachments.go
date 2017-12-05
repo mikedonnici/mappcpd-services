@@ -27,13 +27,13 @@ import (
 type Attachment struct {
 
 	// ID is the identifier of the attachment record
-	ID int `json:"id"`
+	ID int64 `json:"id"`
 
 	// EntityID represents is id of the record with which the attachment is associated
-	EntityID int `json:"entityId"`
+	EntityID int64 `json:"entityId"`
 
 	// UserID is a stored with attachment records when they are added by an admin user.
-	UserID int `json:"userId""`
+	UserID int64 `json:"userId""`
 
 	// Clean filename is a sanitised version of the original filename
 	CleanFilename string `json:"cleanFilename"`
@@ -166,7 +166,7 @@ func (a *Attachment) Register(flags ...string) error {
 	if err != nil {
 		return errors.New("Error getting last insert id - " + err.Error())
 	}
-	a.ID = int(id)
+	a.ID = int64(id)
 
 	return nil
 }
@@ -213,7 +213,7 @@ func (a *Attachment) Exists() error {
 	}
 
 	// Record exists so set ID
-	a.ID = id
+	a.ID = int64(id)
 	return nil
 }
 
@@ -234,7 +234,7 @@ func (a *Attachment) setURL() error {
 		return errors.New(msg)
 	}
 
-	a.URL = url + a.FileSet.Path + strconv.Itoa(a.EntityID) + "/" + a.CloudyFilename
+	a.URL = url + a.FileSet.Path + strconv.FormatInt(a.EntityID, 10) + "/" + a.CloudyFilename
 	return nil
 }
 

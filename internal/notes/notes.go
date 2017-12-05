@@ -5,8 +5,8 @@ import "github.com/mappcpd/web-services/internal/platform/datastore"
 // Note is just that - a note recorded in the system which may be linked to a member,
 // and more specifically to another entity such as an application, or an issue
 type Note struct {
-	ID            int          `json:"id" bson:"id"`
-	MemberID      int          `json:"memberId" bson:"memberId"`
+	ID            int64        `json:"id" bson:"id"`
+	MemberID      int64        `json:"memberId" bson:"memberId"`
 	DateCreated   string       `json:"dateCreated" bson:"dateCreated"`
 	DateUpdated   string       `json:"dateUpdated" bson:"dateUpdated"`
 	DateEffective string       `json:"dateEffective" bson:"dateEffective`
@@ -18,7 +18,7 @@ type Notes []Note
 
 // Attachment is a file linked to a note
 type Attachment struct {
-	ID   int    `json:"id" bson:"id"`
+	ID   int64  `json:"id" bson:"id"`
 	Name string `json:"name" bson:"name"`
 	URL  string `json:"url" bson:"url"`
 }
@@ -57,7 +57,7 @@ func (n *Note) SetAttachments() error {
 }
 
 // NoteById fetches a single Note record
-func NoteById(id int) (*Note, error) {
+func NoteById(id int64) (*Note, error) {
 
 	// Create Note value
 	n := Note{ID: id}
@@ -95,7 +95,7 @@ func NoteById(id int) (*Note, error) {
 }
 
 // NotesByMemberID fetches all the notes linked to a Member
-func NotesByMemberID(id int) (*Notes, error) {
+func NotesByMemberID(id int64) (*Notes, error) {
 
 	ns := Notes{}
 
