@@ -167,6 +167,8 @@ func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
 func AddMemberActivity(a MemberActivityRow) (int64, error) {
 
+	fmt.Printf("%#v", a)
+
 	validate := validator.New()
 	err := validate.Struct(a)
 	if err != nil {

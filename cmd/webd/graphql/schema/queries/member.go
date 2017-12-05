@@ -55,19 +55,17 @@ var MemberActivity = &graphql.Field{
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		var memberID, activityID int64
-
 		t, ok := p.Args["token"].(string)
 		if ok {
 			at, err := jwt.Check(t)
 			if err != nil {
 				return nil, err
 			}
-			memberID = at.Claims.ID
+			memberID := at.Claims.ID
 
-			activityID, ok = p.Args["activityId"].(int64)
+			activityID, ok := p.Args["activityId"].(int)
 			if ok {
-				return data.GetMemberActivity(memberID, activityID)
+				return data.GetMemberActivity(memberID, int64(activityID))
 			}
 		}
 

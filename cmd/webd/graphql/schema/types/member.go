@@ -55,6 +55,9 @@ var Member = graphql.NewObject(graphql.ObjectConfig{
 
 		// these require sub queries to fetch
 		"activities": activities,
+
+		// Mutations
+		"addActivity": addMemberActivity,
 	},
 })
 
@@ -67,5 +70,29 @@ var activities = &graphql.Field{
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 		src := p.Source.(data.Member)
 		return data.GetMemberActivities(src.ID)
+	},
+}
+
+// addMemberActivity records a new activity for a member
+var addMemberActivity = &graphql.Field{
+	Name:        "AddMemberActivity",
+	Description: "Add a member activity",
+	Type:        Activity,
+	Args: graphql.FieldConfigArgument{
+		"memberActivity": &graphql.ArgumentConfig{
+			Type:        MemberActivityInput,
+			Description: "A member activity input type",
+		},
+	},
+	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+		maObj, ok := p.Args["memberActivity"].(map[string]interface{})
+		if ok {
+			ma := data.MemberActivity{}
+			ma.Unpack(maObj)
+
+			return data.AddMemberActivity(501, ma)
+		}
+
+		return nil, nil
 	},
 }

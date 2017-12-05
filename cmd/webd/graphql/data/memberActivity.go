@@ -46,30 +46,43 @@ func GetMemberActivities(memberID int64) ([]MemberActivity, error) {
 // Unpack an object into a value of type MemberActivity
 func (ma *MemberActivity) Unpack(obj map[string]interface{}) {
 	if val, ok := obj["id"].(int64); ok {
+		fmt.Println("Unpack id:", val)
 		ma.ID = val
 	}
 	if val, ok := obj["date"].(string); ok {
+		fmt.Println("Unpack date:", val)
 		// todo: should handle date string error?
-		d, _ := time.Parse(time.RFC3339, val)
+		// date passed in like "2017-12-01"
+		//d, _ := time.Parse(time.RFC3339, val)
+		d, _ := time.Parse("2006-01-02", val)
 		ma.Date = d
 	}
 	if val, ok := obj["credit"].(float64); ok {
+		fmt.Println("Unpack credit:", val)
 		ma.Credit = val
 	}
-	if val, ok := obj["categoryId"].(int64); ok {
-		ma.CategoryID = val
+	if val, ok := obj["categoryId"].(int); ok {
+		fmt.Println("Unpack categoryId:", val)
+		ma.CategoryID = int64(val)
 	}
-	if val, ok := obj["typeId"].(int64); ok {
-		ma.TypeID = val
+	if val, ok := obj["typeId"].(int); ok {
+		fmt.Println("Unpack typeId:", val)
+		ma.TypeID = int64(val)
 	}
 	if val, ok := obj["description"].(string); ok {
+		fmt.Println("Unpack description:", val)
 		ma.Description = val
 	}
+
+	fmt.Printf("%#v", ma)
+
 }
 
 // GetMemberActivity fetches a single activities by id.
 // It verifies that the activity is owned by the member by memberID.
 func GetMemberActivity(memberID, activityID int64) (MemberActivity, error) {
+
+	fmt.Println("here")
 
 	var a MemberActivity
 

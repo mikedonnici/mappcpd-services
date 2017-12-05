@@ -7,6 +7,7 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
+	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/mutations"
 	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/queries"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
@@ -26,21 +27,20 @@ func Start(port string) {
 			},
 		})
 
-	//rootMutation := graphql.NewObject(
-	//	graphql.ObjectConfig{
-	//		Name:        "RootMutation",
-	//		Description: "...",
-	//		Fields: graphql.Fields{
-	//			"addVessel":   mutations.AddVessel,
-	//			"addVoyage":   mutations.AddVoyage,
-	//			"addPosition": mutations.AddPosition,
-	//		},
-	//	})
+	rootMutation := graphql.NewObject(
+		graphql.ObjectConfig{
+			Name:        "RootMutation",
+			Description: "...",
+			Fields: graphql.Fields{
+				"member": mutations.Member,
+				//"addMemberActivity":   mutations.AddMemberActivity,
+			},
+		})
 
 	schema, err := graphql.NewSchema(
 		graphql.SchemaConfig{
-			Query: rootQuery,
-			//Mutation: rootMutation,
+			Query:    rootQuery,
+			Mutation: rootMutation,
 		},
 	)
 	if err != nil {
