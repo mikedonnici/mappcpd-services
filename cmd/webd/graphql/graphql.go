@@ -18,7 +18,7 @@ func Start(port string) {
 
 	rootQuery := graphql.NewObject(
 		graphql.ObjectConfig{
-			Name:        "RootQuery",
+			Name:        "Query",
 			Description: "Root query",
 			Fields: graphql.Fields{
 				"memberUser": schema.MemberUser,
@@ -28,7 +28,7 @@ func Start(port string) {
 
 	rootMutation := graphql.NewObject(
 		graphql.ObjectConfig{
-			Name:        "RootMutation",
+			Name:        "Mutation",
 			Description: "...",
 			Fields: graphql.Fields{
 				"memberUser": schema.MemberUserInput,

@@ -40,22 +40,24 @@ var memberInputType = graphql.NewObject(graphql.ObjectConfig{
 	Description: "Top-level input for member fields",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
-			Type: graphql.Int,
+			Type:        graphql.Int,
 			Description: "Unique id of the member performing the operation, extracted from the token.",
 		},
 
-		"inputActivity": memberActivityInput,
+		"setActivity": memberActivityInput,
 	},
 })
 
 // memberActivity will either add a new member memberActivity, or edit an existing one, when the member memberActivity id is provided.
 var memberActivityInput = &graphql.Field{
-	Description: "Mutate a member memberActivity, will add new or edit if the memberActivity id is included in the argument object.",
-	Type:        memberActivityType, // this is what will return from this operation, ie the type we are mutating
+	Description: "Add or update a member activity. If `activityId` is present in the argument object, and the record " +
+		"belongs to the authenticated member, then it will be updated. If activityId is not present, or does not belong " +
+		"to the authenticated user, a new member activity record will be created.",
+	Type: memberActivityType, // this is what will return from this operation, ie the type we are mutating
 	Args: graphql.FieldConfigArgument{
 		"obj": &graphql.ArgumentConfig{
 			Type:        memberActivityInputType, // this is the type required as the arg
-			Description: "A member memberActivity input type",
+			Description: "An object containing the necessary fields to add or update a member activity",
 		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -74,6 +76,10 @@ var memberActivityInput = &graphql.Field{
 			err := ma.Unpack(maObj)
 			if err != nil {
 				return nil, err
+			}
+
+			if ma.ID > 0 {
+				return data.UpdateMemberActivity(memberID, ma)
 			}
 
 			return data.AddMemberActivity(memberID, ma)

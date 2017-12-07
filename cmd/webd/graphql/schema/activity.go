@@ -6,16 +6,19 @@ import (
 
 // memberActivity represents a Member memberActivity record (not memberActivity type record)
 var memberActivityType = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "memberActivity",
-	Description: "An memberActivity record belonging to a member",
+	Name: "memberActivity",
+	Description: "An activity record belonging to a member. This is an instance on an activity *type* that is recorded " +
+		"by a member as having been completed on a particular date, with additional information such as a detailed description",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "id of the member memberActivity record",
+			Description: "The id of the member activity record",
 		},
 		"date": &graphql.Field{
-			Type:        graphql.DateTime,
-			Description: "The date of the memberActivity",
+			Type: graphql.DateTime,
+			Description: "The date the activity was undertaken. Note only a date string is required, eg '2017-12-07' and " +
+				"any time information is discarded. The date may be returned as an RFC3339 date format with teh time set " +
+				"to 00:00:00 UTC. This is to facilitate date ordering and other date-related operations.",
 		},
 		"credit": &graphql.Field{
 			Type:        graphql.Float,
@@ -64,11 +67,6 @@ var memberActivityInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 		"credit": &graphql.InputObjectFieldConfig{
 			Type:        &graphql.NonNull{OfType: graphql.Float},
 			Description: "Value or credit for the memberActivity",
-		},
-
-		"categoryId": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "The memberActivity category id",
 		},
 
 		"typeId": &graphql.InputObjectFieldConfig{

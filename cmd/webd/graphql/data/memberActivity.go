@@ -130,6 +130,28 @@ func AddMemberActivity(memberID int, memberActivity MemberActivity) (MemberActiv
 }
 
 // UpdateMemberActivity adds a member activity
-func UpdateMemberActivity(ma MemberActivity) {
+func UpdateMemberActivity(memberID int, memberActivity MemberActivity) (MemberActivity, error) {
+
+	// Create the required type for the insert
+	ma := members.MemberActivityRow{
+		MemberID:    memberID,
+		ID:          memberActivity.ID,     // id of the activity instance
+		ActivityID:  memberActivity.TypeID, // id of the activity type
+		Date:        memberActivity.Date.String(),
+		Quantity:    memberActivity.Credit,
+		Description: memberActivity.Description,
+	}
+
+	// A return value for the new record
+	var mar MemberActivity
+
+	// This just returns an error so re-fetch the member activity record
+	// so that all the fields are populated for the response.
+	err := members.UpdateMemberActivity(ma)
+	if err != nil {
+		return mar, err
+	}
+
+	return GetMemberActivity(memberID, ma.ID)
 
 }
