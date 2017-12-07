@@ -21,13 +21,38 @@ type MemberActivity struct {
 	Description string    `json:"description"`
 }
 
-// GetMemberActivities fetches activities for a member
-func GetMemberActivities(memberID int) ([]MemberActivity, error) {
+// GetMemberActivities fetches activities for a member. By default it returns the entire set,
+// ordered by activity date desc. Some filters have been added here for the caller's convenience.
+func GetMemberActivities(memberID int, filter map[string]interface{}) ([]MemberActivity, error) {
 	var xa []MemberActivity
 
-	// This returns a nested struct which we can simplify
+	// This returns a nested struct which is simplified below.
 	xma, err := members.MemberActivitiesByMemberID(memberID)
+
+	// Set up date filters
+	from, okFrom := filter["from"].(time.Time)
+	to, okTo := filter["to"].(time.Time)
+	if okFrom && okTo {
+		if from.After(to) {
+			return xa, errors.New("from date cannot be after to date")
+		}
+	}
+
 	for _, v := range xma {
+
+		// Apply date filters, skip to next iteration if the data is outside the range
+		if okFrom {
+			if v.DateISO.Before(from) {
+				continue
+			}
+		}
+		if okTo {
+			if v.DateISO.After(to) {
+				continue
+			}
+		}
+
+		// Passed through date filters, add the record to our simplified struct
 		a := MemberActivity{
 			ID:          v.ID,
 			Date:        v.DateISO,
@@ -40,6 +65,19 @@ func GetMemberActivities(memberID int) ([]MemberActivity, error) {
 		}
 		xa = append(xa, a)
 	}
+
+
+	// Although less efficient, apply 'last' n filter last - otherwise it cannot be used in conjunction with
+	// the date filters.
+	last, ok := filter["last"].(int)
+	if ok {
+		// Activities are returned in reverse order so returning the 'last' n items, ie the most *recent*, means
+		// slicing from the index 0. If n is greater than the total, just return the total.
+		if last < len(xma) {
+			xa = xa[:last]
+		}
+	}
+
 
 	return xa, err
 }

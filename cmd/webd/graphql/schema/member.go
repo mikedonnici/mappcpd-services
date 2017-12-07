@@ -4,6 +4,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/mappcpd/web-services/cmd/webd/graphql/data"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/mappcpd/web-services/internal/utility"
 )
 
 // MemberUser is exported field attached to the root query. It is a top-level 'viewer' query field that ensures data
@@ -120,6 +121,7 @@ var memberActivity = &graphql.Field{
 			return nil, err
 		}
 		memberID := at.Claims.ID
+
 		activityID, ok := p.Args["activityId"].(int)
 		if ok {
 			return data.GetMemberActivity(memberID, int(activityID))
@@ -133,9 +135,51 @@ var memberActivity = &graphql.Field{
 var memberActivities = &graphql.Field{
 	Description: "Fetches a list of member memberActivities",
 	Type:        graphql.NewList(memberActivityType),
-	// Todo - add args to filter the list in some way
+	Args: graphql.FieldConfigArgument{
+		"last": &graphql.ArgumentConfig{
+			Type:        graphql.Int,
+			Description: "Fetch only the last (most recent) n records.",
+		},
+		"from": &graphql.ArgumentConfig{
+			Type:        graphql.String,
+			Description: "Fetch activities from this date - format 'YYYY-MM-DD'",
+		},
+		"to": &graphql.ArgumentConfig{
+			Type:        graphql.String,
+			Description: "Fetch activities up to and including this date - format 'YYYY-MM-DD'",
+		},
+	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-		src := p.Source.(data.Member)
-		return data.GetMemberActivities(src.ID)
+
+		// Extract member id from the token, available thus:
+		token := p.Info.VariableValues["token"]
+		at, err := jwt.Check(token.(string))
+		if err != nil {
+			return nil, err
+		}
+		memberID := at.Claims.ID
+
+		// Filter arguments
+		f := make(map[string]interface{})
+		last, ok := p.Args["last"].(int)
+		if ok {
+			f["last"] = last
+		}
+		from, ok := p.Args["from"].(string)
+		if ok {
+			f["from"], err = utility.DateStringToTime(from)
+			if err != nil {
+				return nil, err
+			}
+		}
+		to, ok := p.Args["to"].(string)
+		if ok {
+			f["to"], err = utility.DateStringToTime(to)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		return data.GetMemberActivities(memberID, f)
 	},
 }
