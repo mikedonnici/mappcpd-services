@@ -1,6 +1,3 @@
-/*
-	Package responder implements a consistent JSON response for api requests
-*/
 package responder
 
 import (

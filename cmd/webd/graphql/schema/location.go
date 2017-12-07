@@ -1,10 +1,10 @@
-package types
+package schema
 
 import "github.com/graphql-go/graphql"
 
-// Location represents one or more contact locations pertaining to a member
-var Location = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "Location",
+// location represents one or more contact locations pertaining to a member
+var memberLocationType = graphql.NewObject(graphql.ObjectConfig{
+	Name:        "location",
 	Description: "A contact location belonging to a member",
 	Fields: graphql.Fields{
 		"order": &graphql.Field{

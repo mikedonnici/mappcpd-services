@@ -30,7 +30,7 @@ import (
 // Member defines struct for member record
 type Member struct {
 	_id       string    `json:"_id" bson:"_id"`
-	ID        int     `json:"id" bson:"id"`
+	ID        int       `json:"id" bson:"id"`
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 

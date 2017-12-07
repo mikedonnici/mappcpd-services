@@ -47,7 +47,7 @@ func AdminSubRouter(prefix string) *mux.Router {
 	return admin
 }
 
-// AdminMiddleWare wraps the require middleware handlers around the router passed in
+// AdminMiddleware wraps the require middleware handlers around the router passed in
 func AdminMiddleware(r *mux.Router) *negroni.Negroni {
 
 	// Recovery from panic

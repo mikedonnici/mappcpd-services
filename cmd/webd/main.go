@@ -75,9 +75,11 @@ func main() {
 	}
 
 	// ??
-	msg := "Don't know which server type to start.\n" +
+	msg := "Problem starting server.\n" +
 		"The required env var WEBD_TYPE is set to '%s' and should be either 'rest' or 'graphql'.\n" +
 		"Alternatively, the flags -s [type] and -p [port] can be used to specify server type and port.\n" +
-		"Try webd -h for help.\n"
-	fmt.Printf(msg, os.Getenv("WEBD_TYPE"))
+		"Try webd -h for help.\n" +
+		"Also, make sure nothing is already listening on port %s - try this:\n" +
+		"$ netstat -tulpn | grep %s\n"
+	fmt.Printf(msg, os.Getenv("WEBD_TYPE"), serverPort, serverPort)
 }

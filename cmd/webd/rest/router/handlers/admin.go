@@ -21,6 +21,7 @@ import (
 	"github.com/mappcpd/web-services/internal/resources"
 )
 
+// AdminTest is a test endpoint
 func AdminTest(w http.ResponseWriter, _ *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
@@ -201,7 +202,7 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 		}
 
 		m, _ = members.MemberByID(int(id)) // Re-fetch
-		members.SyncMember(m)                // Sync to doc db
+		members.SyncMember(m)              // Sync to doc db
 
 		p.Message = responder.Message{http.StatusOK, "success", "MySQLConnection record updated and copied to MongoDB"}
 		p.Data = m
@@ -293,7 +294,7 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
-// AdminMembersIDListHandler fetches a list of all member ids from MySQL
+// AdminIDList fetches a list of all member ids from MySQL
 func AdminIDList(w http.ResponseWriter, req *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
@@ -370,12 +371,12 @@ func AdminBatchResourcesPost(w http.ResponseWriter, r *http.Request) {
 		id, err := r.Save()
 		if err != nil {
 			data.Failures[r.Name] = err.Error()
-			failCount += 1
+			failCount++
 			continue
 		}
 		// otherwise, add the id to the list
 		data.SuccessIDs = append(data.SuccessIDs, id)
-		successCount += 1
+		successCount++
 	}
 
 	p.Message = responder.Message{http.StatusOK, "success", "Batch completed - see Failures for errors"}

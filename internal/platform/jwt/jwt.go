@@ -24,7 +24,7 @@ type AuthToken struct {
 }
 
 type TokenClaims struct {
-	ID    int    `json:"id"`
+	ID    int      `json:"id"`
 	Name  string   `json:"name"`
 	Scope []string `json:"scope"`
 	jwt.StandardClaims

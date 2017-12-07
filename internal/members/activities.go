@@ -15,8 +15,8 @@ import (
 // MemberActivityDoc is the document format for an activity that is
 // recorded by a member - that is, a CPD diary entry
 type MemberActivityDoc struct {
-	ID          int                       `json:"id" bson:"id"`
-	MemberID    int                       `json:"memberId" bson:"memberId"`
+	ID          int                         `json:"id" bson:"id"`
+	MemberID    int                         `json:"memberId" bson:"memberId"`
 	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
 	Date        string                      `json:"date" bson:"date"`
@@ -31,10 +31,10 @@ type MemberActivityDoc struct {
 // MemberActivityRow represents the minimum data to add or update a Member Activity.
 // 'Row' implies a representation of the relevant SQL table row.
 type MemberActivityRow struct {
-	ID          int   `json:"ID"`
-	MemberID    int   `json:"memberID"`
-	ActivityID  int   `json:"activityID" validate:"required,min=1"`
-	Evidence    int   `json:"evidence"`
+	ID          int     `json:"ID"`
+	MemberID    int     `json:"memberID"`
+	ActivityID  int     `json:"activityID" validate:"required,min=1"`
+	Evidence    int     `json:"evidence"`
 	Date        string  `json:"date" validate:"required"`
 	Quantity    float64 `json:"quantity" validate:"required"`
 	UnitCredit  float64 `json:"unitCredit"`
@@ -166,8 +166,6 @@ func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
 func AddMemberActivity(a MemberActivityRow) (int, error) {
-
-	fmt.Printf("%#v", a)
 
 	validate := validator.New()
 	err := validate.Struct(a)

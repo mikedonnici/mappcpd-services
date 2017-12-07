@@ -7,7 +7,7 @@ import (
 // ActivityType describes the type of activity, eg online learning. This is NOT the same
 // as the category which is a much broader grouping.
 type Activity struct {
-	ID          int          `json:"id" bson:"id"`
+	ID          int            `json:"id" bson:"id"`
 	Code        string         `json:"code" bson:"code"`
 	Name        string         `json:"name" bson:"name"`
 	Description string         `json:"description" bson:"description"`
@@ -26,7 +26,7 @@ type ActivityCredit struct {
 
 // ActivityCategory stored details about the category
 type ActivityCategory struct {
-	ID          int  `json:"id" bson:"id"`
+	ID          int    `json:"id" bson:"id"`
 	Code        string `json:"code" bson:"code"`
 	Name        string `json:"name" bson:"name"`
 	Description string `json:"description" bson:"description"`

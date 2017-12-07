@@ -20,6 +20,7 @@ const (
 	v1ReportBase  = "/v1/r"
 )
 
+// Start fires up the router that handles requests to REST api endpoints
 func Start(port string) {
 
 	// Router

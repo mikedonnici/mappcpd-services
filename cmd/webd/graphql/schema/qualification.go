@@ -1,10 +1,10 @@
-package types
+package schema
 
 import "github.com/graphql-go/graphql"
 
-// Qualification represents a qualification obtained by the member
-var Qualification = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "Qualification",
+// qualification represents a qualification obtained by the member
+var qualificationType = graphql.NewObject(graphql.ObjectConfig{
+	Name:        "qualification",
 	Description: "An academic qualification obtained by the member",
 	Fields: graphql.Fields{
 		"code": &graphql.Field{

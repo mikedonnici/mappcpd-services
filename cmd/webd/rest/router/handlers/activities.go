@@ -73,7 +73,7 @@ func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
-// Activities fetches a single activity record by id
+// MembersActivitiesID fetches a single activity record by id
 func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)

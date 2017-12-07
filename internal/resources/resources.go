@@ -24,11 +24,11 @@ import (
 // Resource record
 type Resource struct {
 	OID          bson.ObjectId          `json:"_id,omitempty" bson:"_id,omitempty"`
-	ID           int                  `json:"id" bson:"id"`
+	ID           int                    `json:"id" bson:"id"`
 	CreatedAt    time.Time              `json:"createdAt" bson:"createdAt"`
 	UpdatedAt    time.Time              `json:"updatedAt" bson:"updatedAt"`
 	PubDate      PubDate                `json:"pubDate" bson:"pubDate"`
-	TypeID       int                  `json:"typeId" bson:"typeId"`
+	TypeID       int                    `json:"typeId" bson:"typeId"`
 	Type         string                 `json:"type" bson:"type"`
 	Primary      bool                   `json:"primary" bson:"primary"`
 	Name         string                 `json:"name" bson:"name"`

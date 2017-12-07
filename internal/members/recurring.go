@@ -19,14 +19,14 @@ type Recurring struct {
 	//ID         string              `json:"_id" bson:"_id"`
 	CreatedAt  time.Time           `json:"createdAt" bson:"createdAt"`
 	UpdatedAt  time.Time           `json:"updatedAt" bson:"updatedAt"`
-	MemberID   int               `json:"memberId" bson:"memberId" validate:"required,min=1"`
+	MemberID   int                 `json:"memberId" bson:"memberId" validate:"required,min=1"`
 	Activities []RecurringActivity `json:"activities" bson:"activities"`
 }
 
 // RecurringActivity represents an individual recurring activity.
 type RecurringActivity struct {
 	ID          bson.ObjectId `json:"_id" bson:"_id"`
-	ActivityID  int         `json:"activityId" bson:"activityId" validate:"required,min=1"`
+	ActivityID  int           `json:"activityId" bson:"activityId" validate:"required,min=1"`
 	CreatedAt   time.Time     `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time     `json:"updatedAt" bson:"updatedAt"`
 	Quantity    float64       `json:"quantity" validate:"required"`

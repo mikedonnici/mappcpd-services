@@ -7,7 +7,7 @@ import (
 // Member struct - a simpler representation than members.Member
 // This is used as a 'viewer' field and the id is passed down to child queries.
 type Member struct {
-	ID             int                    `json:"id"`
+	ID             int                      `json:"id"`
 	Active         bool                     `json:"active"`
 	Title          string                   `json:"title"`
 	FirstName      string                   `json:"firstName"`

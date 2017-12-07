@@ -5,8 +5,8 @@ import "github.com/mappcpd/web-services/internal/platform/datastore"
 // Note is just that - a note recorded in the system which may be linked to a member,
 // and more specifically to another entity such as an application, or an issue
 type Note struct {
-	ID            int        `json:"id" bson:"id"`
-	MemberID      int        `json:"memberId" bson:"memberId"`
+	ID            int          `json:"id" bson:"id"`
+	MemberID      int          `json:"memberId" bson:"memberId"`
 	DateCreated   string       `json:"dateCreated" bson:"dateCreated"`
 	DateUpdated   string       `json:"dateUpdated" bson:"dateUpdated"`
 	DateEffective string       `json:"dateEffective" bson:"dateEffective`
@@ -18,7 +18,7 @@ type Notes []Note
 
 // Attachment is a file linked to a note
 type Attachment struct {
-	ID   int  `json:"id" bson:"id"`
+	ID   int    `json:"id" bson:"id"`
 	Name string `json:"name" bson:"name"`
 	URL  string `json:"url" bson:"url"`
 }

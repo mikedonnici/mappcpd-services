@@ -6,16 +6,17 @@ import (
 	"time"
 
 	"github.com/mappcpd/web-services/internal/members"
+	"github.com/mappcpd/web-services/internal/utility"
 )
 
 // MemberActivity is a simpler representation of the member activity than the nested one in the current REST api.
 type MemberActivity struct {
-	ID          int     `json:"id"`
+	ID          int       `json:"id"`
 	Date        time.Time `json:"date"`
 	Credit      float64   `json:"credit"`
-	CategoryID  int     `json:"categoryId"`
+	CategoryID  int       `json:"categoryId"`
 	Category    string    `json:"category"`
-	TypeID      int     `json:"typeId"`
+	TypeID      int       `json:"typeId"`
 	Type        string    `json:"type"`
 	Description string    `json:"description"`
 }
@@ -44,45 +45,36 @@ func GetMemberActivities(memberID int) ([]MemberActivity, error) {
 }
 
 // Unpack an object into a value of type MemberActivity
-func (ma *MemberActivity) Unpack(obj map[string]interface{}) {
+func (ma *MemberActivity) Unpack(obj map[string]interface{}) error {
 	if val, ok := obj["id"].(int); ok {
-		fmt.Println("Unpack id:", val)
 		ma.ID = val
 	}
 	if val, ok := obj["date"].(string); ok {
-		fmt.Println("Unpack date:", val)
-		// todo: should handle date string error?
-		// date passed in like "2017-12-01"
-		//d, _ := time.Parse(time.RFC3339, val)
-		d, _ := time.Parse("2006-01-02", val)
+		d, err := utility.DateStringToTime(val)
+		if err != nil {
+			return err
+		}
 		ma.Date = d
 	}
 	if val, ok := obj["credit"].(float64); ok {
-		fmt.Println("Unpack credit:", val)
 		ma.Credit = val
 	}
 	if val, ok := obj["categoryId"].(int); ok {
-		fmt.Println("Unpack categoryId:", val)
 		ma.CategoryID = int(val)
 	}
 	if val, ok := obj["typeId"].(int); ok {
-		fmt.Println("Unpack typeId:", val)
 		ma.TypeID = int(val)
 	}
 	if val, ok := obj["description"].(string); ok {
-		fmt.Println("Unpack description:", val)
 		ma.Description = val
 	}
 
-	fmt.Printf("%#v", ma)
-
+	return nil
 }
 
 // GetMemberActivity fetches a single activities by id.
 // It verifies that the activity is owned by the member by memberID.
 func GetMemberActivity(memberID, activityID int) (MemberActivity, error) {
-
-	fmt.Println("here")
 
 	var a MemberActivity
 

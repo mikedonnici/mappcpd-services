@@ -13,8 +13,8 @@ type Evaluation struct {
 
 // MemberEvaluation represents an Evaluation belonging to a Member
 type MemberEvaluation struct {
-	ID             int                `json:"id" bson:"id"`
-	MemberID       int                `json:"memberId" bson:"memberId"`
+	ID             int                  `json:"id" bson:"id"`
+	MemberID       int                  `json:"memberId" bson:"memberId"`
 	Name           string               `json:"name" bson:"name"`
 	StartDate      string               `json:"startDate" bson:"startDate"`
 	EndDate        string               `json:"endDate" bson:"endDate"`

@@ -1,10 +1,10 @@
-package types
+package schema
 
 import "github.com/graphql-go/graphql"
 
-// Position represents a position held by a member
-var Position = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "Position",
+// position represents a position held by a member
+var positionType = graphql.NewObject(graphql.ObjectConfig{
+	Name:        "position",
 	Description: "A position or affiliation with a council, committee or group",
 	Fields: graphql.Fields{
 		"orgCode": &graphql.Field{

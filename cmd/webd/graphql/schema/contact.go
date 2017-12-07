@@ -1,10 +1,10 @@
-package types
+package schema
 
 import "github.com/graphql-go/graphql"
 
 // Contact represents a contact 'card' - that is, a single contact record that pertains to a Member.
-var Contact = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "Contact",
+var memberContactType = graphql.NewObject(graphql.ObjectConfig{
+	Name:        "contact",
 	Description: "A contact record belonging to a member",
 	Fields: graphql.Fields{
 		"emailPrimary": &graphql.Field{
@@ -17,7 +17,7 @@ var Contact = graphql.NewObject(graphql.ObjectConfig{
 			Type: graphql.String,
 		},
 		"locations": &graphql.Field{
-			Type: graphql.NewList(Location),
+			Type: graphql.NewList(memberLocationType),
 		},
 	},
 })

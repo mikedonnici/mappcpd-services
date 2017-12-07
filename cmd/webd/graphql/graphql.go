@@ -7,22 +7,21 @@ import (
 
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
-	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/mutations"
-	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/queries"
+	"github.com/mappcpd/web-services/cmd/webd/graphql/schema"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
+// Start fires up the GraphQL server
 func Start(port string) {
 
 	datastore.Connect()
 
 	rootQuery := graphql.NewObject(
 		graphql.ObjectConfig{
-			Name: "RootQuery",
+			Name:        "RootQuery",
+			Description: "Root query",
 			Fields: graphql.Fields{
-				"member":         queries.Member,
-				"memberActivity": queries.MemberActivity,
-				//"member":  queries.Member,
+				"memberUser": schema.MemberUser,
 				//"members": queries.Members,
 			},
 		})
@@ -32,8 +31,7 @@ func Start(port string) {
 			Name:        "RootMutation",
 			Description: "...",
 			Fields: graphql.Fields{
-				"member": mutations.Member,
-				//"addMemberActivity":   mutations.AddMemberActivity,
+				"memberUser": schema.MemberUserInput,
 			},
 		})
 
