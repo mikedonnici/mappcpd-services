@@ -57,6 +57,8 @@ func Start(port string) {
 	// CORS handler - needed to add OptionsPassThrough for preflight requests which use OPTIONS http method
 	//handler := cors.Default().Handler(r)
 	// Todo... tighten this up - not sure if needed  with preflightHandler??
+	// todo: seem to have sorted this in the graphql handler so can possible remove the Preflight handler
+	// in favour of the same set tup in graphql
 	handler := cors.New(cors.Options{
 		AllowedOrigins:     []string{"*"},
 		AllowedMethods:     []string{"*"},

@@ -15,17 +15,21 @@ var memberActivityType = graphql.NewObject(graphql.ObjectConfig{
 			Description: "The id of the member activity record",
 		},
 		"date": &graphql.Field{
+			Type:        graphql.String,
+			Description: "The date the activity was undertaken, as string format 'YYYY-MM-DD'.",
+		},
+		"dateTime": &graphql.Field{
 			Type: graphql.DateTime,
 			Description: "The date the activity was undertaken. Note only a date string is required, eg '2017-12-07' and " +
-				"any time information is discarded. The date may be returned as an RFC3339 date format with teh time set " +
-				"to 00:00:00 UTC. This is to facilitate date ordering and other date-related operations.",
+				"any time information is discarded. This field returns the date in RFC3339 format with the time set " +
+				"to 00:00:00 UTC to facilitate date ordering and other date-related operations.",
 		},
 		"credit": &graphql.Field{
 			Type:        graphql.Float,
 			Description: "Value or credit for the memberActivity",
 		},
 		"categoryId": &graphql.Field{
-			Type:        graphql.String,
+			Type:        graphql.Int,
 			Description: "The memberActivity category id",
 		},
 		"category": &graphql.Field{
@@ -37,7 +41,7 @@ var memberActivityType = graphql.NewObject(graphql.ObjectConfig{
 			Description: "The type of memberActivity",
 		},
 		"typeId": &graphql.Field{
-			Type:        graphql.String,
+			Type:        graphql.Int,
 			Description: "The memberActivity type id",
 		},
 		"description": &graphql.Field{
@@ -60,7 +64,7 @@ var memberActivityInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 		},
 
 		"date": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.DateTime},
+			Type:        &graphql.NonNull{OfType: graphql.String},
 			Description: "The date of the memberActivity",
 		},
 

@@ -12,7 +12,8 @@ import (
 // MemberActivity is a simpler representation of the member activity than the nested one in the current REST api.
 type MemberActivity struct {
 	ID          int       `json:"id"`
-	Date        time.Time `json:"date"`
+	Date        string    `json:"date"`
+	DateTime    time.Time `json:"dateTime"`
 	Credit      float64   `json:"credit"`
 	CategoryID  int       `json:"categoryId"`
 	Category    string    `json:"category"`
@@ -55,7 +56,8 @@ func GetMemberActivities(memberID int, filter map[string]interface{}) ([]MemberA
 		// Passed through date filters, add the record to our simplified struct
 		a := MemberActivity{
 			ID:          v.ID,
-			Date:        v.DateISO,
+			Date:        v.Date,
+			DateTime:    v.DateISO,
 			Credit:      v.Credit,
 			CategoryID:  v.Category.ID,
 			Category:    v.Category.Name,
@@ -65,7 +67,6 @@ func GetMemberActivities(memberID int, filter map[string]interface{}) ([]MemberA
 		}
 		xa = append(xa, a)
 	}
-
 
 	// Although less efficient, apply 'last' n filter last - otherwise it cannot be used in conjunction with
 	// the date filters.
@@ -78,7 +79,6 @@ func GetMemberActivities(memberID int, filter map[string]interface{}) ([]MemberA
 		}
 	}
 
-
 	return xa, err
 }
 
@@ -88,11 +88,12 @@ func (ma *MemberActivity) Unpack(obj map[string]interface{}) error {
 		ma.ID = val
 	}
 	if val, ok := obj["date"].(string); ok {
+		ma.Date = val
 		d, err := utility.DateStringToTime(val)
 		if err != nil {
 			return err
 		}
-		ma.Date = d
+		ma.DateTime = d
 	}
 	if val, ok := obj["credit"].(float64); ok {
 		ma.Credit = val
@@ -129,7 +130,8 @@ func GetMemberActivity(memberID, activityID int) (MemberActivity, error) {
 	}
 
 	a.ID = ma.ID
-	a.Date = ma.DateISO
+	a.Date = ma.Date
+	a.DateTime = ma.DateISO
 	a.Credit = ma.Credit
 	a.CategoryID = ma.Category.ID
 	a.Category = ma.Category.Name
@@ -148,7 +150,7 @@ func AddMemberActivity(memberID int, memberActivity MemberActivity) (MemberActiv
 	ma := members.MemberActivityRow{
 		MemberID:    memberID,
 		ActivityID:  memberActivity.TypeID,
-		Date:        memberActivity.Date.String(),
+		Date:        memberActivity.Date,
 		Quantity:    memberActivity.Credit,
 		Description: memberActivity.Description,
 	}
@@ -175,7 +177,7 @@ func UpdateMemberActivity(memberID int, memberActivity MemberActivity) (MemberAc
 		MemberID:    memberID,
 		ID:          memberActivity.ID,     // id of the activity instance
 		ActivityID:  memberActivity.TypeID, // id of the activity type
-		Date:        memberActivity.Date.String(),
+		Date:        memberActivity.Date,
 		Quantity:    memberActivity.Credit,
 		Description: memberActivity.Description,
 	}

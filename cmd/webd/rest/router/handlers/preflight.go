@@ -30,6 +30,5 @@ func Preflight(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type")
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE")
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
 	io.WriteString(w, "Cabin crew, please arm doors and crosscheck :)")
 }
