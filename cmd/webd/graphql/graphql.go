@@ -23,7 +23,7 @@ func Start(port string) {
 			Description: "Root query",
 			Fields: graphql.Fields{
 				"memberUser": schema.MemberUser,
-				//"members": queries.Members,
+				"activities": schema.Activities,
 			},
 		})
 
@@ -64,31 +64,3 @@ func Start(port string) {
 	fmt.Println("GraphQL server listening at", os.Getenv("MAPPCPD_API_URL")+":"+port+"/graphql")
 	http.ListenAndServe(":"+port, nil)
 }
-
-// optionsCheck checks if the request is an OPTIONS type, and if so returns an options handler.
-// Otherwise it just calls the
-//func optionsCheck(h http.Handler) http.Handler {
-//
-//	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//		if r.Method == "OPTIONS" {
-//			optionsHandler(w,r)
-//		} else {
-//			h.ServeHTTP(w, r)
-//		}
-//
-//	})
-//}
-
-// optionsHandler handles an OPTIONS request such as is made by Chrome in preflight requests.
-// This is the same as the Preflight() func in the REST server
-//func optionsHandler(w http.ResponseWriter, r *http.Request) {
-//	h := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//		fmt.Println("Handling OPTIONS request")
-//		w.Header().Set("Access-Control-Allow-Origin", "*")
-//		w.Header().Set("Access-Control-Allow-Headers", "Authorization,Content-Type")
-//		w.Header().Set("Access-Control-Allow-Methods", "GET,POST")
-//		w.Header().Set("Content-Type", "text/plain")
-//		io.WriteString(w, "Cabin crew, please arm doors and crosscheck :)")
-//	})
-//	h.ServeHTTP(w,r)
-//}
