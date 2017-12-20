@@ -2,15 +2,15 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
-	"strconv"
-	"fmt"
 	"github.com/34South/envr"
+	"github.com/dgrijalva/jwt-go"
 )
 
 // tokenLifeHours specifies the expiry time of the JWT, specified in env
@@ -33,10 +33,10 @@ type TokenClaims struct {
 	jwt.StandardClaims
 }
 
-
 func init() {
+	var err error
 	envr.New("jwtEnv", []string{"JWT_TTL_HOURS"}).Auto()
-	tokenLifeHours, err := strconv.Atoi(os.Getenv("JWT_TTL_HOURS"))
+	tokenLifeHours, err = strconv.Atoi(os.Getenv("JWT_TTL_HOURS"))
 	if err != nil {
 		fmt.Println("Error setting tokenLifeHours from env var JWT_TTL_HOURS -", err)
 		fmt.Println("Setting a default value of 48 hours")
