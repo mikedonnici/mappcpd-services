@@ -8,10 +8,13 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"strconv"
+	"fmt"
+	"github.com/34South/envr"
 )
 
-// todo - tokenLifeHours should be configurable via env var
-const tokenLifeHours = 168 // 1 week
+// tokenLifeHours specifies the expiry time of the JWT, specified in env
+var tokenLifeHours int
 
 // The key for signing the JWTs - using the MYSQL_URL string for now so it will be host specific
 var signingKey = []byte(os.Getenv("MAPPCPD_MYSQL_URL"))
@@ -30,6 +33,17 @@ type TokenClaims struct {
 	jwt.StandardClaims
 }
 
+
+func init() {
+	envr.New("jwtEnv", []string{"JWT_TTL_HOURS"}).Auto()
+	tokenLifeHours, err := strconv.Atoi(os.Getenv("JWT_TTL_HOURS"))
+	if err != nil {
+		fmt.Println("Error setting tokenLifeHours from env var JWT_TTL_HOURS -", err)
+		fmt.Println("Setting a default value of 48 hours")
+		tokenLifeHours = 48
+	}
+}
+
 // CreateJWT creates a JWT
 func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 
@@ -43,7 +57,7 @@ func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 		scope,
 		jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour * tokenLifeHours).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * time.Duration(tokenLifeHours)).Unix(),
 			Issuer:    os.Getenv("MAPPCPD_API_URL"),
 		},
 	}
