@@ -97,8 +97,10 @@ var memberType = graphql.NewObject(graphql.ObjectConfig{
 		},
 
 		// sub queries
-		"activity":   memberActivity,
-		"activities": memberActivities,
+		"activity":    memberActivity,
+		"activities":  memberActivities,
+		"evaluation":  memberCurrentEvaluation,
+		"evaluations": memberEvaluations,
 	},
 })
 
@@ -181,5 +183,41 @@ var memberActivities = &graphql.Field{
 		}
 
 		return data.GetMemberActivities(memberID, f)
+	},
+}
+
+// memberCurrentEvaluation field fetches the current evaluation period data
+var memberCurrentEvaluation = &graphql.Field{
+	Description: "Fetches activity data for the current evaluation period",
+	Type:        memberEvaluationType,
+	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+
+		// Extract member id from the token, available thus:
+		token := p.Info.VariableValues["token"]
+		at, err := jwt.Check(token.(string))
+		if err != nil {
+			return nil, err
+		}
+		memberID := at.Claims.ID
+
+		return data.GetCurrentEvaluation(memberID)
+	},
+}
+
+// memberEvaluations field fetches a list of activity evaluations for the member
+var memberEvaluations = &graphql.Field{
+	Description: "Fetches a history of member activity evaluation periods",
+	Type:        graphql.NewList(memberEvaluationType),
+	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+
+		// Extract member id from the token, available thus:
+		token := p.Info.VariableValues["token"]
+		at, err := jwt.Check(token.(string))
+		if err != nil {
+			return nil, err
+		}
+		memberID := at.Claims.ID
+
+		return data.GetMemberEvaluations(memberID)
 	},
 }
