@@ -2,13 +2,19 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
+	"github.com/34South/envr"
 	"github.com/dgrijalva/jwt-go"
 )
+
+// tokenLifeHours specifies the expiry time of the JWT, specified in env
+var tokenLifeHours int
 
 // The key for signing the JWTs - using the MYSQL_URL string for now so it will be host specific
 var signingKey = []byte(os.Getenv("MAPPCPD_MYSQL_URL"))
@@ -27,6 +33,17 @@ type TokenClaims struct {
 	jwt.StandardClaims
 }
 
+func init() {
+	var err error
+	envr.New("jwtEnv", []string{"JWT_TTL_HOURS"}).Auto()
+	tokenLifeHours, err = strconv.Atoi(os.Getenv("JWT_TTL_HOURS"))
+	if err != nil {
+		fmt.Println("Error setting tokenLifeHours from env var JWT_TTL_HOURS -", err)
+		fmt.Println("Setting a default value of 48 hours")
+		tokenLifeHours = 48
+	}
+}
+
 // CreateJWT creates a JWT
 func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 
@@ -40,7 +57,7 @@ func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
 		scope,
 		jwt.StandardClaims{
 			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour * 4).Unix(),
+			ExpiresAt: time.Now().Add(time.Hour * time.Duration(tokenLifeHours)).Unix(),
 			Issuer:    os.Getenv("MAPPCPD_API_URL"),
 		},
 	}
@@ -167,7 +184,7 @@ func (t *AuthToken) setDates() {
 	if ok && tok.Valid {
 
 		// The dates in Claims are stored as float64
-		// we want friendly date strings so need int64 first!
+		// we want friendly date strings so need int first!
 		iat := int64(claims["iat"].(float64))
 		exp := int64(claims["exp"].(float64))
 

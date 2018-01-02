@@ -17,11 +17,11 @@ type Activity struct {
 // ActivityCredit holds the detail about how the credit is calculated for the activity
 type ActivityCredit struct {
 	QuantityFixed   bool    `json:"quantityFixed"`
-	Quantity        float32 `json:"quantity" bson:"quantity"`
+	Quantity        float64 `json:"quantity" bson:"quantity"`
 	UnitCode        string  `json:"unitCode" bson:"unitCode"`
 	UnitName        string  `json:"unitName" bson:"unitName"`
 	UnitDescription string  `json:"unitDescription" bson:"unitDescription"`
-	UnitCredit      float32 `json:"unitCredit" bson:"unitCredit"`
+	UnitCredit      float64 `json:"unitCredit" bson:"unitCredit"`
 }
 
 // ActivityCategory stored details about the category
@@ -96,9 +96,9 @@ func ActivityByID(id int) (Activity, error) {
 // of 'hours', each of which is worth 1 CPD credit point. It received the
 // id of the activity (type) and returns the value as a float.
 // Note that it will also return an error if the activity (type) is not active
-func ActivityUnitCredit(id int) (float32, error) {
+func ActivityUnitCredit(id int) (float64, error) {
 
-	var p float32
+	var p float64
 	query := `SELECT points_per_unit FROM ce_activity
 		  WHERE active = 1 AND id = ?`
 	err := datastore.MySQL.Session.QueryRow(query, id).Scan(&p)
@@ -128,7 +128,7 @@ func ActivityCreditData(activityUnitID int) (ActivityCredit, error) {
 		FROM ce_activity_unit
 		WHERE id = ?`
 
-	// temp map teh specify_quantity field
+	// temp map the specify_quantity field
 	var specifyQuantity int
 
 	err := datastore.MySQL.Session.QueryRow(query, activityUnitID).Scan(

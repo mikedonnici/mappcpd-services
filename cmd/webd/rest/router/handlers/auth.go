@@ -209,10 +209,9 @@ func AuthAdminLogin(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
-// GetAdminAuthRefresh handles a GET request which validates the current token
+// AuthAdminRefreshHandler handles a GET request which validates the current token
 // and issues a fresh one so the consumer can extend validity to the maximum time.
-// The only difference between this func and GetAuthRefresh is the function call to set
-// scope claims.
+// The only difference between this func and GetAuthRefresh is the function call to set scope claims.
 func AuthAdminRefreshHandler(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.Payload{}

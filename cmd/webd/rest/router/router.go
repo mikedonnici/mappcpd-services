@@ -2,7 +2,6 @@ package router
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 
@@ -21,7 +20,8 @@ const (
 	v1ReportBase  = "/v1/r"
 )
 
-func Start() {
+// Start fires up the router that handles requests to REST api endpoints
+func Start(port string) {
 
 	// Router
 	r := mux.NewRouter()
@@ -54,15 +54,11 @@ func Start() {
 	rGeneralMiddleware := routes.GeneralMiddleware(rGeneral)
 	r.PathPrefix(v1GeneralBase).Handler(rGeneralMiddleware)
 
-	// Specify port when env var is not set - Heroku sets dynamically so cannot include in .env
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "5000"
-	}
-
 	// CORS handler - needed to add OptionsPassThrough for preflight requests which use OPTIONS http method
 	//handler := cors.Default().Handler(r)
 	// Todo... tighten this up - not sure if needed  with preflightHandler??
+	// todo: seem to have sorted this in the graphql handler so can possible remove the Preflight handler
+	// in favour of the same set tup in graphql
 	handler := cors.New(cors.Options{
 		AllowedOrigins:     []string{"*"},
 		AllowedMethods:     []string{"*"},
@@ -70,6 +66,6 @@ func Start() {
 		OptionsPassthrough: true,
 	}).Handler(r)
 
-	fmt.Printf("Listening on port %s\n", port)
-	log.Fatal(http.ListenAndServe(":"+port, handler))
+	fmt.Println("REST server listening at", os.Getenv("MAPPCPD_API_URL")+":"+port)
+	http.ListenAndServe(":"+port, handler)
 }

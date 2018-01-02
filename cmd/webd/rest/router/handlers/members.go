@@ -10,7 +10,7 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-// MembersIDHandler fetches a member record by id
+// MembersProfile fetches a member record by id
 func MembersProfile(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)

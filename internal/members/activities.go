@@ -21,7 +21,7 @@ type MemberActivityDoc struct {
 	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
 	Date        string                      `json:"date" bson:"date"`
 	DateISO     time.Time                   `json:"dateISO" bson:"dateISO"`
-	Credit      float32                     `json:"credit" bson:"credit"`
+	Credit      float64                     `json:"credit" bson:"credit"`
 	Description string                      `json:"description" bson:"description"`
 	Category    activities.ActivityCategory `json:"category" bson:"category"`
 	Activity    activities.Activity         `json:"activity" bson:"activity"`
@@ -36,8 +36,8 @@ type MemberActivityRow struct {
 	ActivityID  int     `json:"activityID" validate:"required,min=1"`
 	Evidence    int     `json:"evidence"`
 	Date        string  `json:"date" validate:"required"`
-	Quantity    float32 `json:"quantity" validate:"required"`
-	UnitCredit  float32 `json:"unitCredit"`
+	Quantity    float64 `json:"quantity" validate:"required"`
+	UnitCredit  float64 `json:"unitCredit"`
 	Description string  `json:"description" validate:"required"`
 }
 
@@ -165,7 +165,7 @@ func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 }
 
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
-func AddMemberActivity(a MemberActivityRow) (int64, error) {
+func AddMemberActivity(a MemberActivityRow) (int, error) {
 
 	validate := validator.New()
 	err := validate.Struct(a)
@@ -198,7 +198,7 @@ func AddMemberActivity(a MemberActivityRow) (int64, error) {
 		return 0, err
 	}
 
-	return id, nil
+	return int(id), nil
 }
 
 // UpdateMemberActivity updates an existing member activity record in the MySQL db

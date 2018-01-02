@@ -8,6 +8,7 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 )
 
+// MemberSubRouter is a sub router for endpoints relevant to member user requests.
 func MemberSubRouter(prefix string) *mux.Router {
 
 	// Middleware for Members sub-router

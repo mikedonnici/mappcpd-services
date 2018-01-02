@@ -8,6 +8,7 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 )
 
+// GeneralSubRouter is a sub router for requests relevant to all users
 func GeneralSubRouter(prefix string) *mux.Router {
 
 	// Middleware for General sub-router just need a valid token

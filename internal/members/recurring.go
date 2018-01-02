@@ -29,7 +29,7 @@ type RecurringActivity struct {
 	ActivityID  int           `json:"activityId" bson:"activityId" validate:"required,min=1"`
 	CreatedAt   time.Time     `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time     `json:"updatedAt" bson:"updatedAt"`
-	Quantity    float32       `json:"quantity" validate:"required"`
+	Quantity    float64       `json:"quantity" validate:"required"`
 	Description string        `json:"description" validate:"required"`
 	Type        string        `json:"type" validate:"required"`
 	Next        time.Time     `json:"next"`

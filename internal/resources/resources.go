@@ -318,7 +318,7 @@ func UpdateResourceDoc(r *Resource, w *sync.WaitGroup) {
 
 // Save a Resource to MySQL. Returns the id of the new record, and an error. If the record appears to be a duplicate
 // then this will hand off to .Update() to see if the record should be updated instead.
-func (r *Resource) Save() (int64, error) {
+func (r *Resource) Save() (int, error) {
 
 	// At this point we will not save a resource without a target url... defeats the purpose
 	if r.ResourceURL == "" {
@@ -350,7 +350,7 @@ func (r *Resource) Save() (int64, error) {
 		r2, err := ResourceByID(r.ID)
 		if err != nil {
 			fmt.Printf("Could not fetch the (possible) duplicate resource id %v, err: %v - skipping this record", r.ID, err)
-			return int64(r.ID), err
+			return int(r.ID), err
 		}
 
 		//fmt.Println("")
@@ -364,7 +364,7 @@ func (r *Resource) Save() (int64, error) {
 		// key fields to see if there is anything that actually needs to be updated...
 		if ResourceDeepEqual(r, r2) {
 			fmt.Println("Resource", r.ID, "has no significant changes, skipping update")
-			return int64(r.ID), err
+			return int(r.ID), err
 		}
 
 		// Not deeply equal, so update
@@ -372,18 +372,18 @@ func (r *Resource) Save() (int64, error) {
 		err = r.Update(r.ID)
 		if err != nil {
 			fmt.Printf("Update failed for Resource %v with err: %v - skipping this record", r.ID, err)
-			return int64(r.ID), err
+			return int(r.ID), err
 		}
 
 		// Set ShortUrl
 		err = r.SetShortURL()
 		if err != nil {
 			fmt.Println("setShortURL error:", err)
-			return int64(r.ID), err
+			return int(r.ID), err
 		}
 
 		fmt.Println("done!")
-		return int64(r.ID), nil
+		return int(r.ID), nil
 	}
 
 	// No duplicate so add a new resource...
@@ -444,7 +444,7 @@ func (r *Resource) Save() (int64, error) {
 		fmt.Println("setShortURL error:", err)
 	}
 
-	return id, nil
+	return r.ID, nil
 }
 
 // Update performs an update operation on a Resource record in MySQL

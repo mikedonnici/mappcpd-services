@@ -25,12 +25,12 @@ func queryParams(s string) (map[string]interface{}, error) {
 
 		//if we don't get 2 decent strings then the param is malformed
 		if len(fv[0]) < 1 || len(fv[1]) < 1 {
-			return q, errors.New("Query parameters incorrect - should be ?q=name1:value1,name2:value2...")
+			return q, errors.New("query parameters incorrect - should be ?q=name1:value1,name2:value2 etc")
 		}
 
 		// Also let's limit the length of each to 255 chars
 		if len(fv[0]) > 255 || len(fv[1]) > 255 {
-			return q, errors.New("Query parameters are too long!")
+			return q, errors.New("query parameters are too long")
 		}
 
 		// Add the name-value pair to the query

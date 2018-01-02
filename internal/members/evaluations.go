@@ -18,6 +18,7 @@ type MemberEvaluation struct {
 	Name           string               `json:"name" bson:"name"`
 	StartDate      string               `json:"startDate" bson:"startDate"`
 	EndDate        string               `json:"endDate" bson:"endDate"`
+	Closed         bool                 `json:"closed"`
 	CreditRequired int                  `json:"creditRequired" bson:"creditRequired"`
 	CreditObtained int                  `json:"creditObtained" bson:"creditObtained"`
 	Activities     []EvaluationActivity `json:"activities" bson:"activities"`
@@ -27,9 +28,9 @@ type MemberEvaluation struct {
 // that was recorded within an evaluation period
 type EvaluationActivity struct {
 	Activity string  `json:"activity" bson:"activity"`
-	Total    float32 `json:"total" bson:"total"`
-	Cap      float32 `json:"cap" bson:"cap"`
-	Credit   float32 `json:"credit" bson:"credit"`
+	Total    float64 `json:"total" bson:"total"`
+	Cap      float64 `json:"cap" bson:"cap"`
+	Credit   float64 `json:"credit" bson:"credit"`
 }
 
 // EvaluationsByMemberID fetches all evaluation records for a member
@@ -39,7 +40,7 @@ func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
 	es := []MemberEvaluation{}
 
 	query := `SELECT cme.id, cme.member_id, ce.name,
-	cme.cpd_points_required, cme.start_on, cme.end_on
+	cme.cpd_points_required, cme.start_on, cme.end_on, cme.closed
 	FROM ce_m_evaluation cme
 	LEFT JOIN ce_evaluation ce ON cme.ce_evaluation_id = ce.id
 	WHERE member_id = ?`
@@ -59,6 +60,7 @@ func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
 			&e.CreditRequired,
 			&e.StartDate,
 			&e.EndDate,
+			&e.Closed,
 		)
 
 		// Evaluate activities for this evaluation period
@@ -72,6 +74,27 @@ func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
 
 	return es, nil
 }
+
+
+// CurrentEvaluation returns a value with fields describing the current evaluation period
+func CurrentEvaluation(memberID int) (MemberEvaluation, error) {
+	var me MemberEvaluation
+
+	// find the current one
+	xme, err := EvaluationsByMemberID(memberID)
+	if err != nil {
+		return me, err
+	}
+
+	for _, v := range xme {
+		if v.Closed == false {
+			me = v
+		}
+	}
+
+	return me, nil
+}
+
 
 // evaluate adds the activities to the MemberEvaluation value
 // including total activity by types, caps and credit allowed.
@@ -118,7 +141,7 @@ func (e *MemberEvaluation) evaluate() error {
 // for each activity type within the evaluation
 func (e *MemberEvaluation) creditObtained() error {
 
-	var c float32
+	var c float64
 	for _, v := range e.Activities {
 		c += v.Credit
 	}

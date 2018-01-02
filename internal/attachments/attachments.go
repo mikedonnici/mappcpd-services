@@ -213,7 +213,7 @@ func (a *Attachment) Exists() error {
 	}
 
 	// Record exists so set ID
-	a.ID = id
+	a.ID = int(id)
 	return nil
 }
 

@@ -6,12 +6,13 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-func Start() {
+// Start fires up the REST server
+func Start(port string) {
 	fmt.Println("Starting REST server...")
 
 	// Connect to the databases
 	datastore.Connect()
 
 	// Crank up the router
-	router.Start()
+	router.Start(port)
 }

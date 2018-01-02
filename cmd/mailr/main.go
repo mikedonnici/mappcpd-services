@@ -45,14 +45,14 @@ type campaignConfig struct {
 	TestEmail string `json:"testEmail"`
 
 	// Add a date to the campaign title and the email subject
-	AppendDate       bool   `json:appendDate`
+	AppendDate       bool   `json:"appendDate"`
 	AppendDateFormat string `json:"appendDateFormat"`
 
 	// SendGrid campaign-specific properties
 	CampaignTitle      string `json:"campaignTitle"`
 	EmailSubject       string `json:"emailSubject"`
 	SenderID           int    `json:"senderId"`
-	SegmentListID      int    `json:"segmentListIds`
+	SegmentListID      int    `json:"segmentListIds"`
 	SuppressionGroupID int    `json:"suppressionGroupId"`
 	// CampaignID gets set *after* the campaign is created at SendGrid
 	CampaignID int
@@ -304,7 +304,10 @@ func (cc *campaignConfig) read(configFile string) error {
 
 	// Remote file
 	if strings.Index(configFile, "http") == 0 {
-		res, _ := http.Get(configFile)
+		res, err := http.Get(configFile)
+		if err != nil {
+			fmt.Println(err)
+		}
 		defer res.Body.Close()
 		xb, err = ioutil.ReadAll(res.Body)
 		if err != nil {
@@ -541,7 +544,10 @@ func createTemplate() (string, error) {
 
 	// Remote file
 	if strings.Index(cfg.HTMLTemplate, "http") == 0 {
-		res, _ := http.Get(cfg.HTMLTemplate)
+		res, err := http.Get(cfg.HTMLTemplate)
+		if err != nil {
+			fmt.Println(err)
+		}
 		defer res.Body.Close()
 		xb, err = ioutil.ReadAll(res.Body)
 		if err != nil {
