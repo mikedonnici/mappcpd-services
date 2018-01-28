@@ -60,7 +60,6 @@ func Start(port string) {
 	}).Handler(h)
 
 	http.Handle("/graphql", ch)
-	//http.Handle("/graphql", optionsCheck(ch))
 	fmt.Println("GraphQL server listening at", os.Getenv("MAPPCPD_API_URL")+":"+port+"/graphql")
 	http.ListenAndServe(":"+port, nil)
 }
