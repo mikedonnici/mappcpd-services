@@ -1,3 +1,36 @@
+dist: trusty
+sudo: required
+
 language: go
 go:
   - 1.9
+
+services:
+  - mysql
+  - mongodb
+
+addons:
+  apt:
+    sources:
+      - mysql-5.7-trusty
+    packages:
+      - mysql-server
+      - mysql-client
+
+before_install:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
+  - sudo mysql -e "use mysql; update user set authentication_string=PASSWORD('password') where User='root'; update user set plugin='mysql_native_password';FLUSH PRIVILEGES;"
+  - sudo service mysql restart
+
+before_script:
+  - mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
+  - sleep 15
+  - mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
+
+env:
+  - MAPPCPD_ADMIN_USER="admin"
+  - MAPPCPD_ADMIN_PASS="password"
+  - MAPPCPD_MONGO_URL=""
+  - MAPPCPD_MYSQL_URL=""
+
+
