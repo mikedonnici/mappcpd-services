@@ -27,9 +27,10 @@ before_script:
   - mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
 
 env:
-  - MAPPCPD_ADMIN_USER="admin"
-  - MAPPCPD_ADMIN_PASS="password"
-  - MAPPCPD_MONGO_URL=""
-  - MAPPCPD_MYSQL_URL=""
+  global:
+    - MAPPCPD_ADMIN_USER="admin"
+    - MAPPCPD_ADMIN_PASS="password"
+    - MAPPCPD_MONGO_URL=""
+    - MAPPCPD_MYSQL_URL=""
 
 
