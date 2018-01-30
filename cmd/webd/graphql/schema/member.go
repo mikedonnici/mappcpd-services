@@ -10,8 +10,8 @@ import (
 // MemberUser is exported field attached to the root query. It is a top-level 'viewer' query field that ensures data
 // is restricted to the member (user) identified by the token.
 var MemberUser = &graphql.Field{
-	Description: "The memberUser field acts as a 'viewer' and requires a valid JSON Web Token (JWT)[https://jwt.io]. " +
-		"Access to data in sub-fields is restricted to that belonging to the member identified by the token.",
+	Description: "The memberUser field acts as a 'viewer' and requires a valid JSON Web Token ( see https://jwt.io). " +
+		"Data in child fields will always belong to the member identified by the token.",
 	Type: memberType,
 	Args: graphql.FieldConfigArgument{
 		"token": &graphql.ArgumentConfig{
@@ -38,10 +38,10 @@ var MemberUser = &graphql.Field{
 	},
 }
 
-// member represents the main member node , and provides a path to the child nodes.
+// memberType represents the memberUser node, and provides a path to the child nodes.
 var memberType = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "member",
-	Description: "Member query object that provides general profile information as well as additional sub-query fields.",
+	Description: "Member query object that provides access to data for the member identified by the token.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.String,

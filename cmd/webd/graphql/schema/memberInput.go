@@ -51,7 +51,7 @@ var memberInputType = graphql.NewObject(graphql.ObjectConfig{
 // memberActivity will either add a new member memberActivity, or edit an existing one, when the member memberActivity id is provided.
 var memberActivityInput = &graphql.Field{
 	Description: "Add or update a member activity. If `activityId` is present in the argument object, and the record " +
-		"belongs to the authenticated member, then it will be updated. If activityId is not present, or does not belong " +
+		"belongs to the member identified by the token, then it will be updated. If `activityId` is not present, or does not belong " +
 		"to the authenticated user, a new member activity record will be created.",
 	Type: memberActivityType, // this is what will return from this operation, ie the type we are mutating
 	Args: graphql.FieldConfigArgument{

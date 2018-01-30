@@ -1,0 +1,151 @@
+// Package events provides access to Events data
+package events
+
+import (
+	"log"
+	"time"
+	"math"
+
+	"database/sql"
+
+	"github.com/pkg/errors"
+
+	"github.com/mappcpd/web-services/internal/constants"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
+)
+
+// Event is a conference, workshop or some other calendar event that is relevant to CPD activity
+type Event struct {
+	ID          int    `json:"id" bson:"id"`
+	DateCreated string `json:"dateCreated" bson:"dateCreated"`
+	DateUpdated string `json:"dateUpdated" bson:"dateUpdated"`
+	DateStart   string `json:"dateStart" bson:"dateStart"`
+	DateEnd     string `json:"dateEnd" bson:"dateEnd"`
+	Location    string `json:"location" bson:"location"`
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description" bson:"description"`
+	URL         string `json:"url" bson:"url"`
+}
+
+// ByID fetches a single Event by ID
+func ByID(id int) (Event, error) {
+
+	// Create Note value
+	e := Event{ID: id}
+
+	// Coalesce any NULL-able fields
+	q := `SELECT created_at, updated_at,
+		  COALESCE(start_on, ''),
+		  COALESCE(end_on, ''),
+		  COALESCE(location, ''),
+		  COALESCE(name, ''),
+		  COALESCE(description, ''),
+		  COALESCE(information_url, '')
+          FROM ce_event WHERE id = ?
+          ORDER BY start_on DESC`
+
+	err := datastore.MySQL.Session.QueryRow(q, id).Scan(
+		&e.DateCreated,
+		&e.DateUpdated,
+		&e.DateStart,
+		&e.DateEnd,
+		&e.Location,
+		&e.Name,
+		&e.Description,
+		&e.URL,
+	)
+
+	return e, err
+}
+
+// DateRange returns Events that have a start date within the specified date range, including the start and end dates
+func DateRange(start, end time.Time) ([]Event, error) {
+
+	var xe []Event
+
+	// MySQL DATE format
+	sd := start.Format(constants.MySQLDateFormat)
+	ed := end.Format(constants.MySQLDateFormat)
+
+	q := `SELECT id, created_at, updated_at,
+		  COALESCE(start_on, ''),
+		  COALESCE(end_on, ''),
+		  COALESCE(location, ''),
+		  COALESCE(name, ''),
+		  COALESCE(description, ''),
+		  COALESCE(information_url, '')
+		  FROM ce_event WHERE
+		  start_on >= ? AND end_on <= ?
+		  ORDER BY start_on DESC`
+
+	rows, err := datastore.MySQL.Session.Query(q, sd, ed)
+	switch {
+	case err == sql.ErrNoRows:
+		return xe, nil
+	case err != nil:
+		msg := "DateRange() sql error"
+		return xe, errors.Wrap(err, msg)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+
+		e := Event{}
+
+		err := rows.Scan(
+			&e.ID,
+			&e.DateCreated,
+			&e.DateUpdated,
+			&e.DateStart,
+			&e.DateEnd,
+			&e.Location,
+			&e.Name,
+			&e.Description,
+			&e.URL,
+		)
+		if err != nil {
+			msg := "DateRange() failed to scan row"
+			log.Println(msg, err)
+			return xe, errors.Wrap(err, msg)
+		}
+
+		xe = append(xe, e)
+	}
+
+	return xe, nil
+}
+
+// DaysRange returns events with start dates falling within daysBack to daysForward.
+func DaysRange(daysBack, daysForward int) ([]Event, error) {
+
+	// ensure daysBack is negative, and daysForward is positive
+	daysBack = -int(math.Abs(float64(daysBack)))
+	daysForward = int(math.Abs(float64(daysForward)))
+
+	from := time.Now().AddDate(0, 0, daysBack)
+	to := time.Now().AddDate(0, 0, daysForward)
+
+	return DateRange(from, to)
+}
+
+// Past is a convenience function that fetches events with a start date that falls between today and n days ago.
+// If n < 0 it will return all past events.
+func Past(days int) ([]Event, error) {
+
+	if days < 0 {
+		days = 35000 // 100 years should be enough!
+	}
+
+	return DaysRange(days, 0)
+}
+
+// Future is a convenience function that fetches events with a start date that falls between today and n days forward.
+// If n < 0 it will return all future events.
+func Future(days int) ([]Event, error) {
+
+	if days < 0 {
+		days = 35000 // 100 years should be enough!
+	}
+
+	return DaysRange(0, days)
+}

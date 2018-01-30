@@ -75,7 +75,6 @@ func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
 	return es, nil
 }
 
-
 // CurrentEvaluation returns a value with fields describing the current evaluation period
 func CurrentEvaluation(memberID int) (MemberEvaluation, error) {
 	var me MemberEvaluation
@@ -94,7 +93,6 @@ func CurrentEvaluation(memberID int) (MemberEvaluation, error) {
 
 	return me, nil
 }
-
 
 // evaluate adds the activities to the MemberEvaluation value
 // including total activity by types, caps and credit allowed.

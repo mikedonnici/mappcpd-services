@@ -7,8 +7,8 @@ import (
 // memberActivity represents a Member memberActivity record (not memberActivity type record)
 var memberActivityType = graphql.NewObject(graphql.ObjectConfig{
 	Name: "memberActivity",
-	Description: "An activity record belonging to a member. This is an instance on an activity *type* that is recorded " +
-		"by a member as having been completed on a particular date, with additional information such as a detailed description",
+	Description: "An activity record belonging to a member. This is an instance of an activity recorded " +
+		"by a member, having been completed on a particular date, with additional information such as duration and description.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,

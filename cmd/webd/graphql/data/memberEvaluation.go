@@ -12,7 +12,7 @@ type MemberEvaluation struct {
 	EndDate        string  `json:"endDate"`
 	CreditRequired float64 `json:"creditRequired"`
 	CreditObtained float64 `json:"creditObtained"`
-	Closed bool `json:"closed"`
+	Closed         bool    `json:"closed"`
 }
 
 // GetMemberEvaluations fetches evaluation data for a member.
@@ -30,7 +30,7 @@ func GetMemberEvaluations(memberID int) ([]MemberEvaluation, error) {
 			EndDate:        v.EndDate,
 			CreditRequired: float64(v.CreditRequired),
 			CreditObtained: float64(v.CreditObtained),
-			Closed: v.Closed,
+			Closed:         v.Closed,
 		}
 		xme = append(xme, e)
 	}

@@ -6,6 +6,7 @@ package attachments
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	"database/sql"
@@ -18,14 +19,12 @@ import (
 
 	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"strconv"
 )
 
 // Attachment contains data about an uploaded file (attachment)- that is
 // its location in cloud storage and the entity with which it is associated.
 // The relevant fields will depend on the type of upload, and member or admin.
 type Attachment struct {
-
 	// ID is the identifier of the attachment record
 	ID int `json:"id"`
 

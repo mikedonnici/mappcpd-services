@@ -2,14 +2,17 @@ package graphql
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 
+	"net/http"
+
+	"github.com/rs/cors"
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
+
 	"github.com/mappcpd/web-services/cmd/webd/graphql/schema"
+	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/events"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/rs/cors"
 )
 
 // Start fires up the GraphQL server
@@ -24,6 +27,7 @@ func Start(port string) {
 			Fields: graphql.Fields{
 				"memberUser": schema.MemberUser,
 				"activities": schema.Activities,
+				"events": events.Query,
 			},
 		})
 

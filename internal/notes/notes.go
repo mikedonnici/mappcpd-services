@@ -1,3 +1,4 @@
+// Packages notes provides access to Notes data
 package notes
 
 import "github.com/mappcpd/web-services/internal/platform/datastore"
@@ -56,8 +57,8 @@ func (n *Note) SetAttachments() error {
 	return nil
 }
 
-// NoteById fetches a single Note record
-func NoteById(id int) (*Note, error) {
+// NoteByID fetches a single Note record
+func NoteByID(id int) (*Note, error) {
 
 	// Create Note value
 	n := Note{ID: id}
