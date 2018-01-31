@@ -7,45 +7,19 @@ import (
 	"net/http"
 
 	"github.com/rs/cors"
-	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/handler"
 
-	"github.com/mappcpd/web-services/cmd/webd/graphql/schema"
-	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/events"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/cmd/webd/graphql/schema"
 )
 
 // Start fires up the GraphQL server
 func Start(port string) {
 
+	// todo: should this even be here? Shouldn't the internal packages handle the connection?
 	datastore.Connect()
 
-	rootQuery := graphql.NewObject(
-		graphql.ObjectConfig{
-			Name:        "Query",
-			Description: "Root query",
-			Fields: graphql.Fields{
-				"memberUser": schema.MemberUser,
-				"activities": schema.Activities,
-				"events": events.Query,
-			},
-		})
-
-	rootMutation := graphql.NewObject(
-		graphql.ObjectConfig{
-			Name:        "Mutation",
-			Description: "...",
-			Fields: graphql.Fields{
-				"memberUser": schema.MemberUserInput,
-			},
-		})
-
-	schema, err := graphql.NewSchema(
-		graphql.SchemaConfig{
-			Query:    rootQuery,
-			Mutation: rootMutation,
-		},
-	)
+	schema, err := schema.Create()
 	if err != nil {
 		panic(err)
 	}

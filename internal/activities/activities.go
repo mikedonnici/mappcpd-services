@@ -4,7 +4,7 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-// ActivityType describes the type of activity, eg online learning. This is NOT the same
+// Activity describes a type of activity, eg online learning. This is NOT the same
 // as the category which is a much broader grouping.
 type Activity struct {
 	ID          int            `json:"id" bson:"id"`
