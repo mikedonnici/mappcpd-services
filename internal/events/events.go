@@ -3,8 +3,8 @@ package events
 
 import (
 	"log"
-	"time"
 	"math"
+	"time"
 
 	"database/sql"
 

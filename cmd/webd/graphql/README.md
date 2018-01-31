@@ -1,12 +1,29 @@
-The GraphQL service is heavily coupled with the `rest` service, and the `internal` packages for accessing data. 
+The GraphQL service only supports member-level data access at this stage.
 
-`data/` contains functions for accessing the datastore. These may access the REST api to GET or POST data. 
+Start dev server: 
+```bash
+$ go run cmd/webd/main.go -s graphql
+``` 
 
-`schema` contains the GraphQL schema
+GraphiQL available at http://localhost:5001/graphql
 
 
+Sample queries:
 
-## Introspection Query
+```graphql
+query Member($token: String!) {
+  memberUser(token: $token) {
+    id
+  }
+}
+``` 
+
+## Visual Representation
+
+Run the introspection query below and paste the output into https://apis.guru/graphql-voyager/ 
+
+
+**Introspection Query**
 
 ```graphql
 query IntrospectionQuery {
@@ -95,9 +112,6 @@ fragment TypeRef on __Type {
   }
 }
 ```
-
-Can then use https://apis.guru/graphql-voyager/ to create a visual representation.
-
 
 
 

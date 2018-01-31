@@ -43,12 +43,11 @@ func GetEvents(daysBack, daysForward int) ([]Event, error) {
 	return xle, nil
 }
 
-
 // EventsQuery field fetches Events
 var EventsQuery = &graphql.Field{
 	Description: "Fetches a list of events. Optional args can be passed to specify how many days back, or forward, " +
 		"the event start date should be. Default is to show events with a start date in the past year.",
-	Type:        graphql.NewList(event),
+	Type: graphql.NewList(event),
 	Args: graphql.FieldConfigArgument{
 		"daysBack": &graphql.ArgumentConfig{
 			Type:        graphql.Int,
@@ -82,7 +81,7 @@ var EventsQuery = &graphql.Field{
 
 // event (object) defines the fields (properties) of an event
 var event = graphql.NewObject(graphql.ObjectConfig{
-	Name: "event",
+	Name:        "event",
 	Description: "An event is an organised activity such as a conference, seminar, workshop etc.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{

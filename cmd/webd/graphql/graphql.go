@@ -6,11 +6,11 @@ import (
 
 	"net/http"
 
-	"github.com/rs/cors"
 	"github.com/graphql-go/handler"
+	"github.com/rs/cors"
 
-	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/cmd/webd/graphql/schema"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // Start fires up the GraphQL server
