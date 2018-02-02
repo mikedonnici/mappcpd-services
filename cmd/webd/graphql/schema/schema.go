@@ -12,9 +12,9 @@ func Create() (graphql.Schema, error) {
 			Name:        "Query",
 			Description: "Root query",
 			Fields: graphql.Fields{
-				"memberUser": MemberUser,
-				"activities": ActivitiesQuery,
-				"events":     EventsQuery,
+				"member":     memberQueryField,
+				"activities": activitiesQueryField,
+				"events":     eventsQueryField,
 			},
 		})
 
@@ -23,7 +23,7 @@ func Create() (graphql.Schema, error) {
 			Name:        "Mutation",
 			Description: "...",
 			Fields: graphql.Fields{
-				"memberUser": MemberUserInput,
+				"member": memberMutationField,
 			},
 		})
 

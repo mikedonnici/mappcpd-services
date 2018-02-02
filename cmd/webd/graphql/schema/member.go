@@ -12,8 +12,8 @@ import (
 	"github.com/mappcpd/web-services/internal/utility"
 )
 
-// Member struct - a simpler representation than members.Member
-type Member struct {
+// member struct - a leaner representation of members.member
+type member struct {
 	ID             int                      `json:"id"`
 	Active         bool                     `json:"active"`
 	Title          string                   `json:"title"`
@@ -29,8 +29,8 @@ type Member struct {
 	Positions      []members.Position       `json:"positions"`
 }
 
-// MemberActivity is a simpler representation of the member activity than the nested one in the current REST api.
-type MemberActivity struct {
+// memberActivity is a simpler representation of the member activity than the nested one in the current REST api.
+type memberActivity struct {
 	ID          int       `json:"id"`
 	Date        string    `json:"date"`
 	DateTime    time.Time `json:"dateTime"`
@@ -42,8 +42,8 @@ type MemberActivity struct {
 	Description string    `json:"description"`
 }
 
-// MemberEvaluation representations the member evaluation data
-type MemberEvaluation struct {
+// memberEvaluation representations the member evaluation data
+type memberEvaluation struct {
 	//ID          int       `json:"id"`
 	Name           string  `json:"name"`
 	StartDate      string  `json:"startDate"`
@@ -53,10 +53,10 @@ type MemberEvaluation struct {
 	Closed         bool    `json:"closed"`
 }
 
-// getMember fetches the basic member record
-func getMember(id int) (Member, error) {
-	var m Member
-	mp, err := getMemberProfile(id)
+// memberData fetches the basic member record
+func memberData(id int) (member, error) {
+	var m member
+	mp, err := memberProfileData(id)
 	if err != nil {
 		return m, err
 	}
@@ -77,17 +77,17 @@ func getMember(id int) (Member, error) {
 	return m, nil
 }
 
-// getMemberProfile fetches a single member record by id
-func getMemberProfile(memberID int) (members.Member, error) {
-	// MemberByID returns a pointer to a members.Member so dereference in return
+// memberProfileData fetches a single member record by id
+func memberProfileData(memberID int) (members.Member, error) {
+	// MemberByID returns a pointer to a members.member so dereference in return
 	m, err := members.MemberByID(memberID)
 	return *m, err
 }
 
-// getMemberActivities fetches activities for a member. By default it returns the entire set,
+// memberActivitiesData fetches activities for a member. By default it returns the entire set,
 // ordered by activity date desc. Some filters have been added here for the caller's convenience.
-func getMemberActivities(memberID int, filter map[string]interface{}) ([]MemberActivity, error) {
-	var xa []MemberActivity
+func memberActivitiesData(memberID int, filter map[string]interface{}) ([]memberActivity, error) {
+	var xa []memberActivity
 
 	// This returns a nested struct which is simplified below.
 	xma, err := members.MemberActivitiesByMemberID(memberID)
@@ -116,7 +116,7 @@ func getMemberActivities(memberID int, filter map[string]interface{}) ([]MemberA
 		}
 
 		// Passed through date filters, add the record to our simplified struct
-		a := MemberActivity{
+		a := memberActivity{
 			ID:          v.ID,
 			Date:        v.Date,
 			DateTime:    v.DateISO,
@@ -144,8 +144,8 @@ func getMemberActivities(memberID int, filter map[string]interface{}) ([]MemberA
 	return xa, err
 }
 
-// unpack an object into a value of type MemberActivity
-func (ma *MemberActivity) unpack(obj map[string]interface{}) error {
+// unpack an object into a value of type memberActivityQueryField
+func (ma *memberActivity) unpack(obj map[string]interface{}) error {
 	if val, ok := obj["id"].(int); ok {
 		ma.ID = val
 	}
@@ -173,11 +173,10 @@ func (ma *MemberActivity) unpack(obj map[string]interface{}) error {
 	return nil
 }
 
-// getMemberActivity fetches a single activities by id.
-// It verifies that the activity is owned by the member by memberID.
-func getMemberActivity(memberID, activityID int) (MemberActivity, error) {
+// memberActivityData fetches a single member activity by ID after verifying ownership by memberID
+func memberActivityData(memberID, activityID int) (memberActivity, error) {
 
-	var a MemberActivity
+	var a memberActivity
 
 	// This returns a nested struct which we can simplify
 	ma, err := members.MemberActivityByID(activityID)
@@ -187,7 +186,7 @@ func getMemberActivity(memberID, activityID int) (MemberActivity, error) {
 
 	// Verify owner match
 	if ma.MemberID != memberID {
-		msg := fmt.Sprintf("MemberActivity with id %v does not belong to member with id %v", activityID, memberID)
+		msg := fmt.Sprintf("memberActivityQueryField with id %v does not belong to member with id %v", activityID, memberID)
 		return a, errors.New(msg)
 	}
 
@@ -205,20 +204,20 @@ func getMemberActivity(memberID, activityID int) (MemberActivity, error) {
 }
 
 // addMemberActivity adds a member activity
-func addMemberActivity(memberID int, memberActivity MemberActivity) (MemberActivity, error) {
+func addMemberActivity(memberID int, activity memberActivity) (memberActivity, error) {
 
 	// Create the required type for the insert
-	// todo: add evidence and categoryId
+	// todo: add evidence and attachment
 	ma := members.MemberActivityRow{
 		MemberID:    memberID,
-		ActivityID:  memberActivity.TypeID,
-		Date:        memberActivity.Date,
-		Quantity:    memberActivity.Credit,
-		Description: memberActivity.Description,
+		ActivityID:  activity.TypeID,
+		Date:        activity.Date,
+		Quantity:    activity.Credit,
+		Description: activity.Description,
 	}
 
 	// A return value for the new record
-	var mar MemberActivity
+	var mar memberActivity
 
 	// This just returns the new record id, so re-fetch the member activity record
 	// so that all the fields are populated for the response.
@@ -227,25 +226,25 @@ func addMemberActivity(memberID int, memberActivity MemberActivity) (MemberActiv
 		return mar, err
 	}
 
-	return getMemberActivity(memberID, newID)
+	return memberActivityData(memberID, newID)
 
 }
 
 // updateMemberActivity adds a member activity
-func updateMemberActivity(memberID int, memberActivity MemberActivity) (MemberActivity, error) {
+func updateMemberActivity(memberID int, activity memberActivity) (memberActivity, error) {
 
 	// Create the required type for the insert
 	ma := members.MemberActivityRow{
 		MemberID:    memberID,
-		ID:          memberActivity.ID,     // id of the activity instance
-		ActivityID:  memberActivity.TypeID, // id of the activity type
-		Date:        memberActivity.Date,
-		Quantity:    memberActivity.Credit,
-		Description: memberActivity.Description,
+		ID:          activity.ID,     // id of the activity instance
+		ActivityID:  activity.TypeID, // id of the activity type
+		Date:        activity.Date,
+		Quantity:    activity.Credit,
+		Description: activity.Description,
 	}
 
 	// A return value for the new record
-	var mar MemberActivity
+	var mar memberActivity
 
 	// This just returns an error so re-fetch the member activity record
 	// so that all the fields are populated for the response.
@@ -254,20 +253,20 @@ func updateMemberActivity(memberID int, memberActivity MemberActivity) (MemberAc
 		return mar, err
 	}
 
-	return getMemberActivity(memberID, ma.ID)
+	return memberActivityData(memberID, ma.ID)
 
 }
 
-// GetMemberEvaluations fetches evaluation data for a member.
-func GetMemberEvaluations(memberID int) ([]MemberEvaluation, error) {
+// memberEvaluationsData fetches evaluation data for a member.
+func memberEvaluationsData(memberID int) ([]memberEvaluation, error) {
 
-	var xme []MemberEvaluation
+	var xme []memberEvaluation
 
 	// This returns a nested struct which is simplified below.
 	xma, err := members.EvaluationsByMemberID(memberID)
 
 	for _, v := range xma {
-		e := MemberEvaluation{
+		e := memberEvaluation{
 			Name:           v.Name,
 			StartDate:      v.StartDate,
 			EndDate:        v.EndDate,
@@ -281,10 +280,10 @@ func GetMemberEvaluations(memberID int) ([]MemberEvaluation, error) {
 	return xme, err
 }
 
-// getCurrentEvaluation fetches the current evaluation period data for a member.
-func getCurrentEvaluation(memberID int) (MemberEvaluation, error) {
+// memberCurrentEvaluationData fetches the current evaluation period data for a member.
+func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
 
-	var me MemberEvaluation
+	var me memberEvaluation
 
 	// This returns a nested struct which is simplified below.
 	ce, err := members.CurrentEvaluation(memberID)
@@ -302,12 +301,12 @@ func getCurrentEvaluation(memberID int) (MemberEvaluation, error) {
 	return me, nil
 }
 
-// MemberUser is exported field attached to the root query. It is a top-level 'viewer' query field that ensures data
-// is restricted to the member (user) identified by the token.
-var MemberUser = &graphql.Field{
-	Description: "The memberUser field acts as a 'viewer' and requires a valid JSON Web Token ( see https://jwt.io). " +
-		"Data in child fields will always belong to the member identified by the token.",
-	Type: memberType,
+// memberQueryField resolves member queries and acts as a 'viewer' field. Data returned from child nodes will always
+// belong to the member (user) identified by the member id in the token.
+var memberQueryField = &graphql.Field{
+	Description: "Member queries require a valid JSON Web Token for auth and data in child nodes will always " +
+		"belong to the member identified by the token.",
+	Type: memberQueryObject,
 	Args: graphql.FieldConfigArgument{
 		"token": &graphql.ArgumentConfig{
 			Type:        &graphql.NonNull{OfType: graphql.String},
@@ -327,16 +326,16 @@ var MemberUser = &graphql.Field{
 			// At this point we have a valid token from which we've extracted an id.
 			// As a final step we can verify that the id is a valid user in the system,
 			// for example, that it is active. Although this is a bit redundant for each request?
-			return getMember(id)
+			return memberData(id)
 		}
 		return nil, nil
 	},
 }
 
-// memberType represents the memberUser node, and provides a path to the child nodes.
-var memberType = graphql.NewObject(graphql.ObjectConfig{
+// memberQueryObject defines fields for a member.
+var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "member",
-	Description: "Member query object that provides access to data for the member identified by the token.",
+	Description: "member query object that provides access to data for the member identified by the token.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.String,
@@ -379,48 +378,28 @@ var memberType = graphql.NewObject(graphql.ObjectConfig{
 			Description: "The member's mobile phone number",
 		},
 		"locations": &graphql.Field{
-			Type:        graphql.NewList(memberLocationType),
+			Type:        graphql.NewList(locationQueryObject),
 			Description: "One or more contact locations",
 		},
 		"qualifications": &graphql.Field{
-			Type:        graphql.NewList(qualificationType),
+			Type:        graphql.NewList(qualificationQueryObject),
 			Description: "The member's qualifications",
 		},
 		"positions": &graphql.Field{
-			Type:        graphql.NewList(positionType),
+			Type:        graphql.NewList(positionQueryObject),
 			Description: "The member's positions or appointments to committees, councils etc",
 		},
 
-		// sub queries
-		"activity":    memberActivity,
-		"activities":  memberActivities,
-		"evaluation":  memberCurrentEvaluation,
-		"evaluations": memberEvaluations,
+		// child nodes / sub queries
+		"activity":    memberActivityQueryField,
+		"activities":  memberActivitiesQueryField,
+		"evaluation":  memberCurrentEvaluationQueryField,
+		"evaluations": memberEvaluationsQueryField,
 	},
 })
 
-// Contact represents a contact 'card' - that is, a single contact record that pertains to a Member.
-var memberContactType = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "contact",
-	Description: "A contact record belonging to a member",
-	Fields: graphql.Fields{
-		"emailPrimary": &graphql.Field{
-			Type: graphql.String,
-		},
-		"emailSecondary": &graphql.Field{
-			Type: graphql.String,
-		},
-		"mobile": &graphql.Field{
-			Type: graphql.String,
-		},
-		"locations": &graphql.Field{
-			Type: graphql.NewList(memberLocationType),
-		},
-	},
-})
-
-// location represents one or more contact locations pertaining to a member
-var memberLocationType = graphql.NewObject(graphql.ObjectConfig{
+// locationQueryObject defines fields for a contact location
+var locationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "location",
 	Description: "A contact location belonging to a member",
 	Fields: graphql.Fields{
@@ -460,8 +439,48 @@ var memberLocationType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// position represents a position held by a member
-var positionType = graphql.NewObject(graphql.ObjectConfig{
+// contactQueryObject defines fields for a member's contact information, containing one or more locations
+var contactQueryObject = graphql.NewObject(graphql.ObjectConfig{
+	Name:        "contact",
+	Description: "Member contact information which may include one or more contact locations.",
+	Fields: graphql.Fields{
+		"emailPrimary": &graphql.Field{
+			Type: graphql.String,
+		},
+		"emailSecondary": &graphql.Field{
+			Type: graphql.String,
+		},
+		"mobile": &graphql.Field{
+			Type: graphql.String,
+		},
+		"locations": &graphql.Field{
+			Type: graphql.NewList(locationQueryObject),
+		},
+	},
+})
+
+// qualificationQueryObject defines fields for a qualification obtained by a member
+var qualificationQueryObject = graphql.NewObject(graphql.ObjectConfig{
+	Name:        "qualification",
+	Description: "An academic qualification obtained by the member",
+	Fields: graphql.Fields{
+		"code": &graphql.Field{
+			Type: graphql.String,
+		},
+		"name": &graphql.Field{
+			Type: graphql.String,
+		},
+		"description": &graphql.Field{
+			Type: graphql.String,
+		},
+		"year": &graphql.Field{
+			Type: graphql.String,
+		},
+	},
+})
+
+// positionQueryObject defines fields for a position held by a member
+var positionQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "position",
 	Description: "A position or affiliation with a council, committee or group",
 	Fields: graphql.Fields{
@@ -489,28 +508,8 @@ var positionType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// qualification represents a qualification obtained by the member
-var qualificationType = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "qualification",
-	Description: "An academic qualification obtained by the member",
-	Fields: graphql.Fields{
-		"code": &graphql.Field{
-			Type: graphql.String,
-		},
-		"name": &graphql.Field{
-			Type: graphql.String,
-		},
-		"description": &graphql.Field{
-			Type: graphql.String,
-		},
-		"year": &graphql.Field{
-			Type: graphql.String,
-		},
-	},
-})
-
-// memberActivity represents a Member memberActivity record (not memberActivity type record)
-var memberActivityType = graphql.NewObject(graphql.ObjectConfig{
+// memberActivityQueryObject defines fields for a member activity
+var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name: "memberActivity",
 	Description: "An activity record belonging to a member. This is an instance of an activity recorded " +
 		"by a member, having been completed on a particular date, with additional information such as duration and description.",
@@ -531,67 +530,33 @@ var memberActivityType = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"credit": &graphql.Field{
 			Type:        graphql.Float,
-			Description: "Value or credit for the memberActivity",
+			Description: "Value or credit for the memberActivityQueryField",
 		},
 		"categoryId": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The memberActivity category id",
+			Description: "The memberActivityQueryField category id",
 		},
 		"category": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The top-level category of the memberActivity",
+			Description: "The top-level category of the memberActivityQueryField",
 		},
 		"type": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The type of memberActivity",
+			Description: "The type of memberActivityQueryField",
 		},
 		"typeId": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The memberActivity type id",
+			Description: "The memberActivityQueryField type id",
 		},
 		"description": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The specifics of the memberActivity described by the member",
+			Description: "The specifics of the memberActivityQueryField described by the member",
 		},
 	},
 })
 
-// memberActivityInput is an input object type used as an argument for adding / updating a memberActivity
-var memberActivityInputType = graphql.NewInputObject(graphql.InputObjectConfig{
-	Name:        "memberActivityInput",
-	Description: "An input object type used as an argument for adding / updating a memberActivity",
-	Fields: graphql.InputObjectConfigFieldMap{
-
-		// optional member activity id - if supplied then it is an update
-		"id": &graphql.InputObjectFieldConfig{
-			Type:        graphql.Int,
-			Description: "Optional id of the member memberActivity record - if supplied then will update existing.",
-		},
-
-		"date": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.String},
-			Description: "The date of the memberActivity",
-		},
-
-		"credit": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.Float},
-			Description: "Value or credit for the memberActivity",
-		},
-
-		"typeId": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "The memberActivity type id",
-		},
-
-		"description": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.String},
-			Description: "The specifics of the memberActivity described by the member",
-		},
-	},
-})
-
-// memberEvaluationType represents data about the points credited vs points required for an evaluation period.
-var memberEvaluationType = graphql.NewObject(graphql.ObjectConfig{
+// memberEvaluationQueryObject defines fields for a member evaluation
+var memberEvaluationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "memberEvaluation",
 	Description: "An evaluation of activity credited and required, for a given period of time - eg a calendar year.",
 	Fields: graphql.Fields{
@@ -622,14 +587,14 @@ var memberEvaluationType = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// memberActivity query field fetches a single memberActivity that belongs to a member
-var memberActivity = &graphql.Field{
-	Description: "Fetches a single member memberActivity by memberActivity id.",
-	Type:        memberActivityType,
+// memberActivityQueryField resolves a query for a single member activity
+var memberActivityQueryField = &graphql.Field{
+	Description: "Fetches a single member memberActivityQueryField by memberActivityQueryField id.",
+	Type:        memberActivityQueryObject,
 	Args: graphql.FieldConfigArgument{
 		"activityId": &graphql.ArgumentConfig{
 			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "ID of the member memberActivity",
+			Description: "ID of the member memberActivityQueryField",
 		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
@@ -644,17 +609,17 @@ var memberActivity = &graphql.Field{
 
 		activityID, ok := p.Args["activityId"].(int)
 		if ok {
-			return getMemberActivity(memberID, int(activityID))
+			return memberActivityData(memberID, int(activityID))
 		}
 
 		return nil, nil
 	},
 }
 
-// memberActivities field fetches multiple memberActivities belonging to a member
-var memberActivities = &graphql.Field{
+// memberActivitiesQueryField resolves a query for member activities
+var memberActivitiesQueryField = &graphql.Field{
 	Description: "Fetches a list of member memberActivities",
-	Type:        graphql.NewList(memberActivityType),
+	Type:        graphql.NewList(memberActivityQueryObject),
 	Args: graphql.FieldConfigArgument{
 		"last": &graphql.ArgumentConfig{
 			Type:        graphql.Int,
@@ -700,14 +665,14 @@ var memberActivities = &graphql.Field{
 			}
 		}
 
-		return getMemberActivities(memberID, f)
+		return memberActivitiesData(memberID, f)
 	},
 }
 
-// memberCurrentEvaluation field fetches the current evaluation period data
-var memberCurrentEvaluation = &graphql.Field{
+// memberCurrentEvaluationQueryField resolves queries for the current evaluation period
+var memberCurrentEvaluationQueryField = &graphql.Field{
 	Description: "Fetches activity data for the current evaluation period",
-	Type:        memberEvaluationType,
+	Type:        memberEvaluationQueryObject,
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
 		// Extract member id from the token, available thus:
@@ -718,14 +683,14 @@ var memberCurrentEvaluation = &graphql.Field{
 		}
 		memberID := at.Claims.ID
 
-		return getCurrentEvaluation(memberID)
+		return memberCurrentEvaluationData(memberID)
 	},
 }
 
-// memberEvaluations field fetches a list of activity evaluations for the member
-var memberEvaluations = &graphql.Field{
+// memberEvaluationsQueryField resolves queries for multiple member evaluation periods
+var memberEvaluationsQueryField = &graphql.Field{
 	Description: "Fetches a history of member activity evaluation periods",
-	Type:        graphql.NewList(memberEvaluationType),
+	Type:        graphql.NewList(memberEvaluationQueryObject),
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
 		// Extract member id from the token, available thus:
@@ -736,14 +701,14 @@ var memberEvaluations = &graphql.Field{
 		}
 		memberID := at.Claims.ID
 
-		return GetMemberEvaluations(memberID)
+		return memberEvaluationsData(memberID)
 	},
 }
 
-// MemberUserInput is top-level fields for mutations performed by member users.
-var MemberUserInput = &graphql.Field{
+// memberMutationField handles mutations for member data
+var memberMutationField = &graphql.Field{
 	Description: "Top-level input field for member data.",
-	Type:        memberInputType,
+	Type:        memberMutationObject,
 	Args: graphql.FieldConfigArgument{
 		"token": &graphql.ArgumentConfig{
 			Type:        &graphql.NonNull{OfType: graphql.String},
@@ -761,15 +726,15 @@ var MemberUserInput = &graphql.Field{
 			id := at.Claims.ID
 
 			// For the memberInput type we only want the member id, and, to be honest, don't really even need that
-			//return data.getMember(id)
+			//return data.memberData(id)
 			return map[string]interface{}{"id": id}, nil
 		}
 		return nil, nil
 	},
 }
 
-// memberInputType is entry point for member mutations, requiring a valid token.
-var memberInputType = graphql.NewObject(graphql.ObjectConfig{
+// memberMutationObject defines fields for mutating member data
+var memberMutationObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "memberInput",
 	Description: "Top-level input for member fields",
 	Fields: graphql.Fields{
@@ -778,19 +743,19 @@ var memberInputType = graphql.NewObject(graphql.ObjectConfig{
 			Description: "Unique id of the member performing the operation, extracted from the token.",
 		},
 
-		"setActivity": memberActivityInput,
+		"setActivity": memberActivityMutationField,
 	},
 })
 
-// memberActivity will either add a new member memberActivity, or edit an existing one, when the member memberActivity id is provided.
-var memberActivityInput = &graphql.Field{
+// memberActivityMutationField handles mutation (add / update) of a member activity
+var memberActivityMutationField = &graphql.Field{
 	Description: "Add or update a member activity. If `activityId` is present in the argument object, and the record " +
 		"belongs to the member identified by the token, then it will be updated. If `activityId` is not present, or does not belong " +
 		"to the authenticated user, a new member activity record will be created.",
-	Type: memberActivityType, // this is what will return from this operation, ie the type we are mutating
+	Type: memberActivityQueryObject, // this type will be returned this operation
 	Args: graphql.FieldConfigArgument{
 		"obj": &graphql.ArgumentConfig{
-			Type:        memberActivityInputType, // this is the type required as the arg
+			Type:        memberActivityMutationObject, // this is the type required as the arg
 			Description: "An object containing the necessary fields to add or update a member activity",
 		},
 	},
@@ -806,7 +771,7 @@ var memberActivityInput = &graphql.Field{
 
 		maObj, ok := p.Args["obj"].(map[string]interface{})
 		if ok {
-			ma := MemberActivity{}
+			ma := memberActivity{}
 			err := ma.unpack(maObj)
 			if err != nil {
 				return nil, err
@@ -822,3 +787,37 @@ var memberActivityInput = &graphql.Field{
 		return nil, nil
 	},
 }
+
+// memberActivityMutationObject defines fields for mutating a member activity
+var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name:        "memberActivityInput",
+	Description: "An input object type used as an argument for adding / updating a memberActivityQueryField",
+	Fields: graphql.InputObjectConfigFieldMap{
+
+		// optional member activity id - if supplied then it is an update
+		"id": &graphql.InputObjectFieldConfig{
+			Type:        graphql.Int,
+			Description: "Optional id of the member memberActivityQueryField record - if supplied then will update existing.",
+		},
+
+		"date": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.String},
+			Description: "The date of the memberActivityQueryField",
+		},
+
+		"credit": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.Float},
+			Description: "Value or credit for the memberActivityQueryField",
+		},
+
+		"typeId": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.Int},
+			Description: "The memberActivityQueryField type id",
+		},
+
+		"description": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.String},
+			Description: "The specifics of the memberActivityQueryField described by the member",
+		},
+	},
+})

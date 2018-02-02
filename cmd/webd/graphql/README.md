@@ -8,12 +8,23 @@ $ go run cmd/webd/main.go -s graphql
 GraphiQL available at http://localhost:5001/graphql
 
 
-Sample queries:
+## Sample Queries##
 
+**Member Query** acts as a *viewer* type, requiring a valid JWT token to access child nodes**
 ```graphql
 query Member($token: String!) {
   memberUser(token: $token) {
     id
+    lastName
+    middleNames
+    firstName
+    email
+    mobile
+    locations {
+      type
+      address
+      phone
+    }
   }
 }
 ``` 

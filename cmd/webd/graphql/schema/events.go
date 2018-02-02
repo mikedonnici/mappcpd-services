@@ -6,8 +6,8 @@ import (
 	"github.com/mappcpd/web-services/internal/events"
 )
 
-// Event is slightly trimmer version of an events.Event
-type Event struct {
+// event is slightly trimmer version of an events.event
+type event struct {
 	ID          int    `json:"id"`
 	DateStart   string `json:"dateStart"`
 	DateEnd     string `json:"dateEnd"`
@@ -17,19 +17,19 @@ type Event struct {
 	URL         string `json:"url"`
 }
 
-// GetEvents returns a list of events based on supplied filters
-func GetEvents(daysBack, daysForward int) ([]Event, error) {
+// eventsData returns a list of events based on supplied filters
+func eventsData(daysBack, daysForward int) ([]event, error) {
 
-	var xle []Event // local Event type
+	var xle []event // local event type
 
 	xe, err := events.DaysRange(daysBack, daysForward)
 	if err != nil {
 		return nil, err
 	}
 
-	// map each events.Event to local Event type
+	// map each events.event to local event type
 	for _, v := range xe {
-		e := Event{}
+		e := event{}
 		e.ID = v.ID
 		e.DateStart = v.DateStart
 		e.DateEnd = v.DateEnd
@@ -43,11 +43,11 @@ func GetEvents(daysBack, daysForward int) ([]Event, error) {
 	return xle, nil
 }
 
-// EventsQuery field fetches Events
-var EventsQuery = &graphql.Field{
+// eventsQueryField resolves queries for events
+var eventsQueryField = &graphql.Field{
 	Description: "Fetches a list of events. Optional args can be passed to specify how many days back, or forward, " +
 		"the event start date should be. Default is to show events with a start date in the past year.",
-	Type: graphql.NewList(event),
+	Type: graphql.NewList(eventQueryObject),
 	Args: graphql.FieldConfigArgument{
 		"daysBack": &graphql.ArgumentConfig{
 			Type:        graphql.Int,
@@ -75,12 +75,12 @@ var EventsQuery = &graphql.Field{
 			db = 365
 		}
 
-		return GetEvents(db, df)
+		return eventsData(db, df)
 	},
 }
 
-// event (object) defines the fields (properties) of an event
-var event = graphql.NewObject(graphql.ObjectConfig{
+// eventQueryObject defines the fields (properties) of an event
+var eventQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "event",
 	Description: "An event is an organised activity such as a conference, seminar, workshop etc.",
 	Fields: graphql.Fields{
