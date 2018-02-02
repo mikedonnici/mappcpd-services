@@ -32,9 +32,14 @@ type ActivityCategory struct {
 	Description string `json:"description" bson:"description"`
 }
 
+type ActivityType struct {
+	ID   int    `json:"id" bson:"id"`
+	Name string `json:"name" bson:"name"`
+}
+
 type Activities []Activity
 
-// ActivityList fetches a list of all the 'active' activity types
+// ActivityList fetches activity (types)
 func ActivityList() (Activities, error) {
 
 	var ats Activities
@@ -60,6 +65,28 @@ func ActivityList() (Activities, error) {
 	}
 
 	return ats, nil
+}
+
+// ActivityTypes fetches activity sub-types for the activity designated by activityID
+func ActivityTypes(activityID int) ([]ActivityType, error) {
+
+	var xat []ActivityType
+
+	query := "SELECT id, name FROM ce_activity_type WHERE active = 1 AND ce_activity_id = ?"
+
+	rows, err := datastore.MySQL.Session.Query(query, activityID)
+	if err != nil {
+		return xat, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		at := ActivityType{}
+		rows.Scan(&at.ID, &at.Name)
+		xat = append(xat, at)
+	}
+
+	return xat, nil
 }
 
 // ActivityByID fetches a single activity type by id
