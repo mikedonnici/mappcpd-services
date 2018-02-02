@@ -12,9 +12,10 @@ import (
 	"github.com/mappcpd/web-services/internal/utility"
 )
 
-// member struct - a leaner representation of members.member
+// member is a local representation of members.member
 type member struct {
 	ID             int                      `json:"id"`
+	Token          string                   `json:"token"`
 	Active         bool                     `json:"active"`
 	Title          string                   `json:"title"`
 	FirstName      string                   `json:"firstName"`
@@ -314,20 +315,36 @@ var memberQueryField = &graphql.Field{
 		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+
 		token, ok := p.Args["token"].(string)
 		if ok {
+
 			// Validate the token, and extract the member id
 			at, err := jwt.Check(token)
 			if err != nil {
 				return nil, err
 			}
-			//fmt.Println(at.Claims)
 			id := at.Claims.ID
+
 			// At this point we have a valid token from which we've extracted an id.
 			// As a final step we can verify that the id is a valid user in the system,
 			// for example, that it is active. Although this is a bit redundant for each request?
-			return memberData(id)
+
+			// create the member value
+			m, err := memberData(id)
+			if err != nil {
+				return nil, err
+			}
+
+			// set the fresh token
+			m.Token, err = members.FreshToken(token)
+			if err != nil {
+				return m, err
+			}
+
+			return m, nil
 		}
+
 		return nil, nil
 	},
 }
@@ -340,6 +357,10 @@ var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		"id": &graphql.Field{
 			Type:        graphql.String,
 			Description: "The member's unique id number",
+		},
+		"token": &graphql.Field{
+			Type:        graphql.String,
+			Description: "A fresh token",
 		},
 		"active": &graphql.Field{
 			Type:        graphql.Boolean,
@@ -725,10 +746,21 @@ var memberMutationField = &graphql.Field{
 			}
 			id := at.Claims.ID
 
-			// For the memberInput type we only want the member id, and, to be honest, don't really even need that
-			//return data.memberData(id)
-			return map[string]interface{}{"id": id}, nil
+			// create the member value
+			m, err := memberData(id)
+			if err != nil {
+				return nil, err
+			}
+
+			// set the fresh token
+			m.Token, err = members.FreshToken(token)
+			if err != nil {
+				return m, err
+			}
+
+			return m, nil
 		}
+
 		return nil, nil
 	},
 }
@@ -741,6 +773,10 @@ var memberMutationObject = graphql.NewObject(graphql.ObjectConfig{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
 			Description: "Unique id of the member performing the operation, extracted from the token.",
+		},
+		"token": &graphql.Field{
+			Type:        graphql.String,
+			Description: "A fresh token",
 		},
 
 		"setActivity": memberActivityMutationField,
