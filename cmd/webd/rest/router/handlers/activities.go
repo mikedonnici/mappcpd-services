@@ -117,7 +117,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Decode JSON body into NewActivity value
-	a := members.MemberActivityRow{}
+	a := members.MemberActivityInput{}
 	a.MemberID = middleware.UserAuthToken.Claims.ID
 	err := json.NewDecoder(r.Body).Decode(&a)
 	if err != nil {
@@ -184,8 +184,8 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Original activity - from above we have a MemberActivityDoc but need a subset of this - ie MemberActivityRow
-	oa := members.MemberActivityRow{
+	// Original activity - from above we have a MemberActivity but need a subset of this - ie MemberActivityInput
+	oa := members.MemberActivityInput{
 		ID:          a.ID,
 		MemberID:    a.MemberID,
 		ActivityID:  a.Activity.ID,
@@ -197,7 +197,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// new activity - ie, updated version posted in JSON body
-	na := members.MemberActivityRow{}
+	na := members.MemberActivityInput{}
 	err = json.NewDecoder(r.Body).Decode(&na)
 	if err != nil {
 		msg := "Error decoding JSON: " + err.Error() + ". Check the format of request body."

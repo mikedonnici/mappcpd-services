@@ -30,17 +30,63 @@ type member struct {
 	Positions      []members.Position       `json:"positions"`
 }
 
-// memberActivity is a simpler representation of the member activity than the nested one in the current REST api.
+// memberActivity is a leaner representation of members.memberActivity
 type memberActivity struct {
-	ID          int       `json:"id"`
-	Date        string    `json:"date"`
-	DateTime    time.Time `json:"dateTime"`
-	Credit      float64   `json:"credit"`
-	CategoryID  int       `json:"categoryId"`
-	Category    string    `json:"category"`
-	TypeID      int       `json:"typeId"`
-	Type        string    `json:"type"`
-	Description string    `json:"description"`
+	// ID is the unique id of the member activity record
+	ID int `json:"id"`
+
+	// Date on which the activity was undertaken, and an equivalent Time value
+	Date     string    `json:"date"`
+	DateTime time.Time `json:"dateTime"`
+
+	// Credit is generally the number of hours
+	Credit float64 `json:"credit"`
+
+	// Description is the user-input that further describes the activity itself
+	Description string `json:"description"`
+
+	// The following are descriptive of the type of activity undertaken. yes, this is a disaster - will fix later
+	// The data relationship is: Category -> Activity -> Type, which is straightforward enough. However the Type
+	// was added in much later for a compliance reason and creates some confusion as, in many parts of this code,
+	// the word 'type' is used to describe activity (type) from the ce_activity table.
+
+	// ActivityID is the id of the activity (type), ie, a record from the ce_activity table. Until the new 'type'
+	// came along this was often described as activityType in var names etc. This was to avoid confusion with an
+	// actual member activity, but has now caused more confusion.
+	ActivityID int `json:"activityId"`
+	// Activity is the string name of the ce_activity record
+	Activity string `json:"activity"`
+
+	// CategoryID is the parent category, ie a record from ce_activity_category
+	CategoryID int `json:"categoryId"`
+	// Category is the name
+	Category string `json:"category"`
+
+	// TypeID now refers to the activity sub-type, ie a record from the ce_activity_type table
+	TypeID int `json:"typeId"`
+	// type is the string name of the activity sub-type
+	Type string `json:"type"`
+}
+
+// memberActivityInput represents an object for mutating a member activity
+type memberActivityInput struct {
+	// ID - if present triggers and update, else record will be added
+	ID int `json:"id"`
+
+	// Date on which the activity was undertaken as a string "YYYY-MM-DD"
+	Date string `json:"date"`
+
+	// Quantity of the units relevant to the activity, generally hours
+	Quantity float64 `json:"quantity"`
+
+	// Description is the user-input that further describes the activity itself
+	Description string `json:"description"`
+
+	// ActivityID is the id of the activity (type)
+	ActivityID int `json:"activityId"`
+
+	// TypeID now refers to the activity sub-type, ie a record from the ce_activity_type table
+	TypeID int `json:"typeId"`
 }
 
 // memberEvaluation representations the member evaluation data
@@ -124,8 +170,10 @@ func memberActivitiesData(memberID int, filter map[string]interface{}) ([]member
 			Credit:      v.Credit,
 			CategoryID:  v.Category.ID,
 			Category:    v.Category.Name,
-			TypeID:      v.Activity.ID,
-			Type:        v.Activity.Name,
+			ActivityID:  v.Activity.ID,
+			Activity:    v.Activity.Name,
+			TypeID:      v.Type.ID,
+			Type:        v.Type.Name,
 			Description: v.Description,
 		}
 		xa = append(xa, a)
@@ -145,7 +193,7 @@ func memberActivitiesData(memberID int, filter map[string]interface{}) ([]member
 	return xa, err
 }
 
-// unpack an object into a value of type memberActivityQueryField
+// unpack an object into a value of type MemberActivity
 func (ma *memberActivity) unpack(obj map[string]interface{}) error {
 	if val, ok := obj["id"].(int); ok {
 		ma.ID = val
@@ -164,6 +212,9 @@ func (ma *memberActivity) unpack(obj map[string]interface{}) error {
 	if val, ok := obj["categoryId"].(int); ok {
 		ma.CategoryID = int(val)
 	}
+	if val, ok := obj["activityId"].(int); ok {
+		ma.ActivityID = int(val)
+	}
 	if val, ok := obj["typeId"].(int); ok {
 		ma.TypeID = int(val)
 	}
@@ -174,20 +225,44 @@ func (ma *memberActivity) unpack(obj map[string]interface{}) error {
 	return nil
 }
 
+// unpack an object into a value of type MemberActivityInput
+func (mai *memberActivityInput) unpack(obj map[string]interface{}) error {
+	if val, ok := obj["id"].(int); ok {
+		mai.ID = val
+	}
+	if val, ok := obj["date"].(string); ok {
+		mai.Date = val
+	}
+	if val, ok := obj["quantity"].(float64); ok {
+		mai.Quantity = val
+	}
+	if val, ok := obj["activityId"].(int); ok {
+		mai.ActivityID = int(val)
+	}
+	if val, ok := obj["typeId"].(int); ok {
+		mai.TypeID = int(val)
+	}
+	if val, ok := obj["description"].(string); ok {
+		mai.Description = val
+	}
+
+	return nil
+}
+
 // memberActivityData fetches a single member activity by ID after verifying ownership by memberID
-func memberActivityData(memberID, activityID int) (memberActivity, error) {
+func memberActivityData(memberID, memberActivityID int) (memberActivity, error) {
 
 	var a memberActivity
 
 	// This returns a nested struct which we can simplify
-	ma, err := members.MemberActivityByID(activityID)
+	ma, err := members.MemberActivityByID(memberActivityID)
 	if err != nil {
 		return a, err
 	}
 
 	// Verify owner match
 	if ma.MemberID != memberID {
-		msg := fmt.Sprintf("memberActivityQueryField with id %v does not belong to member with id %v", activityID, memberID)
+		msg := fmt.Sprintf("Member activity (id %v) does not belong to member (id %v)", memberActivityID, memberID)
 		return a, errors.New(msg)
 	}
 
@@ -197,23 +272,28 @@ func memberActivityData(memberID, activityID int) (memberActivity, error) {
 	a.Credit = ma.Credit
 	a.CategoryID = ma.Category.ID
 	a.Category = ma.Category.Name
-	a.TypeID = ma.Activity.ID
-	a.Type = ma.Activity.Name
+	a.ActivityID = ma.Activity.ID
+	a.Activity = ma.Activity.Name
+	a.TypeID = ma.Type.ID
+	a.Type = ma.Type.Name
 	a.Description = ma.Description
+
+	fmt.Println(a)
 
 	return a, nil
 }
 
 // addMemberActivity adds a member activity
-func addMemberActivity(memberID int, activity memberActivity) (memberActivity, error) {
+func addMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
 
 	// Create the required type for the insert
 	// todo: add evidence and attachment
-	ma := members.MemberActivityRow{
+	ma := members.MemberActivityInput{
 		MemberID:    memberID,
-		ActivityID:  activity.TypeID,
+		ActivityID:  activity.ActivityID,
+		TypeID:      activity.TypeID,
 		Date:        activity.Date,
-		Quantity:    activity.Credit,
+		Quantity:    activity.Quantity,
 		Description: activity.Description,
 	}
 
@@ -232,15 +312,15 @@ func addMemberActivity(memberID int, activity memberActivity) (memberActivity, e
 }
 
 // updateMemberActivity adds a member activity
-func updateMemberActivity(memberID int, activity memberActivity) (memberActivity, error) {
+func updateMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
 
 	// Create the required type for the insert
-	ma := members.MemberActivityRow{
+	ma := members.MemberActivityInput{
 		MemberID:    memberID,
 		ID:          activity.ID,     // id of the activity instance
 		ActivityID:  activity.TypeID, // id of the activity type
 		Date:        activity.Date,
-		Quantity:    activity.Credit,
+		Quantity:    activity.Quantity,
 		Description: activity.Description,
 	}
 
@@ -255,7 +335,6 @@ func updateMemberActivity(memberID int, activity memberActivity) (memberActivity
 	}
 
 	return memberActivityData(memberID, ma.ID)
-
 }
 
 // memberEvaluationsData fetches evaluation data for a member.
@@ -553,6 +632,14 @@ var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 			Type:        graphql.Float,
 			Description: "Value or credit for the memberActivityQueryField",
 		},
+		"activity": &graphql.Field{
+			Type:        graphql.String,
+			Description: "The activity (type)",
+		},
+		"activityId": &graphql.Field{
+			Type:        graphql.Int,
+			Description: "The id of the activity (type)",
+		},
 		"categoryId": &graphql.Field{
 			Type:        graphql.Int,
 			Description: "The memberActivityQueryField category id",
@@ -805,9 +892,12 @@ var memberActivityMutationField = &graphql.Field{
 		}
 		memberID := at.Claims.ID
 
+		// todo: check that activityId and activityTypeId are related
+
 		maObj, ok := p.Args["obj"].(map[string]interface{})
 		if ok {
-			ma := memberActivity{}
+
+			ma := memberActivityInput{}
 			err := ma.unpack(maObj)
 			if err != nil {
 				return nil, err
@@ -827,30 +917,40 @@ var memberActivityMutationField = &graphql.Field{
 // memberActivityMutationObject defines fields for mutating a member activity
 var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name:        "memberActivityInput",
-	Description: "An input object type used as an argument for adding / updating a memberActivityQueryField",
+	Description: "An input object type used as an argument for adding / updating a member activity",
 	Fields: graphql.InputObjectConfigFieldMap{
 
 		// optional member activity id - if supplied then it is an update
 		"id": &graphql.InputObjectFieldConfig{
 			Type:        graphql.Int,
-			Description: "Optional id of the member memberActivityQueryField record - if supplied then will update existing.",
+			Description: "Optional id of the member activity record - if supplied triggers an update",
 		},
 
-		"date": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.String},
-			Description: "The date of the memberActivityQueryField",
+		// activityId specifies the activity (type)
+		"activityId": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.Int},
+			Description: "The activity (type) id",
 		},
 
-		"credit": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.Float},
-			Description: "Value or credit for the memberActivityQueryField",
-		},
-
+		// typeId specifies the activity sub-type id - yes, confusing!
 		"typeId": &graphql.InputObjectFieldConfig{
 			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "The memberActivityQueryField type id",
+			Description: "The member activity sub-type id",
 		},
 
+		// date on which the activity was undertaken
+		"date": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.String},
+			Description: "The date on which the activity was undertaken",
+		},
+
+		// quantity, generally in hours
+		"quantity": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.Float},
+			Description: "The number of units of the activity being recorded, generally the number of hours",
+		},
+
+		// description supplied by the user
 		"description": &graphql.InputObjectFieldConfig{
 			Type:        &graphql.NonNull{OfType: graphql.String},
 			Description: "The specifics of the memberActivityQueryField described by the member",

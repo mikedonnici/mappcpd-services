@@ -146,7 +146,7 @@ func (r *Recurring) Record(_id string) error {
 		return errors.New(".Record() cannot record a recurring activity if .Next is in the future")
 	}
 
-	ar := MemberActivityRow{}
+	ar := MemberActivityInput{}
 	ar.MemberID = r.MemberID
 	ar.ActivityID = a.ActivityID
 	ar.Date = a.Next.Format(constants.MySQLDateFormat)

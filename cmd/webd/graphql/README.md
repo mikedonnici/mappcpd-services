@@ -10,7 +10,10 @@ GraphiQL available at http://localhost:5001/graphql
 
 ## Sample Queries##
 
-**Member Query** acts as a *viewer* type, requiring a valid JWT token to access child nodes**
+Member Query acts as a *viewer* type, requiring a valid JWT token to access child nodes
+
+
+**Member Query**
 ```graphql
 query Member($token: String!) {
   memberUser(token: $token) {
@@ -28,6 +31,36 @@ query Member($token: String!) {
   }
 }
 ``` 
+
+Mutation Examples:
+
+**Record a member activity**
+
+Note that the activityId and TypeId must be present, and must be related.
+
+```graphql
+mutation Member($token: String!) {
+  member(token: $token) {
+    setActivity(obj: {
+      date:"2018-02-03"
+      description: "Update the internal member activity data funcs"
+      quantity: 4
+      activityId: 22
+      typeId: 18    
+    }) 
+    {
+      id
+      activity
+      type
+      category
+      credit
+      date
+      description
+    }
+  }
+}
+```
+
 
 ## Visual Representation
 

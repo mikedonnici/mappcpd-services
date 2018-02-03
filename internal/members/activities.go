@@ -12,9 +12,9 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-// MemberActivityDoc is the document format for an activity that is
+// MemberActivity is the document format for an activity that is
 // recorded by a member - that is, a CPD diary entry
-type MemberActivityDoc struct {
+type MemberActivity struct {
 	ID          int                         `json:"id" bson:"id"`
 	MemberID    int                         `json:"memberId" bson:"memberId"`
 	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
@@ -25,15 +25,16 @@ type MemberActivityDoc struct {
 	Description string                      `json:"description" bson:"description"`
 	Category    activities.ActivityCategory `json:"category" bson:"category"`
 	Activity    activities.Activity         `json:"activity" bson:"activity"`
+	Type        activities.ActivityType     `json:"type" bson:"type"`
 	CreditData  activities.ActivityCredit   `json:"creditData" bson:"creditData"`
 }
 
-// MemberActivityRow represents the minimum data to add or update a Member Activity.
-// 'Row' implies a representation of the relevant SQL table row.
-type MemberActivityRow struct {
+// MemberActivityInput contains fields required to add / update a Member Activity.
+type MemberActivityInput struct {
 	ID          int     `json:"ID"`
-	MemberID    int     `json:"memberID"`
-	ActivityID  int     `json:"activityID" validate:"required,min=1"`
+	MemberID    int     `json:"memberId"`
+	ActivityID  int     `json:"activityId" validate:"required,min=1"`
+	TypeID      int     `json:"typeId" validate:"required,min=1"`
 	Evidence    int     `json:"evidence"`
 	Date        string  `json:"date" validate:"required"`
 	Quantity    float64 `json:"quantity" validate:"required"`
@@ -41,58 +42,34 @@ type MemberActivityRow struct {
 	Description string  `json:"description" validate:"required"`
 }
 
-// MemberActivities is a collection of MemberActivityDoc values
-type MemberActivities []MemberActivityDoc
+// MemberActivities is a collection of MemberActivity values
+type MemberActivities []MemberActivity
 
 // MemberActivityByID fetches a member activity record by id
-func MemberActivityByID(id int) (*MemberActivityDoc, error) {
+func MemberActivityByID(id int) (*MemberActivity, error) {
 
-	// Create Activity value
-	a := MemberActivityDoc{ID: id}
+	a := MemberActivity{}
 
-	// Coalesce any NULL-able fields
-	query := `SELECT
-		cma.member_id,
-		cma.activity_on,
-		COALESCE(cma.description, ''),
-		(cma.quantity * cma.points_per_unit),
-		cma.quantity,
-		'no unit code in model',
-		COALESCE(cau.name, ''),
-		COALESCE(cau.description, ''),
-		cma.points_per_unit,
-		cac.id,
-		"cac.Code",
-		COALESCE(cac.name, ''),
-		COALESCE(cac.description, ''),
-		ca.id,
-		COALESCE(ca.code, ''),
-		COALESCE(ca.name, ''),
-		COALESCE(ca.description, '')
-		FROM ce_m_activity cma
-		LEFT JOIN ce_activity ca ON cma.ce_activity_id = ca.id
-		LEFT JOIN ce_activity_unit cau ON ca.ce_activity_unit_id = cau.id
-		LEFT JOIN ce_activity_category cac ON ca.ce_activity_category_id = cac.id
-		WHERE cma.id = ?`
+	query := selectMemberActivityQuery + ` WHERE cma.id = ?`
 
 	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
+		&a.ID,
 		&a.MemberID,
 		&a.Date,
 		&a.Description,
 		&a.Credit,
 		&a.CreditData.Quantity,
-		&a.CreditData.UnitCode,
 		&a.CreditData.UnitName,
-		&a.CreditData.UnitDescription,
 		&a.CreditData.UnitCredit,
 		&a.Category.ID,
-		&a.Category.Code,
 		&a.Category.Name,
 		&a.Category.Description,
 		&a.Activity.ID,
 		&a.Activity.Code,
 		&a.Activity.Name,
 		&a.Activity.Description,
+		&a.Type.ID,
+		&a.Type.Name,
 	)
 	if err != nil {
 		return &a, err
@@ -111,38 +88,52 @@ func MemberActivityByID(id int) (*MemberActivityDoc, error) {
 }
 
 // MemberActivitiesByMemberID fetches activities for a particular member
-func MemberActivitiesByMemberID(id int) ([]MemberActivityDoc, error) {
+func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 
 	activities := MemberActivities{}
 
-	sql := fmt.Sprintf("SELECT id from ce_m_activity WHERE member_id = %v ORDER BY activity_on DESC", id)
-	rows, err := datastore.MySQL.Session.Query(sql)
+	query := selectMemberActivityQuery + ` WHERE member_id = ? ORDER BY activity_on DESC`
+
+	fmt.Println(query)
+
+	rows, err := datastore.MySQL.Session.Query(query, memberID)
 	if err != nil {
 		return activities, err
 	}
 	defer rows.Close()
 
-	var activityIDs []int
-
 	for rows.Next() {
 
-		var id int
-		rows.Scan(&id)
-		activityIDs = append(activityIDs, id)
+		a := MemberActivity{}
 
-		a, err := MemberActivityByID(id)
-		if err != nil {
-			return activities, err
-		}
-		activities = append(activities, *a)
+		rows.Scan(
+			&a.ID,
+			&a.MemberID,
+			&a.Date,
+			&a.Description,
+			&a.Credit,
+			&a.CreditData.Quantity,
+			&a.CreditData.UnitName,
+			&a.CreditData.UnitCredit,
+			&a.Category.ID,
+			&a.Category.Name,
+			&a.Category.Description,
+			&a.Activity.ID,
+			&a.Activity.Code,
+			&a.Activity.Name,
+			&a.Activity.Description,
+			&a.Type.ID,
+			&a.Type.Name,
+		)
 
+		activities = append(activities, a)
 	}
 
 	return activities, nil
 }
 
 // UpdateMemberActivityDoc updates the JSON-formatted activity record in the Doc DB (MongoDB)
-func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
+func UpdateMemberActivityDoc(a *MemberActivity, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
 	id := map[string]int{"id": a.ID}
@@ -165,7 +156,7 @@ func UpdateMemberActivityDoc(a *MemberActivityDoc, w *sync.WaitGroup) {
 }
 
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
-func AddMemberActivity(a MemberActivityRow) (int, error) {
+func AddMemberActivity(a MemberActivityInput) (int, error) {
 
 	validate := validator.New()
 	err := validate.Struct(a)
@@ -181,10 +172,10 @@ func AddMemberActivity(a MemberActivityRow) (int, error) {
 	a.UnitCredit = uc
 
 	query := `INSERT INTO ce_m_activity
-	(member_id, ce_activity_id, evidence, created_at, updated_at,
+	(member_id, ce_activity_id, ce_activity_type_id, evidence, created_at, updated_at,
 	activity_on, quantity, points_per_unit, description)
-	VALUES("%v", "%v", "%v", NOW(), NOW(), "%v", "%v", "%v", "%v")`
-	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
+	VALUES("%v", "%v", "%v", "%v", NOW(), NOW(), "%v", "%v", "%v", "%v")`
+	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
 
 	// Get result of the the query execution...
 	r, err := datastore.MySQL.Session.Exec(query)
@@ -202,7 +193,7 @@ func AddMemberActivity(a MemberActivityRow) (int, error) {
 }
 
 // UpdateMemberActivity updates an existing member activity record in the MySQL db
-func UpdateMemberActivity(a MemberActivityRow) error {
+func UpdateMemberActivity(a MemberActivityInput) error {
 
 	validate := validator.New()
 	err := validate.Struct(a)
