@@ -228,6 +228,32 @@ func UpdateMemberActivity(a MemberActivityInput) error {
 	return nil
 }
 
+// DuplicateMemberActivity returns the id of a duplicate member activity, or 0 if not found
+func DuplicateMemberActivity(a MemberActivityInput) int {
+
+	var dupId int
+
+	validate := validator.New()
+	err := validate.Struct(a)
+	if err != nil {
+		return dupId
+	}
+
+	query := `SELECT id FROM ce_m_activity WHERE
+	member_id = "%v" AND
+	ce_activity_id = "%v" AND
+	ce_activity_type_id = "%v" AND
+	activity_on = "%v" AND
+	description = "%v"
+	LIMIT 1`
+	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, a.Date, a.Description)
+
+	row := datastore.MySQL.Session.QueryRow(query)
+	row.Scan(&dupId)
+
+	return dupId
+}
+
 // Save a recurring activity
 //func (a *members.RecurringActivity) Save() error {
 //

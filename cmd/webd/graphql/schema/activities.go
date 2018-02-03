@@ -42,7 +42,6 @@ func activityTypesData(activityID int) ([]activities.ActivityType, error) {
 	return activities.ActivityTypes(activityID)
 }
 
-
 // activitiesQueryField resolves queries for activities (activity types)
 var activitiesQueryField = &graphql.Field{
 	Description: "Fetches a list of activity types.",
@@ -98,7 +97,7 @@ var activityTypesQueryField = &graphql.Field{
 
 // activityTypeQueryObject defines the fields (properties) of an activity sub-type
 var activityTypeQueryObject = graphql.NewObject(graphql.ObjectConfig{
-	Name: "activityType",
+	Name:        "activityType",
 	Description: "Activity sub-types or examples.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
@@ -111,5 +110,3 @@ var activityTypeQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 	},
 })
-
-

@@ -3,8 +3,8 @@ package members
 import (
 	"github.com/pkg/errors"
 
-	"github.com/mappcpd/web-services/internal/platform/jwt"
 	"github.com/mappcpd/web-services/internal/auth"
+	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
 // FreshToken will validate a JWT, and return a fresh token if all ok

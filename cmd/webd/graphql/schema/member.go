@@ -278,8 +278,6 @@ func memberActivityData(memberID, memberActivityID int) (memberActivity, error) 
 	a.Type = ma.Type.Name
 	a.Description = ma.Description
 
-	fmt.Println(a)
-
 	return a, nil
 }
 
@@ -314,9 +312,9 @@ func addMemberActivity(memberID int, activity memberActivityInput) (memberActivi
 // updateMemberActivity adds a member activity
 func updateMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
 
-	// Create the required type for the insert
+	// Create the required value
 	ma := members.MemberActivityInput{
-		ID: activity.ID,
+		ID:          activity.ID,
 		MemberID:    memberID,
 		ActivityID:  activity.ActivityID,
 		TypeID:      activity.TypeID,
@@ -336,6 +334,23 @@ func updateMemberActivity(memberID int, activity memberActivityInput) (memberAct
 	}
 
 	return memberActivityData(memberID, ma.ID)
+}
+
+// memberActivityDuplicate returns the id of a matching member activity, or 0 if not found
+func memberActivityDuplicate(memberID int, activity memberActivityInput) int {
+
+	// Create the required value
+	ma := members.MemberActivityInput{
+		ID:          activity.ID,
+		MemberID:    memberID,
+		ActivityID:  activity.ActivityID,
+		TypeID:      activity.TypeID,
+		Date:        activity.Date,
+		Quantity:    activity.Quantity,
+		Description: activity.Description,
+	}
+
+	return members.DuplicateMemberActivity(ma)
 }
 
 // memberEvaluationsData fetches evaluation data for a member.
@@ -912,17 +927,24 @@ var memberActivityMutationField = &graphql.Field{
 				}
 			}
 			if t == false {
-				msg := fmt.Sprintf("Incorrect activity type (typeId: %v) for specified activity (activityId: %v) " +
+				msg := fmt.Sprintf("Incorrect activity type (typeId: %v) for specified activity (activityId: %v) "+
 					"- query 'activities' for correct values", ma.TypeID, ma.ActivityID)
 				return nil, errors.New(msg)
 			}
 
-			// update if record id is present
+			// update record
 			if ma.ID > 0 {
 				return updateMemberActivity(memberID, ma)
 			}
 
-			// otherwise, create new
+			// add record, ensure not a duplicate
+			dupID := memberActivityDuplicate(memberID, ma)
+			if dupID > 0 {
+				msg := fmt.Sprintf("Cannot add new activity as it is a duplicate of member activity id %v - "+
+					"include { id: %v } in the object argument to update instead", dupID, dupID)
+				return nil, errors.New(msg)
+			}
+
 			return addMemberActivity(memberID, ma)
 		}
 
