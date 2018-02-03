@@ -210,6 +210,7 @@ func UpdateMemberActivity(a MemberActivityInput) error {
 
 	query := `UPDATE ce_m_activity SET
 	ce_activity_id= "%v",
+	ce_activity_type_id= "%v",
 	evidence= "%v",
 	updated_at = NOW(),
 	activity_on = "%v",
@@ -218,7 +219,7 @@ func UpdateMemberActivity(a MemberActivityInput) error {
 	description = "%v"
 	WHERE id = %v
 	LIMIT 1`
-	query = fmt.Sprintf(query, a.ActivityID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
+	query = fmt.Sprintf(query, a.ActivityID, a.TypeID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
 	_, err = datastore.MySQL.Session.Exec(query)
 	if err != nil {
 		return err

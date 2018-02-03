@@ -316,9 +316,10 @@ func updateMemberActivity(memberID int, activity memberActivityInput) (memberAct
 
 	// Create the required type for the insert
 	ma := members.MemberActivityInput{
+		ID: activity.ID,
 		MemberID:    memberID,
-		ID:          activity.ID,     // id of the activity instance
-		ActivityID:  activity.TypeID, // id of the activity type
+		ActivityID:  activity.ActivityID,
+		TypeID:      activity.TypeID,
 		Date:        activity.Date,
 		Quantity:    activity.Quantity,
 		Description: activity.Description,
@@ -892,8 +893,6 @@ var memberActivityMutationField = &graphql.Field{
 		}
 		memberID := at.Claims.ID
 
-		// todo: check that activityId and activityTypeId are related
-
 		maObj, ok := p.Args["obj"].(map[string]interface{})
 		if ok {
 
@@ -903,10 +902,27 @@ var memberActivityMutationField = &graphql.Field{
 				return nil, err
 			}
 
+			// ensure the activity type (id) is correct for the specified activity (id)
+			xat, err := activityTypesData(ma.ActivityID)
+			t := false
+			for _, v := range xat {
+				if v.ID == ma.TypeID {
+					t = true
+					break
+				}
+			}
+			if t == false {
+				msg := fmt.Sprintf("Incorrect activity type (typeId: %v) for specified activity (activityId: %v) " +
+					"- query 'activities' for correct values", ma.TypeID, ma.ActivityID)
+				return nil, errors.New(msg)
+			}
+
+			// update if record id is present
 			if ma.ID > 0 {
 				return updateMemberActivity(memberID, ma)
 			}
 
+			// otherwise, create new
 			return addMemberActivity(memberID, ma)
 		}
 
