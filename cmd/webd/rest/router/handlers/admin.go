@@ -18,6 +18,7 @@ import (
 	"github.com/mappcpd/web-services/internal/members"
 	"github.com/mappcpd/web-services/internal/notes"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/platform/s3"
 	"github.com/mappcpd/web-services/internal/resources"
 )
 
@@ -434,7 +435,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get current fileset for note attachments
-	fs, err := fileset.NewNote()
+	fs, err := fileset.NoteAttachment()
 	if err != nil {
 		msg := "Could not determine the storage information for note attachments - " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
@@ -449,7 +450,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 	upload.VolumeFilePath = fs.Volume + filePath
 
 	// get a signed request
-	url, err := attachments.S3PutRequest(filePath, fs.Volume)
+	url, err := s3.PutRequest(filePath, fs.Volume)
 	if err != nil {
 		msg := "Error getting a signed request for upload " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
@@ -502,14 +503,14 @@ func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get current fileset for note attachments
-	fs, err := fileset.NewNote()
+	fs, err := fileset.NoteAttachment()
 	if err != nil {
 		msg := "Could not determine the storage information for note attachments - " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
 		p.Send(w)
 		return
 	}
-	a.FileSet = *fs
+	a.FileSet = fs
 
 	// Register the attachment
 	if err := a.Register(); err != nil {
@@ -570,7 +571,7 @@ func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get current fileset for note attachments
-	fs, err := fileset.NewResource()
+	fs, err := fileset.ResourceAttachment()
 	if err != nil {
 		msg := "Could not determine the storage information for resource attachments - " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
@@ -585,7 +586,7 @@ func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 	upload.VolumeFilePath = fs.Volume + filePath
 
 	// get a signed request
-	url, err := attachments.S3PutRequest(filePath, fs.Volume)
+	url, err := s3.PutRequest(filePath, fs.Volume)
 	if err != nil {
 		msg := "Error getting a signed request for upload " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
@@ -639,14 +640,14 @@ func AdminResourcesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get current fileset for resource attachments
-	fs, err := fileset.NewResource()
+	fs, err := fileset.ResourceAttachment()
 	if err != nil {
 		msg := "Could not determine the storage information for resource attachments - " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
 		p.Send(w)
 		return
 	}
-	a.FileSet = *fs
+	a.FileSet = fs
 
 	// Check if it is a thumbnail
 	var flag string

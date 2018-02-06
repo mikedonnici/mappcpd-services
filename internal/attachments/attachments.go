@@ -5,16 +5,10 @@ package attachments
 
 import (
 	"fmt"
-	"os"
 	"strconv"
-	"time"
 
 	"database/sql"
 
-	"github.com/34South/envr"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/pkg/errors"
 
 	"github.com/mappcpd/web-services/internal/fileset"
@@ -34,17 +28,20 @@ type Attachment struct {
 	// UserID is a stored with attachment records when they are added by an admin user.
 	UserID int `json:"userId""`
 
-	// Clean filename is a sanitised version of the original filename
+	// CleanFilename is a sanitised version of the original filename
 	CleanFilename string `json:"cleanFilename"`
 
-	// Cloudy Filename is an obfuscated MD5 of the original filename and, when present, the file is stored with this name
+	// CloudyFilename is an obfuscated MD5 of the original filename and, when present, the file is stored with this name
 	CloudyFilename string `json:"cloudyFilename"`
+
+	// Path is the full path in clud storage, the 'key'
+	Path string `json:"path"`
 
 	// URL is the public URL to access this attachment
 	// todo can we use signed urls to request access?
 	URL string `json:"url"`
 
-	// An Attachment always has an associated FileSet which represents how it is stored
+	// FileSet represents the files storage information
 	FileSet fileset.FileSet
 }
 
@@ -54,18 +51,18 @@ type attachmentQueries struct {
 	register string
 }
 
-func init() {
-	envr.New("mappcpd-attachments", []string{
-		"AWS_ACCESS_KEY_ID",
-		"AWS_SECRET_ACCESS_KEY",
-		"AWS_REGION",
-	}).Auto()
-}
-
 // New returns a pointer to an Attachment value.
 func New() *Attachment {
 	return &Attachment{}
 }
+
+// ActivityAttachment returns a pointer to an initialised activity attachment
+//func NewActivity() (*Attachment, error) {
+//
+//
+//	return &Attachment{}
+//}
+
 
 // Validate checks the Attachment for the required values prior to registration
 func (a *Attachment) Validate() error {
@@ -100,11 +97,13 @@ func (a *Attachment) Validate() error {
 	return nil
 }
 
-// Register records data about an uploaded file in the database. The record is inserted into a table that corresponds
-// to the entity with which the file is being associated. There are a few differences between the tables, hence the switch.
+// Register records data about an uploaded file in the database.
+//
+// The record is inserted into a table that corresponds to the entity with which the file is being associated.
+// There are a few differences between the tables, hence the switch.
 // If the record already exists it cannot be registered again, however this is not really an error so Register()
 // can just populate the fields and carry on. From the caller's perspective this makes no difference - there is an uploaded
-// file and details about it are being recorded in the database. HOWEVER, what if the user ID is changes? In this case we could
+// file and details about it are being recorded in the database. HOWEVER, what if the user ID changes? In this case we could
 // force an update of the record. For now it will populate the fields which makes this operation IDEMPOTENT.
 // 'flags' is a hack to pass in an optional setting - at this stage just to set thumbnail = 1 for a resource file.
 func (a *Attachment) Register(flags ...string) error {
@@ -237,19 +236,42 @@ func (a *Attachment) setURL() error {
 	return nil
 }
 
-// S3PutRequest issues a signed URL that allows for a PUT to an Amazon S3 bucket. It receives the
-// key (full path to file including file name', and the name of the bucket.
-// The aws package ASSUMES the presence of AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY env vars so they have been
-// added to init() above. AWS_REGION was added by me.
-func S3PutRequest(key, bucket string) (string, error) {
 
-	sess := session.Must(session.NewSession())
-	svc := s3.New(sess, aws.NewConfig().WithRegion(os.Getenv("AWS_REGION")))
-	req, _ := svc.PutObjectRequest(&s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-		//Body:   strings.NewReader("EXPECTED CONTENTS"),
-	})
+// MemberActivityAttachments fetches the attachments for a member activity.
+func MemberActivityAttachments(memberActivityID int) ([]Attachment, error) {
 
-	return req.Presign(15 * time.Minute)
+	var xa []Attachment
+
+	query := `SELECT
+			a.id AS 'attachmentId',
+			a.clean_filename as 'fileName',
+			CONCAT(fs.volume_name, fs.set_path, a.ce_m_activity_id, '/', a.cloudy_filename) AS 'filePath',
+			CONCAT(fu.base_url, fs.set_path, a.ce_m_activity_id, '/', a.cloudy_filename) AS 'fileUrl'
+			FROM ce_m_activity_attachment a
+			LEFT JOIN fs_set fs ON a.fs_set_id = fs.id
+			LEFT JOIN fs_url fu ON fs.id = fu.fs_set_id
+			WHERE a.ce_m_activity_id = ?`
+
+	rows, err := datastore.MySQL.Session.Query(query, memberActivityID)
+	if err == sql.ErrNoRows {
+		return xa, nil
+	}
+	if err != nil {
+		return xa, err
+	}
+
+	for rows.Next() {
+
+		a := Attachment{}
+		rows.Scan(
+			&a.ID,
+			&a.CleanFilename,
+			&a.Path,
+			&a.URL,
+		)
+		 xa = append(xa, a)
+	}
+
+	return xa, nil
 }
+

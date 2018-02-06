@@ -1,7 +1,10 @@
 package activities
 
 import (
+	"database/sql"
+
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"fmt"
 )
 
 // Activity describes a type of activity, eg online learning. This is NOT the same
@@ -32,9 +35,10 @@ type ActivityCategory struct {
 	Description string `json:"description" bson:"description"`
 }
 
+// ActivityType represents a further classification of an Activity into a 'type' of the activity in question.
 type ActivityType struct {
-	ID   int    `json:"id" bson:"id"`
-	Name string `json:"name" bson:"name"`
+	ID   sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
+	Name string        `json:"name" bson:"name"`
 }
 
 type Activities []Activity
@@ -82,7 +86,10 @@ func ActivityTypes(activityID int) ([]ActivityType, error) {
 
 	for rows.Next() {
 		at := ActivityType{}
-		rows.Scan(&at.ID, &at.Name)
+		err := rows.Scan(&at.ID, &at.Name)
+		if err != nil {
+			fmt.Println(err)
+		}
 		xat = append(xat, at)
 	}
 

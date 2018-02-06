@@ -16,7 +16,7 @@ const selectMemberActivityQuery = `SELECT
 		COALESCE(ca.code, '') AS 'activityCode',
 		COALESCE(ca.name, '') AS 'activityName',
 		COALESCE(ca.description, '') AS 'activityDescription',
-		COALESCE(cat.id, '') AS 'typeId',
+		cat.id AS 'typeId',
 		COALESCE(cat.name, '') AS 'typeName'
 		FROM ce_m_activity cma
 		LEFT JOIN ce_activity ca ON cma.ce_activity_id = ca.id

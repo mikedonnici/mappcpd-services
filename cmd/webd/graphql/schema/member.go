@@ -10,6 +10,8 @@ import (
 	"github.com/mappcpd/web-services/internal/members"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 	"github.com/mappcpd/web-services/internal/utility"
+	//"github.com/mappcpd/web-services/internal/fileset"
+	"github.com/mappcpd/web-services/internal/attachments"
 )
 
 // member is a local representation of members.member
@@ -66,6 +68,12 @@ type memberActivity struct {
 	TypeID int `json:"typeId"`
 	// type is the string name of the activity sub-type
 	Type string `json:"type"`
+
+	// Attachments
+	//Attachments []Attachment
+
+	// todo: remove this UploadURL is a signed URL that allows for uploading file attachments
+	UploadURL string `json:"uploadUrl"`
 }
 
 // memberActivityInput represents an object for mutating a member activity
@@ -89,6 +97,12 @@ type memberActivityInput struct {
 	TypeID int `json:"typeId"`
 }
 
+// memberActivityAttachment represents an file associated with a member activity
+type memberActivityAttachment struct {
+	ID  int    `json:"id"`
+	URL string `json:"url"`
+}
+
 // memberEvaluation representations the member evaluation data
 type memberEvaluation struct {
 	//ID          int       `json:"id"`
@@ -100,305 +114,7 @@ type memberEvaluation struct {
 	Closed         bool    `json:"closed"`
 }
 
-// memberData fetches the basic member record
-func memberData(id int) (member, error) {
-	var m member
-	mp, err := memberProfileData(id)
-	if err != nil {
-		return m, err
-	}
-	m.ID = mp.ID
-	m.Active = mp.Active
-	m.Title = mp.Title
-	m.FirstName = mp.FirstName
-	m.MiddleNames = mp.MiddleNames
-	m.LastName = mp.LastName
-	m.DateOfBirth = mp.DateOfBirth
-	m.Email = mp.Contact.EmailPrimary
-	m.Mobile = mp.Contact.Mobile
-	m.PostNominal = mp.PostNominal
-	m.Locations = mp.Contact.Locations
-	m.Qualifications = mp.Qualifications
-	m.Positions = mp.Positions
-
-	return m, nil
-}
-
-// memberProfileData fetches a single member record by id
-func memberProfileData(memberID int) (members.Member, error) {
-	// MemberByID returns a pointer to a members.member so dereference in return
-	m, err := members.MemberByID(memberID)
-	return *m, err
-}
-
-// memberActivitiesData fetches activities for a member. By default it returns the entire set,
-// ordered by activity date desc. Some filters have been added here for the caller's convenience.
-func memberActivitiesData(memberID int, filter map[string]interface{}) ([]memberActivity, error) {
-	var xa []memberActivity
-
-	// This returns a nested struct which is simplified below.
-	xma, err := members.MemberActivitiesByMemberID(memberID)
-
-	// Set up date filters
-	from, okFrom := filter["from"].(time.Time)
-	to, okTo := filter["to"].(time.Time)
-	if okFrom && okTo {
-		if from.After(to) {
-			return xa, errors.New("from date cannot be after to date")
-		}
-	}
-
-	for _, v := range xma {
-
-		// Apply date filters, skip to next iteration if the data is outside the range
-		if okFrom {
-			if v.DateISO.Before(from) {
-				continue
-			}
-		}
-		if okTo {
-			if v.DateISO.After(to) {
-				continue
-			}
-		}
-
-		// Passed through date filters, add the record to our simplified struct
-		a := memberActivity{
-			ID:          v.ID,
-			Date:        v.Date,
-			DateTime:    v.DateISO,
-			Credit:      v.Credit,
-			CategoryID:  v.Category.ID,
-			Category:    v.Category.Name,
-			ActivityID:  v.Activity.ID,
-			Activity:    v.Activity.Name,
-			TypeID:      v.Type.ID,
-			Type:        v.Type.Name,
-			Description: v.Description,
-		}
-		xa = append(xa, a)
-	}
-
-	// Although less efficient, apply 'last' n filter last - otherwise it cannot be used in conjunction with
-	// the date filters.
-	last, ok := filter["last"].(int)
-	if ok {
-		// Activities are returned in reverse order so returning the 'last' n items, ie the most *recent*, means
-		// slicing from the index 0. If n is greater than the total, just return the total.
-		if last < len(xma) {
-			xa = xa[:last]
-		}
-	}
-
-	return xa, err
-}
-
-// unpack an object into a value of type MemberActivity
-func (ma *memberActivity) unpack(obj map[string]interface{}) error {
-	if val, ok := obj["id"].(int); ok {
-		ma.ID = val
-	}
-	if val, ok := obj["date"].(string); ok {
-		ma.Date = val
-		d, err := utility.DateStringToTime(val)
-		if err != nil {
-			return err
-		}
-		ma.DateTime = d
-	}
-	if val, ok := obj["credit"].(float64); ok {
-		ma.Credit = val
-	}
-	if val, ok := obj["categoryId"].(int); ok {
-		ma.CategoryID = int(val)
-	}
-	if val, ok := obj["activityId"].(int); ok {
-		ma.ActivityID = int(val)
-	}
-	if val, ok := obj["typeId"].(int); ok {
-		ma.TypeID = int(val)
-	}
-	if val, ok := obj["description"].(string); ok {
-		ma.Description = val
-	}
-
-	return nil
-}
-
-// unpack an object into a value of type MemberActivityInput
-func (mai *memberActivityInput) unpack(obj map[string]interface{}) error {
-	if val, ok := obj["id"].(int); ok {
-		mai.ID = val
-	}
-	if val, ok := obj["date"].(string); ok {
-		mai.Date = val
-	}
-	if val, ok := obj["quantity"].(float64); ok {
-		mai.Quantity = val
-	}
-	if val, ok := obj["activityId"].(int); ok {
-		mai.ActivityID = int(val)
-	}
-	if val, ok := obj["typeId"].(int); ok {
-		mai.TypeID = int(val)
-	}
-	if val, ok := obj["description"].(string); ok {
-		mai.Description = val
-	}
-
-	return nil
-}
-
-// memberActivityData fetches a single member activity by ID after verifying ownership by memberID
-func memberActivityData(memberID, memberActivityID int) (memberActivity, error) {
-
-	var a memberActivity
-
-	// This returns a nested struct which we can simplify
-	ma, err := members.MemberActivityByID(memberActivityID)
-	if err != nil {
-		return a, err
-	}
-
-	// Verify owner match
-	if ma.MemberID != memberID {
-		msg := fmt.Sprintf("Member activity (id %v) does not belong to member (id %v)", memberActivityID, memberID)
-		return a, errors.New(msg)
-	}
-
-	a.ID = ma.ID
-	a.Date = ma.Date
-	a.DateTime = ma.DateISO
-	a.Credit = ma.Credit
-	a.CategoryID = ma.Category.ID
-	a.Category = ma.Category.Name
-	a.ActivityID = ma.Activity.ID
-	a.Activity = ma.Activity.Name
-	a.TypeID = ma.Type.ID
-	a.Type = ma.Type.Name
-	a.Description = ma.Description
-
-	return a, nil
-}
-
-// addMemberActivity adds a member activity
-func addMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
-
-	// Create the required type for the insert
-	// todo: add evidence and attachment
-	ma := members.MemberActivityInput{
-		MemberID:    memberID,
-		ActivityID:  activity.ActivityID,
-		TypeID:      activity.TypeID,
-		Date:        activity.Date,
-		Quantity:    activity.Quantity,
-		Description: activity.Description,
-	}
-
-	// A return value for the new record
-	var mar memberActivity
-
-	// This just returns the new record id, so re-fetch the member activity record
-	// so that all the fields are populated for the response.
-	newID, err := members.AddMemberActivity(ma)
-	if err != nil {
-		return mar, err
-	}
-
-	return memberActivityData(memberID, newID)
-
-}
-
-// updateMemberActivity adds a member activity
-func updateMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
-
-	// Create the required value
-	ma := members.MemberActivityInput{
-		ID:          activity.ID,
-		MemberID:    memberID,
-		ActivityID:  activity.ActivityID,
-		TypeID:      activity.TypeID,
-		Date:        activity.Date,
-		Quantity:    activity.Quantity,
-		Description: activity.Description,
-	}
-
-	// A return value for the new record
-	var mar memberActivity
-
-	// This just returns an error so re-fetch the member activity record
-	// so that all the fields are populated for the response.
-	err := members.UpdateMemberActivity(ma)
-	if err != nil {
-		return mar, err
-	}
-
-	return memberActivityData(memberID, ma.ID)
-}
-
-// memberActivityDuplicate returns the id of a matching member activity, or 0 if not found
-func memberActivityDuplicate(memberID int, activity memberActivityInput) int {
-
-	// Create the required value
-	ma := members.MemberActivityInput{
-		ID:          activity.ID,
-		MemberID:    memberID,
-		ActivityID:  activity.ActivityID,
-		TypeID:      activity.TypeID,
-		Date:        activity.Date,
-		Quantity:    activity.Quantity,
-		Description: activity.Description,
-	}
-
-	return members.DuplicateMemberActivity(ma)
-}
-
-// memberEvaluationsData fetches evaluation data for a member.
-func memberEvaluationsData(memberID int) ([]memberEvaluation, error) {
-
-	var xme []memberEvaluation
-
-	// This returns a nested struct which is simplified below.
-	xma, err := members.EvaluationsByMemberID(memberID)
-
-	for _, v := range xma {
-		e := memberEvaluation{
-			Name:           v.Name,
-			StartDate:      v.StartDate,
-			EndDate:        v.EndDate,
-			CreditRequired: float64(v.CreditRequired),
-			CreditObtained: float64(v.CreditObtained),
-			Closed:         v.Closed,
-		}
-		xme = append(xme, e)
-	}
-
-	return xme, err
-}
-
-// memberCurrentEvaluationData fetches the current evaluation period data for a member.
-func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
-
-	var me memberEvaluation
-
-	// This returns a nested struct which is simplified below.
-	ce, err := members.CurrentEvaluation(memberID)
-	if err != nil {
-		return me, err
-	}
-
-	me.Name = ce.Name
-	me.StartDate = ce.StartDate
-	me.EndDate = ce.EndDate
-	me.CreditRequired = float64(ce.CreditRequired)
-	me.CreditObtained = float64(ce.CreditObtained)
-	me.Closed = ce.Closed
-
-	return me, nil
-}
-
-// memberQueryField resolves member queries and acts as a 'viewer' field. Data returned from child nodes will always
-// belong to the member (user) identified by the member id in the token.
+// memberQueryField resolves member queries, is a 'viewer' field for the member (user) identified by the token
 var memberQueryField = &graphql.Field{
 	Description: "Member queries require a valid JSON Web Token for auth and data in child nodes will always " +
 		"belong to the member identified by the token.",
@@ -676,6 +392,25 @@ var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 			Type:        graphql.String,
 			Description: "The specifics of the memberActivityQueryField described by the member",
 		},
+
+		"attachments": memberActivityAttachmentsQueryField,
+	},
+})
+
+// memberActivityAttachmentQueryObject defines fields for a member activity attachment
+var memberActivityAttachmentQueryObject = graphql.NewObject(graphql.ObjectConfig{
+	Name:        "memberActivityAttachment",
+	Description: "An attachment associated with the member activity",
+	Fields: graphql.Fields{
+		"id": &graphql.Field{
+			Type:        graphql.Int,
+			Description: "The id of the member activity attachment record",
+		},
+		// todo this should be a signed url
+		"url": &graphql.Field{
+			Type:        graphql.String,
+			Description: "The url for accessing the file",
+		},
 	},
 })
 
@@ -713,7 +448,7 @@ var memberEvaluationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 
 // memberActivityQueryField resolves a query for a single member activity
 var memberActivityQueryField = &graphql.Field{
-	Description: "Fetches a single member memberActivityQueryField by memberActivityQueryField id.",
+	Description: "Fetches a single member activity by id.",
 	Type:        memberActivityQueryObject,
 	Args: graphql.FieldConfigArgument{
 		"activityId": &graphql.ArgumentConfig{
@@ -737,6 +472,32 @@ var memberActivityQueryField = &graphql.Field{
 		}
 
 		return nil, nil
+	},
+}
+
+// memberActivityAttachmentsQueryField resolves a query for member activity attachments
+var memberActivityAttachmentsQueryField = &graphql.Field{
+	Description: "Fetches a list of attachments for a member activity",
+	Type:        graphql.NewList(memberActivityAttachmentQueryObject),
+	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+
+		// Extract member id from the token, available thus:
+		//token := p.Info.VariableValues["token"]
+		//at, err := jwt.Check(token.(string))
+		//if err != nil {
+		//	return nil, err
+		//}
+		//memberID := at.Claims.ID
+
+		// Get the member activity id from the parent
+		maID := p.Source.(memberActivity).ID
+		fmt.Println(maID)
+		//types, err := activityTypesData(id)
+		//if err != nil {
+		//	return nil, nil
+		//}
+
+		return memberActivityAttachmentsData(maID)
 	},
 }
 
@@ -921,7 +682,9 @@ var memberActivityMutationField = &graphql.Field{
 			xat, err := activityTypesData(ma.ActivityID)
 			t := false
 			for _, v := range xat {
-				if v.ID == ma.TypeID {
+
+				// handles nullable data
+				if int64(ma.TypeID) == v.ID.Int64  {
 					t = true
 					break
 				}
@@ -995,3 +758,325 @@ var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectCon
 		},
 	},
 })
+
+// unpack an object into a value of type MemberActivity
+func (ma *memberActivity) unpack(obj map[string]interface{}) error {
+	if val, ok := obj["id"].(int); ok {
+		ma.ID = val
+	}
+	if val, ok := obj["date"].(string); ok {
+		ma.Date = val
+		d, err := utility.DateStringToTime(val)
+		if err != nil {
+			return err
+		}
+		ma.DateTime = d
+	}
+	if val, ok := obj["credit"].(float64); ok {
+		ma.Credit = val
+	}
+	if val, ok := obj["categoryId"].(int); ok {
+		ma.CategoryID = int(val)
+	}
+	if val, ok := obj["activityId"].(int); ok {
+		ma.ActivityID = int(val)
+	}
+	if val, ok := obj["typeId"].(int); ok {
+		ma.TypeID = int(val)
+	}
+	if val, ok := obj["description"].(string); ok {
+		ma.Description = val
+	}
+
+	return nil
+}
+
+// unpack an object into a value of type MemberActivityInput
+func (mai *memberActivityInput) unpack(obj map[string]interface{}) error {
+	if val, ok := obj["id"].(int); ok {
+		mai.ID = val
+	}
+	if val, ok := obj["date"].(string); ok {
+		mai.Date = val
+	}
+	if val, ok := obj["quantity"].(float64); ok {
+		mai.Quantity = val
+	}
+	if val, ok := obj["activityId"].(int); ok {
+		mai.ActivityID = int(val)
+	}
+	if val, ok := obj["typeId"].(int); ok {
+		mai.TypeID = int(val)
+	}
+	if val, ok := obj["description"].(string); ok {
+		mai.Description = val
+	}
+
+	return nil
+}
+
+// memberData fetches the basic member record
+func memberData(id int) (member, error) {
+	var m member
+	mp, err := memberProfileData(id)
+	if err != nil {
+		return m, err
+	}
+	m.ID = mp.ID
+	m.Active = mp.Active
+	m.Title = mp.Title
+	m.FirstName = mp.FirstName
+	m.MiddleNames = mp.MiddleNames
+	m.LastName = mp.LastName
+	m.DateOfBirth = mp.DateOfBirth
+	m.Email = mp.Contact.EmailPrimary
+	m.Mobile = mp.Contact.Mobile
+	m.PostNominal = mp.PostNominal
+	m.Locations = mp.Contact.Locations
+	m.Qualifications = mp.Qualifications
+	m.Positions = mp.Positions
+
+	return m, nil
+}
+
+// memberProfileData fetches a single member record by id
+func memberProfileData(memberID int) (members.Member, error) {
+	// MemberByID returns a pointer to a members.member so dereference in return
+	m, err := members.MemberByID(memberID)
+	return *m, err
+}
+
+// memberActivitiesData fetches activities for a member.
+func memberActivitiesData(memberID int, filter map[string]interface{}) ([]memberActivity, error) {
+	var xa []memberActivity
+
+	// This returns a nested struct which is simplified below.
+	xma, err := members.MemberActivitiesByMemberID(memberID)
+
+	// Set up date filters
+	from, okFrom := filter["from"].(time.Time)
+	to, okTo := filter["to"].(time.Time)
+	if okFrom && okTo {
+		if from.After(to) {
+			return xa, errors.New("from date cannot be after to date")
+		}
+	}
+
+	for _, v := range xma {
+
+		// Apply date filters, skip to next iteration if the data is outside the range
+		if okFrom {
+			if v.DateISO.Before(from) {
+				continue
+			}
+		}
+		if okTo {
+			if v.DateISO.After(to) {
+				continue
+			}
+		}
+
+		// Passed through date filters, add the record to our simplified struct
+		a := memberActivity{
+			ID:          v.ID,
+			Date:        v.Date,
+			DateTime:    v.DateISO,
+			Credit:      v.Credit,
+			CategoryID:  v.Category.ID,
+			Category:    v.Category.Name,
+			ActivityID:  v.Activity.ID,
+			Activity:    v.Activity.Name,
+			TypeID:      int(v.Type.ID.Int64), // null-able field
+			Type:        v.Type.Name,
+			Description: v.Description,
+		}
+		xa = append(xa, a)
+	}
+
+	// Although less efficient, apply 'last' n filter last - otherwise it cannot be used in conjunction with
+	// the date filters.
+	last, ok := filter["last"].(int)
+	if ok {
+		// Activities are returned in reverse order so returning the 'last' n items, ie the most *recent*, means
+		// slicing from the index 0. If n is greater than the total, just return the total.
+		if last < len(xma) {
+			xa = xa[:last]
+		}
+	}
+
+	return xa, err
+}
+
+// memberActivityData fetches a single member activity by ID after verifying ownership by memberID
+func memberActivityData(memberID, memberActivityID int) (memberActivity, error) {
+
+	var a memberActivity
+
+	// This returns a nested struct which we can simplify
+	ma, err := members.MemberActivityByID(memberActivityID)
+	if err != nil {
+		return a, err
+	}
+
+	// Verify owner match
+	if ma.MemberID != memberID {
+		msg := fmt.Sprintf("Member activity (id %v) does not belong to member (id %v)", memberActivityID, memberID)
+		return a, errors.New(msg)
+	}
+
+	a.ID = ma.ID
+	a.Date = ma.Date
+	a.DateTime = ma.DateISO
+	a.Credit = ma.Credit
+	a.CategoryID = ma.Category.ID
+	a.Category = ma.Category.Name
+	a.ActivityID = ma.Activity.ID
+	a.Activity = ma.Activity.Name
+	a.TypeID = int(ma.Type.ID.Int64)
+	a.Type = ma.Type.Name
+	a.Description = ma.Description
+
+	return a, nil
+}
+
+// addMemberActivity adds a member activity
+func addMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
+
+	// Create the required type for the insert
+	// todo: add evidence and attachment
+	ma := members.MemberActivityInput{
+		MemberID:    memberID,
+		ActivityID:  activity.ActivityID,
+		TypeID:      activity.TypeID,
+		Date:        activity.Date,
+		Quantity:    activity.Quantity,
+		Description: activity.Description,
+	}
+
+	// A return value for the new record
+	var mar memberActivity
+
+	// This just returns the new record id, so re-fetch the member activity record
+	// so that all the fields are populated for the response.
+	newID, err := members.AddMemberActivity(ma)
+	if err != nil {
+		return mar, err
+	}
+
+	return memberActivityData(memberID, newID)
+
+}
+
+// updateMemberActivity adds a member activity
+func updateMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
+
+	// Create the required value
+	ma := members.MemberActivityInput{
+		ID:          activity.ID,
+		MemberID:    memberID,
+		ActivityID:  activity.ActivityID,
+		TypeID:      activity.TypeID,
+		Date:        activity.Date,
+		Quantity:    activity.Quantity,
+		Description: activity.Description,
+	}
+
+	// A return value for the new record
+	var mar memberActivity
+
+	// This just returns an error so re-fetch the member activity record
+	// so that all the fields are populated for the response.
+	err := members.UpdateMemberActivity(ma)
+	if err != nil {
+		return mar, err
+	}
+
+	return memberActivityData(memberID, ma.ID)
+}
+
+// memberActivityDuplicate returns the id of a matching member activity, or 0 if not found
+func memberActivityDuplicate(memberID int, activity memberActivityInput) int {
+
+	// Create the required value
+	ma := members.MemberActivityInput{
+		ID:          activity.ID,
+		MemberID:    memberID,
+		ActivityID:  activity.ActivityID,
+		TypeID:      activity.TypeID,
+		Date:        activity.Date,
+		Quantity:    activity.Quantity,
+		Description: activity.Description,
+	}
+
+	return members.DuplicateMemberActivity(ma)
+}
+
+// memberEvaluationsData fetches evaluation data for a member.
+func memberEvaluationsData(memberID int) ([]memberEvaluation, error) {
+
+	var xme []memberEvaluation
+
+	// This returns a nested struct which is simplified below.
+	xma, err := members.EvaluationsByMemberID(memberID)
+
+	for _, v := range xma {
+		e := memberEvaluation{
+			Name:           v.Name,
+			StartDate:      v.StartDate,
+			EndDate:        v.EndDate,
+			CreditRequired: float64(v.CreditRequired),
+			CreditObtained: float64(v.CreditObtained),
+			Closed:         v.Closed,
+		}
+		xme = append(xme, e)
+	}
+
+	return xme, err
+}
+
+// memberCurrentEvaluationData fetches the current evaluation period data for a member
+func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
+
+	var me memberEvaluation
+
+	// This returns a nested struct which is simplified below.
+	ce, err := members.CurrentEvaluation(memberID)
+	if err != nil {
+		return me, err
+	}
+
+	me.Name = ce.Name
+	me.StartDate = ce.StartDate
+	me.EndDate = ce.EndDate
+	me.CreditRequired = float64(ce.CreditRequired)
+	me.CreditObtained = float64(ce.CreditObtained)
+	me.Closed = ce.Closed
+
+	return me, nil
+}
+
+
+// memberActivityAttachmentsData fetches the attachments for a member activity
+func memberActivityAttachmentsData(memberActivityID int) ([]attachments.Attachment, error) {
+
+	return attachments.MemberActivityAttachments(memberActivityID)
+}
+
+
+// memberActivityAttachmentRequest requests a signed URL for uploading to S3
+//func memberActivityAttachmentRequest(memberID int) string {
+//
+//	var url string
+//
+//	// Get the file set data
+//	fs, err := fileset.ActivityAttachment()
+//	if err != nil {
+//		msg := "Could not determine the storage information for activity attachments - " + err.Error()
+//		return msg
+//	}
+//	fmt.Println(fs)
+//
+//	// Use the file set information to create an upload value
+//
+//	return url
+//}

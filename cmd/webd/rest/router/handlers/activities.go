@@ -21,6 +21,7 @@ import (
 	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/members"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/platform/s3"
 )
 
 // Activities fetches list of activity types
@@ -116,7 +117,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	// Decode JSON body into NewActivity value
+	// Decode JSON body into ActivityAttachment value
 	a := members.MemberActivityInput{}
 	a.MemberID = middleware.UserAuthToken.Claims.ID
 	err := json.NewDecoder(r.Body).Decode(&a)
@@ -448,7 +449,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Get current fileset for activity attachments
-	fs, err := fileset.NewActivity()
+	fs, err := fileset.ActivityAttachment()
 	if err != nil {
 		msg := "Could not determine the storage information for activity attachments - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
@@ -463,7 +464,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 	upload.VolumeFilePath = fs.Volume + filePath
 
 	// get a signed request
-	url, err := attachments.S3PutRequest(filePath, fs.Volume)
+	url, err := s3.PutRequest(filePath, fs.Volume)
 	if err != nil {
 		msg := "Error getting a signed request for upload " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
@@ -530,7 +531,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 	}
 
 	// Get current fileset for activity attachments
-	fs, err := fileset.NewActivity()
+	fs, err := fileset.ActivityAttachment()
 	if err != nil {
 		msg := "Could not determine the storage information for activity attachments - " + err.Error()
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", msg}
@@ -538,7 +539,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 		p.Send(w)
 		return
 	}
-	a.FileSet = *fs
+	a.FileSet = fs
 
 	// Register the attachment
 	if err := a.Register(); err != nil {

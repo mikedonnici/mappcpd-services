@@ -10,6 +10,7 @@ import (
 
 	"github.com/mappcpd/web-services/internal/activities"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/pkg/errors"
 )
 
 // MemberActivity is the document format for an activity that is
@@ -42,6 +43,20 @@ type MemberActivityInput struct {
 	Description string  `json:"description" validate:"required"`
 }
 
+// MemberActivityAttachment contains information about a file attached to a member activity
+//type MemberActivityInput struct {
+//	ID          int     `json:"ID"`
+//	MemberID    int     `json:"memberId"`
+//	ActivityID  int     `json:"activityId" validate:"required,min=1"`
+//	TypeID      int     `json:"typeId" validate:"required,min=1"`
+//	Evidence    int     `json:"evidence"`
+//	Date        string  `json:"date" validate:"required"`
+//	Quantity    float64 `json:"quantity" validate:"required"`
+//	UnitCredit  float64 `json:"unitCredit"`
+//	Description string  `json:"description" validate:"required"`
+//}
+
+
 // MemberActivities is a collection of MemberActivity values
 type MemberActivities []MemberActivity
 
@@ -72,7 +87,8 @@ func MemberActivityByID(id int) (*MemberActivity, error) {
 		&a.Type.Name,
 	)
 	if err != nil {
-		return &a, err
+		fmt.Println(errors.Wrap(err, "scan error"))
+		return &a, errors.Wrap(err, "scan error")
 	}
 
 	// Add ISODate for MongoDB from date string
@@ -94,8 +110,6 @@ func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 
 	query := selectMemberActivityQuery + ` WHERE member_id = ? ORDER BY activity_on DESC`
 
-	fmt.Println(query)
-
 	rows, err := datastore.MySQL.Session.Query(query, memberID)
 	if err != nil {
 		return activities, err
@@ -106,7 +120,7 @@ func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 
 		a := MemberActivity{}
 
-		rows.Scan(
+		err := rows.Scan(
 			&a.ID,
 			&a.MemberID,
 			&a.Date,
@@ -125,6 +139,9 @@ func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 			&a.Type.ID,
 			&a.Type.Name,
 		)
+		if err != nil {
+			fmt.Println(err)
+		}
 
 		activities = append(activities, a)
 	}
