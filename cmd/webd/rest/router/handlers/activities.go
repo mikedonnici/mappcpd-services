@@ -29,7 +29,7 @@ func Activities(w http.ResponseWriter, _ *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	al, err := activities.ActivityList()
+	al, err := activities.Activities()
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)

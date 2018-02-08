@@ -1,16 +1,15 @@
 package schema
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
 	"github.com/graphql-go/graphql"
+	"github.com/pkg/errors"
 
 	"github.com/mappcpd/web-services/internal/members"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 	"github.com/mappcpd/web-services/internal/utility"
-	//"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/attachments"
 )
 
@@ -90,7 +89,7 @@ type memberActivityInput struct {
 	// Description is the user-input that further describes the activity itself
 	Description string `json:"description"`
 
-	// ActivityID is the id of the activity (type)
+	// ActivityID is the id of the activity (type) - can look up from type
 	ActivityID int `json:"activityId"`
 
 	// TypeID now refers to the activity sub-type, ie a record from the ce_activity_type table
@@ -491,7 +490,6 @@ var memberActivityAttachmentsQueryField = &graphql.Field{
 
 		// Get the member activity id from the parent
 		maID := p.Source.(memberActivity).ID
-		fmt.Println(maID)
 		//types, err := activityTypesData(id)
 		//if err != nil {
 		//	return nil, nil
@@ -678,22 +676,28 @@ var memberActivityMutationField = &graphql.Field{
 				return nil, err
 			}
 
-			// ensure the activity type (id) is correct for the specified activity (id)
-			xat, err := activityTypesData(ma.ActivityID)
-			t := false
-			for _, v := range xat {
+			// set activity id from the activity type id
+			ma.ActivityID, err = activityIDByActivityTypeID(ma.TypeID)
+			if err != nil {
+				msg := fmt.Sprintf("Error fetching activity with activity type id = %v", ma.TypeID)
+				return nil, errors.Wrap(err, msg)
+			}
 
-				// handles nullable data
-				if int64(ma.TypeID) == v.ID.Int64  {
-					t = true
-					break
-				}
-			}
-			if t == false {
-				msg := fmt.Sprintf("Incorrect activity type (typeId: %v) for specified activity (activityId: %v) "+
-					"- query 'activities' for correct values", ma.TypeID, ma.ActivityID)
-				return nil, errors.New(msg)
-			}
+			//xat, err := activityTypesData(ma.ActivityID)
+			//t := false
+			//for _, v := range xat {
+			//
+			//	// handles nullable data
+			//	if int64(ma.TypeID) == v.ID.Int64  {
+			//		t = true
+			//		break
+			//	}
+			//}
+			//if t == false {
+			//	msg := fmt.Sprintf("Incorrect activity type (typeId: %v) for specified activity (activityId: %v) "+
+			//		"- query 'activities' for correct values", ma.TypeID, ma.ActivityID)
+			//	return nil, errors.New(msg)
+			//}
 
 			// update record
 			if ma.ID > 0 {
@@ -728,10 +732,10 @@ var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectCon
 		},
 
 		// activityId specifies the activity (type)
-		"activityId": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "The activity (type) id",
-		},
+		//"activityId": &graphql.InputObjectFieldConfig{
+		//	Type:        &graphql.NonNull{OfType: graphql.Int},
+		//	Description: "The activity (type) id",
+		//},
 
 		// typeId specifies the activity sub-type id - yes, confusing!
 		"typeId": &graphql.InputObjectFieldConfig{
@@ -801,9 +805,6 @@ func (mai *memberActivityInput) unpack(obj map[string]interface{}) error {
 	}
 	if val, ok := obj["quantity"].(float64); ok {
 		mai.Quantity = val
-	}
-	if val, ok := obj["activityId"].(int); ok {
-		mai.ActivityID = int(val)
 	}
 	if val, ok := obj["typeId"].(int); ok {
 		mai.TypeID = int(val)
@@ -1055,13 +1056,11 @@ func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
 	return me, nil
 }
 
-
 // memberActivityAttachmentsData fetches the attachments for a member activity
 func memberActivityAttachmentsData(memberActivityID int) ([]attachments.Attachment, error) {
 
 	return attachments.MemberActivityAttachments(memberActivityID)
 }
-
 
 // memberActivityAttachmentRequest requests a signed URL for uploading to S3
 //func memberActivityAttachmentRequest(memberID int) string {

@@ -1,10 +1,14 @@
 package activities
 
 import (
+	"fmt"
+
 	"database/sql"
 
+	"github.com/pkg/errors"
+
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"fmt"
+	"runtime"
 )
 
 // Activity describes a type of activity, eg online learning. This is NOT the same
@@ -39,20 +43,21 @@ type ActivityCategory struct {
 type ActivityType struct {
 	ID   sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
 	Name string        `json:"name" bson:"name"`
+	Activity Activity `json:"activity: bson: "activity"`
 }
 
-type Activities []Activity
+//type Activities []Activity
 
-// ActivityList fetches activity (types)
-func ActivityList() (Activities, error) {
+// Activities fetches activity (types)
+func Activities() ([]Activity, error) {
 
-	var ats Activities
+	var xa []Activity
 
 	query := "SELECT id, ce_activity_unit_id, code, name, description FROM ce_activity WHERE active = 1"
 
 	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
-		return ats, err
+		return xa, err
 	}
 	defer rows.Close()
 
@@ -63,16 +68,41 @@ func ActivityList() (Activities, error) {
 		rows.Scan(&at.ID, &ceActivityUnitID, &at.Code, &at.Name, &at.Description)
 		at.Credit, err = ActivityCreditData(ceActivityUnitID)
 		if err != nil {
-			return ats, err
+			return xa, err
 		}
-		ats = append(ats, at)
+		xa = append(xa, at)
 	}
 
-	return ats, nil
+	return xa, nil
 }
 
-// ActivityTypes fetches activity sub-types for the activity designated by activityID
-func ActivityTypes(activityID int) ([]ActivityType, error) {
+// ActivityTypes fetches activity types
+func ActivityTypes() ([]ActivityType, error) {
+
+	var xat []ActivityType
+
+	query := "SELECT id, name FROM ce_activity_type WHERE active = 1"
+
+	rows, err := datastore.MySQL.Session.Query(query)
+	if err != nil {
+		return xat, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		at := ActivityType{}
+		err := rows.Scan(&at.ID, &at.Name)
+		if err != nil {
+			fmt.Println(err)
+		}
+		xat = append(xat, at)
+	}
+
+	return xat, nil
+}
+
+// ActivityTypesByActivity fetches activity sub-types for the activity designated by activityID
+func ActivityTypesByActivity(activityID int) ([]ActivityType, error) {
 
 	var xat []ActivityType
 
@@ -96,7 +126,7 @@ func ActivityTypes(activityID int) ([]ActivityType, error) {
 	return xat, nil
 }
 
-// ActivityByID fetches a single activity type by id
+// ActivityByID fetches a single activity by id
 func ActivityByID(id int) (Activity, error) {
 
 	var a Activity
@@ -123,6 +153,26 @@ func ActivityByID(id int) (Activity, error) {
 	}
 
 	return a, nil
+}
+
+// ActivityByActivityTypeID fetches a single activity by activity type id
+func ActivityByActivityTypeID(activityTypeID int) (Activity, error) {
+
+	var a Activity
+
+	// get the activity id
+	var id int
+	query := "SELECT ce_activity_id FROM ce_activity_type WHERE id = ?"
+	err := datastore.MySQL.Session.QueryRow(query, activityTypeID).Scan(&id)
+	if err != nil {
+
+		function, file, line, _ := runtime.Caller(0)
+		msg := fmt.Sprintf("File: %s  Function: %s Line: %d", file, runtime.FuncForPC(function).Name(), line)
+
+		return a, errors.Wrap(err, msg)
+	}
+
+	return ActivityByID(id)
 }
 
 // ActivityUnitCredit gets the credit value, per unit (eg hour, item) for a particular

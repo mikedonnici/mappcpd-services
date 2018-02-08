@@ -19,7 +19,7 @@ func activitiesData() ([]activity, error) {
 
 	var xla []activity
 
-	xa, err := activities.ActivityList()
+	xa, err := activities.Activities()
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,15 @@ func activitiesData() ([]activity, error) {
 
 // activityTypesData returns sub types for an activity
 func activityTypesData(activityID int) ([]activities.ActivityType, error) {
-	return activities.ActivityTypes(activityID)
+	return activities.ActivityTypesByActivity(activityID)
+}
+
+// activityIDByActivityTypeID returns the activity id for an activity type id
+func activityIDByActivityTypeID(activityTypeID int) (int, error) {
+
+	a, err := activities.ActivityByActivityTypeID(activityTypeID)
+
+	return a.ID, err
 }
 
 // activitiesQueryField resolves queries for activities (activity types)
