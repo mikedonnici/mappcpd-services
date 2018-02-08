@@ -9,6 +9,7 @@ import (
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"runtime"
+	"github.com/mappcpd/web-services/internal/utility"
 )
 
 // Activity describes a type of activity, eg online learning. This is NOT the same
@@ -165,10 +166,8 @@ func ActivityByActivityTypeID(activityTypeID int) (Activity, error) {
 	query := "SELECT ce_activity_id FROM ce_activity_type WHERE id = ?"
 	err := datastore.MySQL.Session.QueryRow(query, activityTypeID).Scan(&id)
 	if err != nil {
-
-		function, file, line, _ := runtime.Caller(0)
-		msg := fmt.Sprintf("File: %s  Function: %s Line: %d", file, runtime.FuncForPC(function).Name(), line)
-
+		function, file, line, ok := runtime.Caller(0)
+		msg := utility.ErrorLocationMessage(function, file, line, ok, true)
 		return a, errors.Wrap(err, msg)
 	}
 

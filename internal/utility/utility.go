@@ -4,9 +4,12 @@ import (
 	"fmt"
 	"reflect"
 	"time"
-
 	"errors"
+	"runtime"
+	"strings"
+
 	"github.com/mappcpd/web-services/internal/constants"
+
 )
 
 // dateTime converts a MySQL timestamp (format "2006-01-02 15:04:05") string to a time.Time value
@@ -85,3 +88,30 @@ func DateStringToTime(dateString string) (time.Time, error) {
 	msg = fmt.Sprintf(msg, constants.MySQLTimestampFormat, constants.MySQLDateFormat, time.RFC3339)
 	return t, errors.New(msg)
 }
+
+// ErrorLocation gives the filename and function and line of the caller. Useful for errors triggered deeper in the stack
+func ErrorLocationMessage(function uintptr, file string, line int, ok bool, stripPaths bool) string {
+
+	if !ok {
+		return "Could not determine error location"
+	}
+
+	var funcName string
+	if stripPaths {
+		file = StripPath(file)
+		funcName = StripPath(runtime.FuncForPC(function).Name())
+	}
+
+	return fmt.Sprintf("File: %s  Function: %s Line: %d", file, funcName, line)
+}
+
+// StripPaths removes all path information and returns the final file name
+func StripPath(filePath string) string {
+	i := strings.LastIndex(filePath, "/")
+	if i == -1 {
+		return filePath
+	} else {
+		return filePath[i+1:]
+	}
+}
+
