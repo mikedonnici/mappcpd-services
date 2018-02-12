@@ -16,6 +16,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"strconv"
+	"strings"
 )
 
 var db *sql.DB
@@ -29,7 +30,13 @@ type link struct {
 	longURL   string
 }
 
+// backdays specifies how far back to include records in whatever task is being performed
 var backdays int
+
+// tasksFlag flag is used to specify specific functions to run, comma-separated
+var tasksFlag string
+
+var validTasks = []string{"fixResources"}
 
 func init() {
 	envr.New("fixrEnv", []string{
@@ -40,8 +47,9 @@ func init() {
 		"MAPPCPD_SHORT_LINK_PREFIX",
 	}).Auto()
 
-	// set backdays from flag
+	// flags
 	flag.IntVar(&backdays, "b", 1, "Specify backdays as an integer > 0")
+	flag.StringVar(&tasksFlag, "t", "", "Specify comma-separated list of tasks to run, 'task1, task2, task3'")
 }
 
 func main() {
@@ -54,6 +62,17 @@ func main() {
 		fmt.Println("Checking records updated within the last", backdays, "days")
 	}
 
+	if tasksFlag == "" {
+		fmt.Println("No tasks specified")
+		os.Exit(0)
+	}
+	t := strings.Replace(tasksFlag, " ", "", -1)
+	tasks := strings.Split(t, ",")
+	if err := verifyTasks(tasks); err != nil {
+		fmt.Println(errors.Cause(err))
+		os.Exit(1)
+	}
+
 	var err error // don't shadow
 
 	db, err = sql.Open("mysql", os.Getenv("MAPPCPD_MYSQL_URL"))
@@ -63,24 +82,50 @@ func main() {
 
 	ddb, err = mgo.Dial(os.Getenv("MAPPCPD_MONGO_URL"))
 	if err != nil {
-		log.Fatal("Could not connect to Mongo server:", os.Getenv("MAPPCPD_MONGO_URL"), "-", errors.Cause(err))
+		log.Fatalln("Could not connect to Mongo server:", os.Getenv("MAPPCPD_MONGO_URL"), "-", errors.Cause(err))
 	}
 
-	fmt.Println("Checking short links-------------------------------- ")
-	if err := checkShortLinks(); err != nil {
-		fmt.Println(errors.Cause(err))
-		os.Exit(1)
-	}
-	fmt.Println("--- done")
+	// run the set of tasks
+	for _, v := range tasks {
 
-	// Sync active flag from primary db to Resources and Links
-	fmt.Println("Syncing active flag ----------------------------------")
-	if err := syncActiveFlag(); err != nil {
-		fmt.Println(errors.Cause(err))
-		os.Exit(1)
-	}
-	fmt.Println("--- done")
+		if v == "fixResources" {
+			fmt.Println("Running task: 'fixResources' ")
+			if err := checkShortLinks(); err != nil {
+				fmt.Println(errors.Cause(err))
+				os.Exit(1)
+			}
+			if err := syncActiveFlag(); err != nil {
+				fmt.Println(errors.Cause(err))
+				os.Exit(1)
+			}
+			fmt.Println("--- done")
+		}
 
+		if v == "" {
+			// todo fix pubmed data
+		}
+
+	}
+}
+
+// verifyTasks checks that the task list contains tasks that are valid
+func verifyTasks(tasks []string) error {
+
+	for _, t := range tasks {
+
+		f := false
+		for _, vt := range validTasks {
+			if t == vt {
+				f = true
+			}
+		}
+
+		if f == false {
+			return errors.New(fmt.Sprintf("Invalid task: '%s'", t))
+		}
+	}
+
+	return nil
 }
 
 // checkShortLinks checks all the Resource records for a short link, and if incorrect or not found, fixes them.
@@ -259,7 +304,7 @@ func getResourceIDs(active bool) ([]int, error) {
 
 	// Only resources with proper urls, even though there are very few with relative urls
 	// Don't need back days - need to check everything.
-	query := "SELECT id from ol_resource WHERE resource_url LIKE 'http%' AND active = ?"
+	query := "SELECT id FROM ol_resource WHERE resource_url LIKE 'http%' AND active = ?"
 	rows, err := db.Query(query, a)
 	if err != nil {
 		return nil, errors.New("Error executing query - " + err.Error())
@@ -365,3 +410,6 @@ func setLinksActiveField(ids []int, active bool) error {
 
 	return nil
 }
+
+
+

@@ -35,9 +35,14 @@ MAPPCPD_SHORT_LINK_URL="https://mapp.to"
 MAPPCPD_SHORT_LINK_PREFIX="r"
 ```
 
-## Usage
+## Flags
 
-Use the `-b` flag to specify *backdays* - ie, how far back to include records based on `updated_at`. Default to 1.
+`-b` *backdays* - ie, how far back to include records based on `updated_at`, defaults to 1.
+`-t` *tasks* to perform, comma-separated list if strings, no default. Options are:
+    * `fixResources` - checks and fixes short links, and the active flag for resource records 
+
+
+## Usage
 
 ```bash
 # run fixr on records updated within the last 1 day (default)
