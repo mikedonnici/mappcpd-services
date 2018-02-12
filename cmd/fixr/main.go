@@ -3,24 +3,19 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"time"
-
-	"database/sql"
+	"strconv"
+	"strings"
 
 	"github.com/34South/envr"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/mappcpd/web-services/internal/resources"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"strconv"
-	"strings"
-)
 
-var db *sql.DB
-var ddb *mgo.Session
+	"github.com/mappcpd/web-services/internal/resources"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
+)
 
 type link struct {
 	id        int
@@ -40,9 +35,6 @@ var validTasks = []string{"fixResources"}
 
 func init() {
 	envr.New("fixrEnv", []string{
-		"MAPPCPD_MYSQL_URL",
-		"MAPPCPD_MONGO_URL",
-		"MAPPCPD_MONGO_DBNAME",
 		"MAPPCPD_SHORT_LINK_URL",
 		"MAPPCPD_SHORT_LINK_PREFIX",
 	}).Auto()
@@ -73,17 +65,20 @@ func main() {
 		os.Exit(1)
 	}
 
-	var err error // don't shadow
+	// connect to data
+	datastore.Connect()
 
-	db, err = sql.Open("mysql", os.Getenv("MAPPCPD_MYSQL_URL"))
-	if err != nil {
-		log.Fatalln("Could not connect to MySQL server:", os.Getenv("MAPPCPD_MYSQL_URL"), "-", errors.Cause(err))
-	}
-
-	ddb, err = mgo.Dial(os.Getenv("MAPPCPD_MONGO_URL"))
-	if err != nil {
-		log.Fatalln("Could not connect to Mongo server:", os.Getenv("MAPPCPD_MONGO_URL"), "-", errors.Cause(err))
-	}
+	//var err error // don't shadow
+	//
+	//db, err = sql.Open("mysql", os.Getenv("MAPPCPD_MYSQL_URL"))
+	//if err != nil {
+	//	log.Fatalln("Could not connect to MySQL server:", os.Getenv("MAPPCPD_MYSQL_URL"), "-", errors.Cause(err))
+	//}
+	//
+	//ddb, err = mgo.Dial(os.Getenv("MAPPCPD_MONGO_URL"))
+	//if err != nil {
+	//	log.Fatalln("Could not connect to Mongo server:", os.Getenv("MAPPCPD_MONGO_URL"), "-", errors.Cause(err))
+	//}
 
 	// run the set of tasks
 	for _, v := range tasks {
@@ -121,7 +116,7 @@ func verifyTasks(tasks []string) error {
 		}
 
 		if f == false {
-			return errors.New(fmt.Sprintf("Invalid task: '%s'", t))
+			return fmt.Errorf("Invalid task: '%s'", t)
 		}
 	}
 
@@ -138,7 +133,7 @@ func checkShortLinks() error {
 		"WHERE `active` = 1 AND `primary` = 1 AND resource_url LIKE 'http%' " +
 		"AND updated_at >= NOW() - INTERVAL " + strconv.Itoa(backdays) + " DAY"
 
-	rows, err := db.Query(query)
+	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
 		return err
 	}
@@ -191,7 +186,7 @@ func setShortURL(id int, shortURL string) error {
 
 	query := `UPDATE ol_resource SET short_url = "%v", updated_at = NOW() WHERE id = %v LIMIT 1`
 	query = fmt.Sprintf(query, shortURL, id)
-	_, err := db.Exec(query)
+	_, err := datastore.MySQL.Session.Exec(query)
 
 	return errors.Wrap(err, "sql updated failed")
 }
@@ -254,16 +249,19 @@ func getLinkDoc(shortPath string) (resources.Link, error) {
 	// Always set this as it is used as the KEY for Links docs
 	l.ShortUrl = shortPath
 
-	// Query the database
-	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Links")
-	s := bson.M{"shortUrl": shortPath}
-	err := c.Find(s).One(&l)
+	// connect to collection
+	c, err := datastore.MongoDB.LinksCol()
+	if err != nil {
+		return l, errors.Wrap(err, "error connecting to collection")
+	}
 
+	// query
+	s := bson.M{"shortUrl": shortPath}
+	err = c.Find(s).One(&l)
 	// Not found is ok, return the empty value
 	if err == mgo.ErrNotFound {
 		return l, nil /// no error, just not found
 	}
-
 	// Some other error
 	if err != nil {
 		return l, errors.Wrap(err, "mongo query failed")
@@ -278,10 +276,14 @@ func getLinkDoc(shortPath string) (resources.Link, error) {
 // or modifying an existing one. So shortPath is the best identifier.
 func sync(ld resources.Link, shortPath string) error {
 
-	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Links")
+	c, err := datastore.MongoDB.LinksCol()
+	if err != nil {
+		return errors.Wrap(err, "error connecting to collection")
+	}
+
 	s := bson.M{"shortUrl": shortPath}
 	u := bson.M{"$set": ld}
-	_, err := c.Upsert(s, u)
+	_, err = c.Upsert(s, u)
 	if err != nil {
 		return errors.Wrap(err, "upsert failed")
 	}
@@ -305,7 +307,7 @@ func getResourceIDs(active bool) ([]int, error) {
 	// Only resources with proper urls, even though there are very few with relative urls
 	// Don't need back days - need to check everything.
 	query := "SELECT id FROM ol_resource WHERE resource_url LIKE 'http%' AND active = ?"
-	rows, err := db.Query(query, a)
+	rows, err := datastore.MySQL.Session.Query(query, a)
 	if err != nil {
 		return nil, errors.New("Error executing query - " + err.Error())
 	}
@@ -352,12 +354,9 @@ func syncActiveFlag() error {
 	if err := setResourcesActiveField(activeIDs, true); err != nil {
 		return err
 	}
-	// Set the corresponding Links docs active field to 'false'
-	if err := setLinksActiveField(activeIDs, true); err != nil {
-		return err
-	}
 
-	return nil
+	// Set the corresponding Links docs active field to 'false'
+	return setLinksActiveField(activeIDs, true)
 }
 
 // setResourcesActiveField sets the active field for Resources docs identified by the ids list
@@ -369,7 +368,12 @@ func setResourcesActiveField(ids []int, active bool) error {
 	}
 
 	fmt.Printf("Setting %v Resources to active: %v", len(ids), active)
-	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Resources")
+
+	c, err := datastore.MongoDB.ResourcesCol()
+	if err != nil {
+		return errors.Wrap(err, "error connecting to collection")
+	}
+
 	s := bson.M{"id": bson.M{"$in": ids}}
 	u := bson.M{"$set": bson.M{"active": active}}
 	ci, err := c.UpdateAll(s, u)
@@ -398,7 +402,12 @@ func setLinksActiveField(ids []int, active bool) error {
 	}
 
 	fmt.Printf("Setting %v Links to active: %v", len(ids), active)
-	c := ddb.DB(os.Getenv("MAPPCPD_MONGO_DBNAME")).C("Links")
+
+	c, err := datastore.MongoDB.LinksCol()
+	if err != nil {
+		return errors.Wrap(err, "error connecting to collection")
+	}
+
 	s := bson.M{"shortUrl": bson.M{"$in": rids}}
 	u := bson.M{"$set": bson.M{"active": active}}
 	ci, err := c.UpdateAll(s, u)
@@ -410,6 +419,3 @@ func setLinksActiveField(ids []int, active bool) error {
 
 	return nil
 }
-
-
-

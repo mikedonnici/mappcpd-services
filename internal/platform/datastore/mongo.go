@@ -4,7 +4,16 @@ import (
 	"os"
 
 	"gopkg.in/mgo.v2"
+	"github.com/34South/envr"
 )
+
+func init() {
+	envr.New("datastoreEnv", []string{
+		"MAPPCPD_MONGO_URL",
+		"MAPPCPD_MONGO_DBNAME",
+		"MAPPCPD_MONGO_DESC",
+	}).Auto()
+}
 
 // MongoDBConnection represents a connection to a MongoDB server
 // and includes convenience methods for accessing each collection

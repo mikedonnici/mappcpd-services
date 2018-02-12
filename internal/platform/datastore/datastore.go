@@ -25,41 +25,32 @@ func Connect() {
 // connectMySQL establishes a MySQL connection
 func connectMySQL() {
 
-	fmt.Println("Initialising MySQL connection...")
-
-	//var m MySQLConnection
 	err := MySQL.Connect() // this does not really open a new connection
 	if err != nil {
-		log.Fatalln("models: Could not connect to MySQLConnection server")
+		log.Fatalln(err)
 	}
-
-	// Set the global db pointer
-	//MySQL = m.Session
-	//MySQL.Session.SetMaxIdleConns(100) // no idea if this is required
 
 	err = MySQL.Session.Ping() // This DOES open a connection if necessary. This makes sure the db is accessible
 	if err != nil {
-		log.Fatalf("Error opening MySQL connection: %s", err.Error())
+		log.Fatalln("Error opening MySQL connection: %s", err.Error())
 	}
 
-	fmt.Println("Connected to ", MySQL.Source)
+	fmt.Println("datastore connected to MySQL:", MySQL.Source)
 }
 
 // connectMongoDB establishes a connection to DB2
 func connectMongoDB() {
 
-	fmt.Println("Establishing connection to MongoDB...")
-
 	err := MongoDB.Connect()
 	if err != nil {
-		log.Fatalln("models: Could not connect to MongoDB server")
+		log.Fatalln(err)
 	}
 
 	// Set global pointer to session for convenience
 	err = MongoDB.session.Ping()
 	if err != nil {
-		log.Fatalf("Error opening MongoDB connection: %s\n", err.Error())
+		log.Fatalln("Error opening MongoDB connection: %s", err.Error())
 	}
 
-	fmt.Println("Connected to ", MongoDB.Source)
+	fmt.Println("datastore connected to MongoDB:", MongoDB.Source)
 }
