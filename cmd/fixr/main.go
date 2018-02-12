@@ -7,6 +7,9 @@ import (
 	"time"
 	"strconv"
 	"strings"
+	"net/http"
+	"io/ioutil"
+	"encoding/json"
 
 	"github.com/34South/envr"
 	"github.com/pkg/errors"
@@ -25,13 +28,34 @@ type link struct {
 	longURL   string
 }
 
+type resource struct {
+	ID         int
+	Name       string
+	Keywords   string
+	Attributes string
+}
+
+// ol_resource.attributes holds a JSON string which should map to this:
+type attributes struct {
+	Category string `json:"category"`
+	Free     bool   `json:"free"`
+	Public   bool   `json:"public"`
+	Source   string `json:"source"`
+	// SourceID is the Pubmed article id
+	SourceID   string `json:"sourceId"`
+	// SourceName is the FULL journal name
+	SourceName string `json:"sourceName"`
+	// SourceRef is the article reference - abbrev. journal name , edition, pages
+	SourceRef string `json:"sourceRef"`
+}
+
 // backdays specifies how far back to include records in whatever task is being performed
 var backdays int
 
 // tasksFlag flag is used to specify specific functions to run, comma-separated
 var tasksFlag string
 
-var validTasks = []string{"fixResources"}
+var validTasks = []string{"fixResources", "pubmedData"}
 
 func init() {
 	envr.New("fixrEnv", []string{
@@ -65,22 +89,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	// connect to data
 	datastore.Connect()
 
-	//var err error // don't shadow
-	//
-	//db, err = sql.Open("mysql", os.Getenv("MAPPCPD_MYSQL_URL"))
-	//if err != nil {
-	//	log.Fatalln("Could not connect to MySQL server:", os.Getenv("MAPPCPD_MYSQL_URL"), "-", errors.Cause(err))
-	//}
-	//
-	//ddb, err = mgo.Dial(os.Getenv("MAPPCPD_MONGO_URL"))
-	//if err != nil {
-	//	log.Fatalln("Could not connect to Mongo server:", os.Getenv("MAPPCPD_MONGO_URL"), "-", errors.Cause(err))
-	//}
-
-	// run the set of tasks
 	for _, v := range tasks {
 
 		if v == "fixResources" {
@@ -96,10 +106,10 @@ func main() {
 			fmt.Println("--- done")
 		}
 
-		if v == "" {
-			// todo fix pubmed data
+		if v == "pubmedData" {
+			fmt.Println("Running task: 'pubmedData' ")
+			pubmedResourceAttributes()
 		}
-
 	}
 }
 
@@ -418,4 +428,152 @@ func setLinksActiveField(ids []int, active bool) error {
 	fmt.Println("...", ci.Updated, "records were updated")
 
 	return nil
+}
+
+
+// pubmedResourceAttributes checks and updates the ol_resources.attributes field for resources that were sourced from Pubmed
+func pubmedResourceAttributes() {
+
+	// fetch pubmed resources
+	xr, err := resourcesByAttribute("pubmed")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	// set new ol_resource.attributes for each resource
+	for _, v := range xr {
+
+		// last keyword in ol_resource.keywords is the pubmed article id
+		pubmedId, err := strconv.Atoi(lastKeyword(v.Keywords))
+		if err != nil {
+			fmt.Println("Last keyword does not appear to be an id")
+			os.Exit(1)
+		}
+		// hack sanity check - all pubmed ids are between 20000000 and 300000000
+		if pubmedId < 20000000 || pubmedId > 30000000 {
+			fmt.Println("Pubmed ID appears out of range:", pubmedId)
+			os.Exit(1)
+		}
+
+		// fetch full journal name and article reference from Pubmed api
+		fn, ar := pubmedMeta(strconv.Itoa(pubmedId))
+
+		// Create new attributes value, unmarshal existing attributes before adding new ones
+		a := attributes{}
+		json.Unmarshal([]byte(v.Attributes), &a)
+		a.SourceID = strconv.Itoa(pubmedId)
+		a.SourceName = fn
+		a.SourceRef = ar
+
+		// Marshal back to a string
+		as, err := json.Marshal(a)
+		if err != nil {
+			fmt.Println("Could not marshal new attributes value")
+			os.Exit(1)
+		}
+
+		// update ol_resource.attributes
+		if err = updateAttributes(v.ID, string(as)); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Println("----------------------------------------------------------------------------------")
+		fmt.Println("Resource id", v.ID, "-", v.Name)
+		fmt.Println("Attributes set to:", string(as))
+	}
+}
+
+// resourceByAttribute fetches resource records that have a string LIKE 'pattern' in the ol_resource.attributes field
+func resourcesByAttribute(pattern string) ([]resource, error) {
+
+	var xr []resource
+
+	query := "SELECT id, name, keywords, attributes FROM ol_resource " +
+		"WHERE attributes LIKE '%" + pattern + "%' " +
+		"AND updated_at >= NOW() - INTERVAL " + strconv.Itoa(backdays) + " DAY "
+	rows, err := datastore.MySQL.Session.Query(query)
+	if err != nil {
+		return xr, err
+	}
+
+	for rows.Next() {
+		var r resource
+		err := rows.Scan(&r.ID, &r.Name, &r.Keywords, &r.Attributes)
+		if err != nil {
+			return xr, err
+		}
+		xr = append(xr, r)
+	}
+
+	return xr, nil
+}
+
+// lastKeyword returns the last keyword in a comma separated list of keywords.
+func lastKeyword(list string) string {
+	xs := strings.Split(list, ",")
+	return xs[len(xs)-1]
+}
+
+// pubmedMeta fetches the meta data for an article by id, it returns the full journal name and the article reference
+//
+// The JSON response from Pubmed is shaped as shown below, ie the field of interest is named after the id of the article.
+// Hence, it is easiest to unmarshal the response into a map[string]interface{}
+//
+//  {
+//	  "meta": [],
+//	  "result": {
+//	  	  "1234": {
+//			  "field1": "value1",
+//			  "field2": "value2",
+//			  "field3": "value3",
+//			  "fulljournalname": "Medicine"
+//		  }
+//	  }
+//  }
+//
+// Example: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=25963440&retmode=json
+func pubmedMeta(id string) (string, string) {
+
+	var jName, aRef string
+
+	url := fmt.Sprintf("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=%s&retmode=json", id)
+	res, err := http.Get(url)
+	if err != nil {
+		fmt.Println("Could not GET", url)
+	}
+	defer res.Body.Close()
+
+	xb, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		fmt.Println("Could not read response body")
+	}
+
+	// unmarshall the entire response body
+	rb := make(map[string]interface{})
+	json.Unmarshal(xb, &rb)
+
+	// assert "result" field
+	rsf := rb["result"].(map[string]interface{})
+
+	// assert the field with name equal to the id of the article
+	idf := rsf[id].(map[string]interface{})
+
+	// now can access the "fulljournalname" field
+	jName = idf["fulljournalname"].(string)
+
+	// and create the article reference - eg J Thorac Cardiovasc Surg. 2015 Jul;150(1):197-9
+	aRef = fmt.Sprintf("%s %s;%s(%s):%s", idf["source"], idf["pubdate"], idf["volume"], idf["issue"], idf["pages"])
+
+	return jName, aRef
+}
+
+// updateAttributes sets the ol_resource.attributes field
+func updateAttributes(id int, attributes string) error {
+
+	query := "UPDATE ol_resource SET updated_at = NOW(), attributes = ? WHERE id = ? LIMIT 1"
+	_, err := datastore.MySQL.Session.Exec(query, attributes, id)
+
+	return err
 }

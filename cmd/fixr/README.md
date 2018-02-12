@@ -40,14 +40,18 @@ MAPPCPD_SHORT_LINK_PREFIX="r"
 `-b` *backdays* - ie, how far back to include records based on `updated_at`, defaults to 1.
 `-t` *tasks* to perform, comma-separated list if strings, no default. Options are:
     * `fixResources` - checks and fixes short links, and the active flag for resource records 
+    * `pubmedData` - updates `ol_resource.attributes` with additional pubmed info
 
 
 ## Usage
 
 ```bash
-# run fixr on records updated within the last 1 day (default)
-$ fixr
+# check short links for resource updated in the last 24 hours (1 day is default)
+$ fixr -t "fixResources"
 
-# run fixr on records updated within the last 3 days
-$ fixr -b 3 
+# check short links for resource updated in the last year
+$ fixr -b 365 -t "fixResources"
+
+# update all Pubmed data
+$ fixr -b 100000 -t "pubmedData"
 ```
