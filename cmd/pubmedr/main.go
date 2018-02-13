@@ -66,6 +66,13 @@ type PubMedArticle struct {
 	KeywordList     []string       `xml:"MedlineCitation>KeywordList>Keyword"`
 	MeshHeadingList []string       `xml:"MedlineCitation>MeshHeadingList>MeshHeading>DescriptorName"`
 	AuthorList      []Author       `xml:"MedlineCitation>Article>AuthorList>Author"`
+	Journal         string         `xml:"MedlineCitation>Article>Journal>Title"`
+	JournalAbbrev   string         `xml:"MedlineCitation>Article>Journal>ISOAbbreviation"`
+	Volume          string         `xml:"MedlineCitation>Article>Journal>JournalIssue>Volume"`
+	Issue           string         `xml:"MedlineCitation>Article>Journal>JournalIssue>Issue"`
+	Pages           string         `xml:"MedlineCitation>Article>Pagination>MedlinePgn"`
+	PubYear         string         `xml:"MedlineCitation>Article>Journal>JournalIssue>PubDate>Year"`
+	PubMonth        string         `xml:"MedlineCitation>Article>Journal>JournalIssue>PubDate>Month"`
 }
 type AbstractText struct {
 	Key   string `xml:"label,attr"`
@@ -327,6 +334,7 @@ func (ps *PubMedSearch) fetchIDs(searchTerm string, relDate, startAt int) {
 
 	//xb, _ := ioutil.ReadAll(r.Body)
 	//fmt.Println(string(xb))
+	//os.Exit(0)
 
 	err = json.NewDecoder(r.Body).Decode(&ps)
 	if err != nil {
@@ -356,6 +364,7 @@ func (ps *PubMedSearch) getSummaries(pa *PubMedArticleSet) {
 
 	//xb, _ := ioutil.ReadAll(r.Body)
 	//fmt.Println(string(xb))
+	//os.Exit(0)
 
 	err = xml.NewDecoder(r.Body).Decode(&pa)
 	if err != nil {
@@ -414,7 +423,7 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 		// If we are using MEDLINE only we get MeshHeadings, otherwise KeyWords
 		// So mash them together as one set of KeyWords...
 		// Also, we will stick the Authors into the Keywords to assist with searches
-		// and tack the PubmedID on the end as well - why not?
+		// and tack the PubmedID on the end as well - why not? (so lucky you did!)
 		v.KeywordList = append(v.KeywordList, v.MeshHeadingList...)
 		// Concat Author LastName and Initials
 		xa := []string{}
@@ -445,7 +454,14 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 
 		// Attributes is fixed (json string) for all pubmed articles in the same batch
 		// This is saves to the db and used later to assist with search faceting
+		// However, we now add article details to attributes so can add here as it is a map[string]interface{}
+		attributes["sourceId"] = strconv.Itoa(v.ID)
+		attributes["sourceName"] = v.Journal
+		attributes["sourceRef"] = fmt.Sprintf("%s %s %s;%s(%s):%s", v.JournalAbbrev, v.PubYear, v.PubMonth, v.Volume, v.Issue, v.Pages)
 		r.Attributes = attributes
+		//fmt.Println("******************")
+		//fmt.Println(attributes)
+		//fmt.Println("******************")
 
 		j, err := json.Marshal(r)
 		if err != nil {
