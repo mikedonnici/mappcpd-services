@@ -37,16 +37,17 @@ type resource struct {
 
 // ol_resource.attributes holds a JSON string which should map to this:
 type attributes struct {
-	Category string `json:"category"`
-	Free     bool   `json:"free"`
-	Public   bool   `json:"public"`
-	Source   string `json:"source"`
-	// SourceID is the Pubmed article id
-	SourceID   string `json:"sourceId"`
-	// SourceName is the FULL journal name
-	SourceName string `json:"sourceName"`
-	// SourceRef is the article reference - abbrev. journal name , edition, pages
-	SourceRef string `json:"sourceRef"`
+	Category         string `json:"category"`
+	Free             bool   `json:"free"`
+	Public           bool   `json:"public"`
+	Source           string `json:"source"`
+	SourceID         string `json:"sourceId"`
+	SourceName       string `json:"sourceName"`
+	SourceNameAbbrev string `json:"sourceNameAbbrev"`
+	SourcePubDate    string `json:"sourcePubDate"`
+	SourceVolume     string `json:"sourceVolume"`
+	SourceIssue      string `json:"sourceIssue"`
+	SourcePages      string `json:"sourcePages"`
 }
 
 // backdays specifies how far back to include records in whatever task is being performed
@@ -430,7 +431,6 @@ func setLinksActiveField(ids []int, active bool) error {
 	return nil
 }
 
-
 // pubmedResourceAttributes checks and updates the ol_resources.attributes field for resources that were sourced from Pubmed
 func pubmedResourceAttributes() {
 
@@ -456,15 +456,12 @@ func pubmedResourceAttributes() {
 			os.Exit(1)
 		}
 
-		// fetch full journal name and article reference from Pubmed api
-		fn, ar := pubmedMeta(strconv.Itoa(pubmedId))
-
-		// Create new attributes value, unmarshal existing attributes before adding new ones
+		// set existing attributes
 		a := attributes{}
 		json.Unmarshal([]byte(v.Attributes), &a)
-		a.SourceID = strconv.Itoa(pubmedId)
-		a.SourceName = fn
-		a.SourceRef = ar
+
+		// set attributes related to pubmed data
+		a.pubmedData(strconv.Itoa(pubmedId))
 
 		// Marshal back to a string
 		as, err := json.Marshal(a)
@@ -472,6 +469,9 @@ func pubmedResourceAttributes() {
 			fmt.Println("Could not marshal new attributes value")
 			os.Exit(1)
 		}
+
+		//fmt.Println(string(as))
+		//os.Exit(0)
 
 		// update ol_resource.attributes
 		if err = updateAttributes(v.ID, string(as)); err != nil {
@@ -516,7 +516,7 @@ func lastKeyword(list string) string {
 	return xs[len(xs)-1]
 }
 
-// pubmedMeta fetches the meta data for an article by id, it returns the full journal name and the article reference
+// pubmedData fetches the meta data for an article by id, it returns the full journal name and the article reference
 //
 // The JSON response from Pubmed is shaped as shown below, ie the field of interest is named after the id of the article.
 // Hence, it is easiest to unmarshal the response into a map[string]interface{}
@@ -534,11 +534,9 @@ func lastKeyword(list string) string {
 //  }
 //
 // Example: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=25963440&retmode=json
-func pubmedMeta(id string) (string, string) {
+func (a *attributes) pubmedData(articleID string) {
 
-	var jName, aRef string
-
-	url := fmt.Sprintf("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=%s&retmode=json", id)
+	url := fmt.Sprintf("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=%s&retmode=json", articleID)
 	res, err := http.Get(url)
 	if err != nil {
 		fmt.Println("Could not GET", url)
@@ -558,15 +556,16 @@ func pubmedMeta(id string) (string, string) {
 	rsf := rb["result"].(map[string]interface{})
 
 	// assert the field with name equal to the id of the article
-	idf := rsf[id].(map[string]interface{})
+	idf := rsf[articleID].(map[string]interface{})
 
-	// now can access the "fulljournalname" field
-	jName = idf["fulljournalname"].(string)
-
-	// and create the article reference - eg J Thorac Cardiovasc Surg. 2015 Jul;150(1):197-9
-	aRef = fmt.Sprintf("%s %s;%s(%s):%s", idf["source"], idf["pubdate"], idf["volume"], idf["issue"], idf["pages"])
-
-	return jName, aRef
+	// set required fields
+	a.SourceID = articleID
+	a.SourceName = idf["fulljournalname"].(string)
+	a.SourceNameAbbrev = idf["source"].(string)
+	a.SourceVolume = idf["volume"].(string)
+	a.SourceIssue = idf["issue"].(string)
+	a.SourcePages = idf["pages"].(string)
+	a.SourcePubDate = idf["pubdate"].(string)
 }
 
 // updateAttributes sets the ol_resource.attributes field
