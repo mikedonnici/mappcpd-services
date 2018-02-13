@@ -169,6 +169,15 @@ func indexResources() {
 	xr.Data = reshapeResources(xr.Data)
 
 	fmt.Println("Update resources index...")
+
+	// check new pubmed source attributes
+	//for _, v := range xr.Data {
+	//	_, ok := v["sourceId"]
+	//	if ok {
+	//		fmt.Println(v["sourceId"], v["sourceName"], v["sourceRef"])
+	//	}
+	//}
+
 	indexDocs(&xr)
 
 	// Remove inactive resources from index
@@ -311,6 +320,22 @@ func reshapeResources(data []map[string]interface{}) []map[string]interface{} {
 			"shortUrl":             v["shortUrl"],
 			"resourceUrl":          v["resourceUrl"],
 		}
+
+		// Pubmed Attributes
+		attributes := v["attributes"].(map[string]interface{})
+		v, ok := attributes["sourceId"]
+		if ok {
+			r["sourceId"] = v
+		}
+		v, ok = attributes["sourceName"]
+		if ok {
+			r["sourceName"] = v
+		}
+		v, ok = attributes["sourceRef"]
+		if ok {
+			r["sourceRef"] = v
+		}
+
 		d = append(d, r)
 	}
 
