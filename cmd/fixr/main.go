@@ -95,7 +95,7 @@ func main() {
 	for _, v := range tasks {
 
 		if v == "fixResources" {
-			fmt.Println("Running task: 'fixResources' ")
+			fmt.Println("Running task:", v)
 			if err := checkShortLinks(); err != nil {
 				fmt.Println(errors.Cause(err))
 				os.Exit(1)
@@ -108,7 +108,7 @@ func main() {
 		}
 
 		if v == "pubmedData" {
-			fmt.Println("Running task: 'pubmedData' ")
+			fmt.Println("Running task:", v)
 			pubmedResourceAttributes()
 		}
 	}

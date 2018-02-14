@@ -323,17 +323,40 @@ func reshapeResources(data []map[string]interface{}) []map[string]interface{} {
 
 		// Pubmed Attributes
 		attributes := v["attributes"].(map[string]interface{})
+
 		v, ok := attributes["sourceId"]
 		if ok {
 			r["sourceId"] = v
 		}
+
 		v, ok = attributes["sourceName"]
 		if ok {
 			r["sourceName"] = v
 		}
-		v, ok = attributes["sourceRef"]
+
+		v, ok = attributes["sourceNameAbbrev"]
 		if ok {
-			r["sourceRef"] = v
+			r["sourceNameAbbrev"] = v
+		}
+
+		v, ok = attributes["sourcePubDate"]
+		if ok {
+			r["sourcePubDate"] = v
+		}
+
+		v, ok = attributes["sourceVolume"]
+		if ok {
+			r["sourceVolume"] = v
+		}
+
+		v, ok = attributes["sourceIssue"]
+		if ok {
+			r["sourceIssue"] = v
+		}
+
+		v, ok = attributes["sourcePages"]
+		if ok {
+			r["sourcePages"] = v
 		}
 
 		d = append(d, r)
