@@ -10,6 +10,7 @@ import (
 
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers"
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/routes"
+	"strings"
 )
 
 const (
@@ -66,6 +67,8 @@ func Start(port string) {
 		OptionsPassthrough: true,
 	}).Handler(r)
 
-	fmt.Println("REST server listening at", os.Getenv("MAPPCPD_API_URL")+":"+port)
+	// strip port number if included in the env var, so we can add it again ;)
+	host := strings.Join(strings.Split(os.Getenv("MAPPCPD_API_URL"), ":")[:2], "")
+	fmt.Println("REST server listening at", host+":"+port)
 	http.ListenAndServe(":"+port, handler)
 }
