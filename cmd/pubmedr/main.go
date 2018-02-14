@@ -59,9 +59,6 @@ type PubMedArticle struct {
 	ID              int            `xml:"MedlineCitation>PMID"`
 	Title           string         `xml:"MedlineCitation>Article>ArticleTitle"`
 	Abstract        []AbstractText `xml:"MedlineCitation>Article>Abstract>AbstractText"`
-	PublishYear     string         `xml:"PubmedData>History>PubMedPubDate>Year"`
-	PublishMonth    string         `xml:"PubmedData>History>PubMedPubDate>Month"`
-	PublishDay      string         `xml:"PubmedData>History>PubMedPubDate>Day"`
 	ArticleIDList   []ArticleID    `xml:"PubmedData>ArticleIdList>ArticleId"`
 	KeywordList     []string       `xml:"MedlineCitation>KeywordList>Keyword"`
 	MeshHeadingList []string       `xml:"MedlineCitation>MeshHeadingList>MeshHeading>DescriptorName"`
@@ -73,15 +70,26 @@ type PubMedArticle struct {
 	Pages           string         `xml:"MedlineCitation>Article>Pagination>MedlinePgn"`
 	PubYear         string         `xml:"MedlineCitation>Article>Journal>JournalIssue>PubDate>Year"`
 	PubMonth        string         `xml:"MedlineCitation>Article>Journal>JournalIssue>PubDate>Month"`
+	PubDay          string         `xml:"MedlineCitation>Article>Journal>JournalIssue>PubDate>Day"`
+
+	// Note that for these fallback dates there are multiple nodes as each is part of the records history
+	// Ideally, we would pick the xml node with the attribute 'entrez', which is the oldest.
+	// today loo into ensuring the oldest date element is selected for fallback
+	PubYearFallback  string `xml:"PubmedData>History>PubMedPubDate>Year"`
+	PubMonthFallback string `xml:"PubmedData>History>PubMedPubDate>Month"`
+	PubDayFallback   string `xml:"PubmedData>History>PubMedPubDate>Day"`
 }
+
 type AbstractText struct {
 	Key   string `xml:"label,attr"`
 	Value string `xml:",chardata"`
 }
+
 type ArticleID struct {
 	Key   string `xml:"IdType,attr"`
 	Value string `xml:",chardata"`
 }
+
 type Author struct {
 	Key      string `xml:"ValidYN,attr"`
 	LastName string `xml:"LastName"`
@@ -108,6 +116,9 @@ type PubDate struct {
 	Year  int       `json:"year" bson:"year"`
 	Month int       `json:"month" bson:"month"`
 	Day   int       `json:"day" bson:"day"`
+
+	// Flag - actual publish date could not be determined and a fallback date from the records history had to be used
+	RealPubDate bool `json:"realPubDate" bson:"realPubDate"`
 }
 
 type AuthRequest struct {
@@ -169,6 +180,11 @@ func main() {
 	for i, v := range pubmedBatch {
 		fmt.Println("\n####################################################################")
 		fmt.Println("Job ", i, "- Category:", v.Category)
+
+		// override for debug
+		// todo remove this
+		v.RelDate = 90
+
 		if v.Run == false {
 			fmt.Println("Run = false ...skipping job")
 			continue
@@ -282,6 +298,11 @@ func authAPI() {
 	defer res.Body.Close()
 	json.NewDecoder(res.Body).Decode(&a)
 	token = a.Data.Token
+	if token == "" {
+		fmt.Println("Failed to authenticate witht the API")
+		os.Exit(1)
+	}
+
 	fmt.Println("ok")
 }
 
@@ -347,11 +368,13 @@ func (ps *PubMedSearch) fetchIDs(searchTerm string, relDate, startAt int) {
 	fmt.Println("Returning max", os.Getenv("MAPPCPD_PUBMED_RETMAX"), "records from", ps.Result.Count, "total results")
 }
 
-// getSummaries fetches the article summary for each of its (pubmed) IDs and stores them in the PubMedArticleSet that is passed in.
-// Fetching multiple articles means fewer calls to the api.
+// getSummaries fetches the article summary (xml) for each article ID and stores them PubMedArticleSet.
+// This is a batch call to the Pubmed API so it fetches multiple articles in each call.
+// See article_sample.xml in pubmedr package dir for a sample.
 func (ps *PubMedSearch) getSummaries(pa *PubMedArticleSet) {
 
 	idString := strings.Join(ps.Result.IDs, ",")
+
 	// This might be too long for GET request so need to use POST!
 	u := pubMedFetch + idString
 
@@ -362,6 +385,8 @@ func (ps *PubMedSearch) getSummaries(pa *PubMedArticleSet) {
 	}
 	defer r.Body.Close()
 
+	// show response (debug)
+	//fmt.Println("############# DEBUG ##################")
 	//xb, _ := ioutil.ReadAll(r.Body)
 	//fmt.Println(string(xb))
 	//os.Exit(0)
@@ -385,30 +410,17 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 
 		var err error
 
+		// Initialise a resource value
 		r := Resource{}
 		r.CreatedAt = time.Now()
 		r.UpdatedAt = time.Now()
-
-		// Concat date string, then create time.Time value from the string format "2006-1-2"
-		d := v.PublishYear + "-" + v.PublishMonth + "-" + v.PublishDay
-		r.PubDate.Date, err = time.Parse("2006-1-2", d)
-		if err != nil {
-			fmt.Println(err)
-		}
-		r.PubDate.Year, err = strconv.Atoi(v.PublishYear)
-		if err != nil {
-			fmt.Println(err)
-		}
-		r.PubDate.Month, err = strconv.Atoi(v.PublishMonth)
-		if err != nil {
-			fmt.Println(err)
-		}
-		r.PubDate.Day, err = strconv.Atoi(v.PublishDay)
-		if err != nil {
-			fmt.Println(err)
-		}
 		r.Primary = true
 		r.TypeID = resourceTypeID
+
+		// Set dates
+		r.bestDate(v)
+
+		// Replace double quotes with single quotes in title
 		r.Name = strings.Replace(v.Title, `"`, `'`, -1)
 
 		// Resource description will come from the <Abstract> node. This contains sub nodes, <AbstractText>
@@ -419,7 +431,7 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 			r.Description = strings.Replace(v.Abstract[0].Value, `"`, `'`, -1)
 		}
 
-		// Do keywords
+		// keywords
 		// If we are using MEDLINE only we get MeshHeadings, otherwise KeyWords
 		// So mash them together as one set of KeyWords...
 		// Also, we will stick the Authors into the Keywords to assist with searches
@@ -444,7 +456,7 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 
 		r.Keywords = v.KeywordList
 
-		// Make DOI link
+		// Make DOI link - not being used?
 		for _, aid := range v.ArticleIDList {
 			if aid.Key == "doi" {
 				r.ResourceURL = fmt.Sprintf("https://doi.org/%s", aid.Value)
@@ -452,16 +464,19 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 		}
 		// We cannot do short url as we don't have an ID for new resource record
 
-		// Attributes is fixed (json string) for all pubmed articles in the same batch
-		// This is saves to the db and used later to assist with search faceting
-		// However, we now add article details to attributes so can add here as it is a map[string]interface{}
+		// Attributes is a JSOn string stored at ol_resource.attributes. It is used to store additional data as required,
+		// without the need to modify the data model. The default value is set in the remote config file (why?)
+		// and we add some additional fields here as it is just a map[string]interface{}
 		attributes["sourceId"] = strconv.Itoa(v.ID)
 		attributes["sourceName"] = v.Journal
-		attributes["sourceRef"] = fmt.Sprintf("%s %s %s;%s(%s):%s", v.JournalAbbrev, v.PubYear, v.PubMonth, v.Volume, v.Issue, v.Pages)
+		attributes["sourceNameAbbrev"] = v.JournalAbbrev
+		attributes["sourceVolume"] = v.Volume
+		attributes["sourceIssue"] = v.Issue
+		attributes["sourcePages"] = v.Pages
+		attributes["sourcePubDate"] = v.PubYear + " " + v.PubMonth + " " + v.PubDay
+
+		//attributes["sourceRef"] = fmt.Sprintf("%s %s %s;%s(%s):%s", v.JournalAbbrev, v.PubYear, v.PubMonth, v.Volume, v.Issue, v.Pages)
 		r.Attributes = attributes
-		//fmt.Println("******************")
-		//fmt.Println(attributes)
-		//fmt.Println("******************")
 
 		j, err := json.Marshal(r)
 		if err != nil {
@@ -478,10 +493,79 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 
 	// data is now a string of JSON objects... just need the square brackets...
 	js = `{"data": [` + js + `]}`
-	//fmt.Println(js)
 
 	// do it!
 	addResources(js)
+}
+
+// bestDate attempts to set date fields based on data PubMedArticle value. this is a workaround for the occasional
+// record that has missing or different date fields int the returns Pubmed XML.
+func (r *Resource) bestDate(article PubMedArticle) {
+
+	var err error
+
+	// Day is often missing from the Pubmed data, set to 1 so we can create time values.
+	// However, leave the original value empty for the descriptive PubDate in attributes below.
+	day := article.PubDay
+	if day == "" {
+		day = "1"
+	}
+
+	// Month in Pubmed data is *usually* a 3 character string, eg 'May', but sometimes it is a two-character
+	// number, eg '05'. So this hack is to determine which prior to creating time value.
+	months := map[string]string{
+		"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6",
+		"Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12",
+	}
+
+	month, ok := months[article.PubMonth]
+	if !ok {
+		month = article.PubMonth
+	}
+
+	// year - always present
+	year := article.PubYear
+
+	// Records with bung date fields won't parse. When that happens try the fallback values. Note these fallback values
+	// are a set of multiple dates in the history of the pubmed article - not sure which one will be pulled out.
+	// eg 'entrez' -> 'pubmed' -> medline'
+	// Here's an example of a record without correct PubDate info:
+	// https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&rettype=abstract&id=27450511
+	// todo - which date gets extracted?
+
+	// Concat date string, then create time.Time value from the string format "2006-1-2"
+	// If the date values don't parse properly, then try the fallback values
+	d := year + "-" + month + "-" + day
+	r.PubDate.RealPubDate = true // unless error below
+
+	r.PubDate.Date, err = time.Parse("2006-1-2", d)
+	if err != nil {
+		fmt.Println("Could not parse date", d, err, "- setting fallback date")
+		r.PubDate.RealPubDate = false
+		day = article.PubDayFallback
+		month = article.PubMonthFallback
+		year = article.PubYearFallback
+		d := year + "-" + month + "-" + day
+		r.PubDate.Date, err = time.Parse("2006-1-2", d)
+		if err != nil {
+			fmt.Println("Error parsing fallback date: ", d, "-", err)
+		}
+	}
+
+	r.PubDate.Year, err = strconv.Atoi(year)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	r.PubDate.Month, err = strconv.Atoi(month)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	r.PubDate.Day, err = strconv.Atoi(day)
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 // inspect is a utility func to look at results and exit
@@ -499,9 +583,9 @@ func (pa *PubMedArticleSet) inspect() {
 			fmt.Printf("Abstract: %s\n", a.Abstract)
 		}
 
-		fmt.Printf("Day: %s\n", a.PublishDay)
-		fmt.Printf("Month: %s\n", a.PublishMonth)
-		fmt.Printf("Year: %s\n", a.PublishYear)
+		fmt.Printf("Day: %s\n", a.PubDay)
+		fmt.Printf("Month: %s\n", a.PubMonth)
+		fmt.Printf("Year: %s\n", a.PubYear)
 
 		// Keywords...
 		fmt.Printf("Keywords: %v\n", a.KeywordList)
@@ -536,11 +620,11 @@ func (pa *PubMedArticleSet) inspect() {
 	os.Exit(1)
 }
 
-// addResources POSTs JSON-formatted resource record to MappCPD api
-// j is fully formatted JSOn string {"data": [{...}, {...}]}
+// addResources POSTs JSON-formatted resource record to the MappCPD API
+// j is fully formatted JSON string {"data": [{...}, {...}]}
 func addResources(j string) {
 
-	fmt.Print("POST batch of resources to api...")
+	fmt.Println("POST batch of resources to api...")
 	req, err := http.NewRequest("POST", apiResource, strings.NewReader(j))
 	if err != nil {
 		log.Fatalln(err)
@@ -550,6 +634,7 @@ func addResources(j string) {
 	req.Header.Add("Authorization", "Bearer "+token)
 	req.Header.Add("Content-Type", "application/json")
 
+	// todo - no response from server does not throw any error
 	res, err := httpClient.Do(req)
 	if err != nil {
 		log.Fatalln("Error posting http request", err)
@@ -569,5 +654,5 @@ func addResources(j string) {
 	if jb.Result == "failed" {
 		log.Fatalln(jb.Message)
 	}
-	//fmt.Println(jb)
+	fmt.Println(jb)
 }
