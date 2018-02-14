@@ -560,12 +560,36 @@ func (a *attributes) pubmedData(articleID string) {
 
 	// set required fields
 	a.SourceID = articleID
-	a.SourceName = idf["fulljournalname"].(string)
-	a.SourceNameAbbrev = idf["source"].(string)
-	a.SourceVolume = idf["volume"].(string)
-	a.SourceIssue = idf["issue"].(string)
-	a.SourcePages = idf["pages"].(string)
-	a.SourcePubDate = idf["pubdate"].(string)
+
+	v, ok := idf["fulljournalname"].(string)
+	if ok {
+		a.SourceName = v
+	}
+
+	v, ok = idf["source"].(string)
+	if ok {
+		a.SourceNameAbbrev = v
+	}
+
+	v, ok = idf["volume"].(string)
+	if ok {
+		a.SourceVolume = v
+	}
+
+	v, ok = idf["issue"].(string)
+	if ok {
+		a.SourceIssue = v
+	}
+
+	v, ok = idf["pages"].(string)
+	if ok {
+		a.SourcePages = v
+	}
+
+	v, ok = idf["pubdate"].(string)
+	if ok {
+		a.SourcePubDate = v
+	}
 }
 
 // updateAttributes sets the ol_resource.attributes field
