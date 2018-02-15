@@ -498,6 +498,23 @@ func (pa PubMedArticleSet) indexSummaries(attributes map[string]interface{}) {
 	addResources(js)
 }
 
+// todo make pubmed package ... originally was trying to export this func however the entire package is 'main'
+// so cannot use it elsewhere
+// pubmedArticle fetches a single article from pubmed by id, and returns a PubMedArticle value.
+// Note: To save work this uses the 'efetch' endpoint which returns a set of XML articles - we only want one
+//func PubMedArticle(pubmedID string) PubMedArticle {
+//
+//	// Results are a set, in this case with one member
+//	xpa := PubMedArticleSet{}
+//
+//	// PubMedSearch with one ID - the article of interest
+//	ps := PubMedSearch{}
+//	ps.Result.IDs = []string{pubmedID}
+//	ps.getSummaries(&xpa)
+//
+//	return xpa.Articles[0]
+//}
+
 // bestDate attempts to set date fields based on data PubMedArticle value. this is a workaround for the occasional
 // record that has missing or different date fields int the returns Pubmed XML.
 func (r *Resource) bestDate(article PubMedArticle) {

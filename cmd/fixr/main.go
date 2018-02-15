@@ -32,7 +32,11 @@ type resource struct {
 	ID         int
 	Name       string
 	Keywords   string
-	Attributes string
+	PubDate    string
+	PubYear    string
+	PubMonth   string
+	PubDay     string
+	Attributes attributes
 }
 
 // ol_resource.attributes holds a JSON string which should map to this:
@@ -109,7 +113,7 @@ func main() {
 
 		if v == "pubmedData" {
 			fmt.Println("Running task:", v)
-			pubmedResourceAttributes()
+			updatePubmedData()
 		}
 	}
 }
@@ -431,8 +435,8 @@ func setLinksActiveField(ids []int, active bool) error {
 	return nil
 }
 
-// pubmedResourceAttributes checks and updates the ol_resources.attributes field for resources that were sourced from Pubmed
-func pubmedResourceAttributes() {
+// updatePubmedData checks and updates the ol_resources record for resources that were sourced from Pubmed
+func updatePubmedData() {
 
 	// fetch pubmed resources
 	xr, err := resourcesByAttribute("pubmed")
@@ -441,11 +445,11 @@ func pubmedResourceAttributes() {
 		os.Exit(1)
 	}
 
-	// set new ol_resource.attributes for each resource
-	for _, v := range xr {
+	// set new ol_resource.Attributes for each resource
+	for _, r := range xr {
 
 		// last keyword in ol_resource.keywords is the pubmed article id
-		pubmedId, err := strconv.Atoi(lastKeyword(v.Keywords))
+		pubmedId, err := strconv.Atoi(lastKeyword(r.Keywords))
 		if err != nil {
 			fmt.Println("Last keyword does not appear to be an id")
 			os.Exit(1)
@@ -456,42 +460,37 @@ func pubmedResourceAttributes() {
 			os.Exit(1)
 		}
 
-		// set existing attributes
-		a := attributes{}
-		json.Unmarshal([]byte(v.Attributes), &a)
+		// set Attributes related to pubmed data
+		r.pubmedData(strconv.Itoa(pubmedId))
 
-		// set attributes related to pubmed data
-		a.pubmedData(strconv.Itoa(pubmedId))
+		// Find best publish date
+		//r.PubDate = "YYYY-MM-DD"
+		//r.PubYear = "YYYY"
+		//r.PubMonth = "MM"
+		//r.PubDay = "DD"
 
-		// Marshal back to a string
-		as, err := json.Marshal(a)
-		if err != nil {
-			fmt.Println("Could not marshal new attributes value")
-			os.Exit(1)
-		}
+		// Don't need to Marshal back to a string?
+		//rxb, err := json.Marshal(r)
+		//if err != nil {
+		//	fmt.Println("Could not marshal new Attributes value")
+		//	os.Exit(1)
+		//}
 
-		//fmt.Println(string(as))
-		//os.Exit(0)
-
-		// update ol_resource.attributes
-		if err = updateAttributes(v.ID, string(as)); err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		fmt.Println("----------------------------------------------------------------------------------")
-		fmt.Println("Resource id", v.ID, "-", v.Name)
-		fmt.Println("Attributes set to:", string(as))
+		// update ol_resource.Attributes
+		//if err = updateAttributes(r); err != nil {
+		//	fmt.Println(err)
+		//	os.Exit(1)
+		//}
 	}
 }
 
-// resourceByAttribute fetches resource records that have a string LIKE 'pattern' in the ol_resource.attributes field
+// resourceByAttribute fetches resource records that have a string LIKE 'pattern' in the ol_resource.Attributes field
 func resourcesByAttribute(pattern string) ([]resource, error) {
 
 	var xr []resource
 
-	query := "SELECT id, name, keywords, attributes FROM ol_resource " +
-		"WHERE attributes LIKE '%" + pattern + "%' " +
+	query := "SELECT id, name, keywords, Attributes FROM ol_resource " +
+		"WHERE Attributes LIKE '%" + pattern + "%' " +
 		"AND updated_at >= NOW() - INTERVAL " + strconv.Itoa(backdays) + " DAY "
 	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
@@ -500,10 +499,15 @@ func resourcesByAttribute(pattern string) ([]resource, error) {
 
 	for rows.Next() {
 		var r resource
-		err := rows.Scan(&r.ID, &r.Name, &r.Keywords, &r.Attributes)
+		var attributes []byte
+		err := rows.Scan(&r.ID, &r.Name, &r.Keywords, &attributes)
 		if err != nil {
 			return xr, err
 		}
+
+		// Unmarshal attributes JSOn string, into Attributes value
+		json.Unmarshal(attributes, &r.Attributes)
+
 		xr = append(xr, r)
 	}
 
@@ -516,7 +520,7 @@ func lastKeyword(list string) string {
 	return xs[len(xs)-1]
 }
 
-// pubmedData fetches the meta data for an article by id, it returns the full journal name and the article reference
+// updatePubmedData fetches data for an article by Pubmed id
 //
 // The JSON response from Pubmed is shaped as shown below, ie the field of interest is named after the id of the article.
 // Hence, it is easiest to unmarshal the response into a map[string]interface{}
@@ -534,7 +538,7 @@ func lastKeyword(list string) string {
 //  }
 //
 // Example: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=25963440&retmode=json
-func (a *attributes) pubmedData(articleID string) {
+func (r *resource) pubmedData(articleID string) {
 
 	url := fmt.Sprintf("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=%s&retmode=json", articleID)
 	res, err := http.Get(url)
@@ -559,44 +563,173 @@ func (a *attributes) pubmedData(articleID string) {
 	idf := rsf[articleID].(map[string]interface{})
 
 	// set required fields
-	a.SourceID = articleID
+	r.Attributes.SourceID = articleID
 
 	v, ok := idf["fulljournalname"].(string)
 	if ok {
-		a.SourceName = v
+		r.Attributes.SourceName = v
 	}
 
 	v, ok = idf["source"].(string)
 	if ok {
-		a.SourceNameAbbrev = v
+		r.Attributes.SourceNameAbbrev = v
 	}
 
 	v, ok = idf["volume"].(string)
 	if ok {
-		a.SourceVolume = v
+		r.Attributes.SourceVolume = v
 	}
 
 	v, ok = idf["issue"].(string)
 	if ok {
-		a.SourceIssue = v
+		r.Attributes.SourceIssue = v
 	}
 
 	v, ok = idf["pages"].(string)
 	if ok {
-		a.SourcePages = v
+		r.Attributes.SourcePages = v
 	}
 
 	v, ok = idf["pubdate"].(string)
 	if ok {
-		a.SourcePubDate = v
+		r.Attributes.SourcePubDate = v
+	}
+
+	// Need to sort out the date... the ACTUAL date
+	r.bestDate(idf)
+
+	// update the main record
+	err = updateResource(*r)
+	if err != nil {
+		fmt.Println("Error updating the record:", err)
 	}
 }
 
-// updateAttributes sets the ol_resource.attributes field
-func updateAttributes(id int, attributes string) error {
+// bestDate attempts to find the best publish date fromt he available data
+func (r *resource) bestDate(data map[string]interface{}) {
 
-	query := "UPDATE ol_resource SET updated_at = NOW(), attributes = ? WHERE id = ? LIMIT 1"
-	_, err := datastore.MySQL.Session.Exec(query, attributes, id)
+	fmt.Println("Looking for best date...")
+
+	// Month in Pubmed data is *usually* a 3 character string, eg 'May', but sometimes it is a two-character
+	// number, eg '05'. So this hack is to determine which prior to creating time value.
+	months := map[string]string{
+		"Jan": "1", "Feb": "2", "Mar": "3", "Apr": "4", "May": "5", "Jun": "6",
+		"Jul": "7", "Aug": "8", "Sep": "9", "Oct": "10", "Nov": "11", "Dec": "12",
+	}
+
+	// first 'best' options are "pubdate" and "epubdate" - "epubdate" is usually a bit earlier than "pubdate"
+	fmt.Print("Try pubdate: ")
+	pubdate := data["pubdate"].(string)
+	fmt.Println(pubdate)
+	xs := strings.Split(pubdate, " ")
+
+	if len(xs) == 3 {
+		r.PubYear, r.PubMonth, r.PubDay = xs[0], xs[1], xs[2]
+	}
+
+	if len(xs) == 2 {
+		r.PubYear, r.PubMonth = xs[0], xs[1]
+	}
+
+	// If the month value is a key in the months array, set it to a 'numerical' value ie '5' instead of 'May'
+	m, ok := months[r.PubMonth]
+	if ok {
+		r.PubMonth = m
+	}
+
+	// No day, so set to 1
+	if r.PubDay == "" {
+		r.PubDay = "1"
+	}
+
+	// if we can parse this date then we are sweet
+	ts := r.PubYear + "-" + r.PubMonth + "-" + r.PubDay
+	_, err := time.Parse("2006-1-2", ts)
+	if err != nil {
+		fmt.Println("Error parsing date -", err)
+		return
+	}
+
+	r.PubDate = ts
+	fmt.Println("Best publish date:", r.PubDate)
+
+	// Day is often missing from the Pubmed data, set to 1 so we can create time values.
+	//// However, leave the original value empty for the descriptive PubDate in Attributes below.
+	//day := article.PubDay
+	//if day == "" {
+	//	day = "1"
+	//}
+	//
+	//month, ok := months[article.PubMonth]
+	//if !ok {
+	//	month = article.PubMonth
+	//}
+	//
+	//// year - always present
+	//year := article.PubYear
+	//
+	//// Records with bung date fields won't parse. When that happens try the fallback values. Note these fallback values
+	//// are a set of multiple dates in the history of the pubmed article - not sure which one will be pulled out.
+	//// eg 'entrez' -> 'pubmed' -> medline'
+	//// Here's an example of a record without correct PubDate info:
+	//// https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&rettype=abstract&id=27450511
+	//// todo - which date gets extracted?
+	//
+	//// Concat date string, then create time.Time value from the string format "2006-1-2"
+	//// If the date values don't parse properly, then try the fallback values
+	//d := year + "-" + month + "-" + day
+	//r.PubDate.RealPubDate = true // unless error below
+	//
+	//r.PubDate.Date, err = time.Parse("2006-1-2", d)
+	//if err != nil {
+	//	fmt.Println("Could not parse date", d, err, "- setting fallback date")
+	//	r.PubDate.RealPubDate = false
+	//	day = article.PubDayFallback
+	//	month = article.PubMonthFallback
+	//	year = article.PubYearFallback
+	//	d := year + "-" + month + "-" + day
+	//	r.PubDate.Date, err = time.Parse("2006-1-2", d)
+	//	if err != nil {
+	//		fmt.Println("Error parsing fallback date: ", d, "-", err)
+	//	}
+	//}
+	//
+	//r.PubDate.Year, err = strconv.Atoi(year)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//
+	//r.PubDate.Month, err = strconv.Atoi(month)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+	//
+	//r.PubDate.Day, err = strconv.Atoi(day)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
+}
+
+// updateResource updates the ol_resource record
+func updateResource(r resource) error {
+
+	// attributes stores as a JSON string
+	attributes, err := json.Marshal(r.Attributes)
+	if err != nil {
+		return err
+	}
+
+	query := `UPDATE ol_resource SET
+              updated_at = NOW(),
+              presented_on = '%s',
+              presented_year = '%s',
+              presented_month = '%s',
+              presented_date = '%s',
+			  attributes = '%s'
+			  WHERE id = %v LIMIT 1`
+	query = fmt.Sprintf(query, r.PubDate, r.PubYear, r.PubMonth, r.PubDay, attributes, r.ID)
+
+	_, err = datastore.MySQL.Session.Exec(query)
 
 	return err
 }
