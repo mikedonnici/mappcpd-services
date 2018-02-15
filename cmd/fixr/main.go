@@ -619,16 +619,19 @@ func (r *resource) bestDate(data map[string]interface{}) {
 
 	// first 'best' options are "pubdate" and "epubdate" - "epubdate" is usually a bit earlier than "pubdate"
 	fmt.Print("Try pubdate: ")
-	pubdate := data["pubdate"].(string)
-	fmt.Println(pubdate)
-	xs := strings.Split(pubdate, " ")
 
-	if len(xs) == 3 {
-		r.PubYear, r.PubMonth, r.PubDay = xs[0], xs[1], xs[2]
-	}
+	pubdate, ok := data["pubdate"].(string)
+	if ok {
+		fmt.Println(pubdate)
+		xs := strings.Split(pubdate, " ")
 
-	if len(xs) == 2 {
-		r.PubYear, r.PubMonth = xs[0], xs[1]
+		if len(xs) == 3 {
+			r.PubYear, r.PubMonth, r.PubDay = xs[0], xs[1], xs[2]
+		}
+
+		if len(xs) == 2 {
+			r.PubYear, r.PubMonth = xs[0], xs[1]
+		}
 	}
 
 	// If the month value is a key in the months array, set it to a 'numerical' value ie '5' instead of 'May'
@@ -652,62 +655,6 @@ func (r *resource) bestDate(data map[string]interface{}) {
 
 	r.PubDate = ts
 	fmt.Println("Best publish date:", r.PubDate)
-
-	// Day is often missing from the Pubmed data, set to 1 so we can create time values.
-	//// However, leave the original value empty for the descriptive PubDate in Attributes below.
-	//day := article.PubDay
-	//if day == "" {
-	//	day = "1"
-	//}
-	//
-	//month, ok := months[article.PubMonth]
-	//if !ok {
-	//	month = article.PubMonth
-	//}
-	//
-	//// year - always present
-	//year := article.PubYear
-	//
-	//// Records with bung date fields won't parse. When that happens try the fallback values. Note these fallback values
-	//// are a set of multiple dates in the history of the pubmed article - not sure which one will be pulled out.
-	//// eg 'entrez' -> 'pubmed' -> medline'
-	//// Here's an example of a record without correct PubDate info:
-	//// https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&rettype=abstract&id=27450511
-	//// todo - which date gets extracted?
-	//
-	//// Concat date string, then create time.Time value from the string format "2006-1-2"
-	//// If the date values don't parse properly, then try the fallback values
-	//d := year + "-" + month + "-" + day
-	//r.PubDate.RealPubDate = true // unless error below
-	//
-	//r.PubDate.Date, err = time.Parse("2006-1-2", d)
-	//if err != nil {
-	//	fmt.Println("Could not parse date", d, err, "- setting fallback date")
-	//	r.PubDate.RealPubDate = false
-	//	day = article.PubDayFallback
-	//	month = article.PubMonthFallback
-	//	year = article.PubYearFallback
-	//	d := year + "-" + month + "-" + day
-	//	r.PubDate.Date, err = time.Parse("2006-1-2", d)
-	//	if err != nil {
-	//		fmt.Println("Error parsing fallback date: ", d, "-", err)
-	//	}
-	//}
-	//
-	//r.PubDate.Year, err = strconv.Atoi(year)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//
-	//r.PubDate.Month, err = strconv.Atoi(month)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-	//
-	//r.PubDate.Day, err = strconv.Atoi(day)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
 }
 
 // updateResource updates the ol_resource record
