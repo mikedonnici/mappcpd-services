@@ -25,6 +25,7 @@ import (
 type Resource struct {
 	OID          bson.ObjectId          `json:"_id,omitempty" bson:"_id,omitempty"`
 	ID           int                    `json:"id" bson:"id"`
+	Active       bool                   `json:"active" bson:"active"`
 	CreatedAt    time.Time              `json:"createdAt" bson:"createdAt"`
 	UpdatedAt    time.Time              `json:"updatedAt" bson:"updatedAt"`
 	PubDate      PubDate                `json:"pubDate" bson:"pubDate"`
@@ -58,6 +59,7 @@ func ResourceByID(id int) (*Resource, error) {
 	// Coalesce any NULL-able fields
 	query := `
 	SELECT
+	olr.active,
 	olr.created_at,
 	olr.updated_at,
 	COALESCE(olr.presented_on, ''),
@@ -89,6 +91,7 @@ func ResourceByID(id int) (*Resource, error) {
 	var attributes string
 
 	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
+		&r.Active,
 		&createdAt,
 		&updatedAt,
 		&presentedOn,
