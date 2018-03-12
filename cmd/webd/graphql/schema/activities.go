@@ -14,6 +14,12 @@ type activity struct {
 	Description string `json:"description" bson:"description"`
 }
 
+// activityType is a local version of activities.ActivityType, to remove to the sql.NullInt64
+type activityType struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 // activitiesData returns a list of activity types
 func activitiesData() ([]activity, error) {
 
@@ -85,21 +91,32 @@ var activityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// activityTypesQueryField resolves queries for activities sub-types
+// activityTypesQueryField resolves queries for activity types
 var activityTypesQueryField = &graphql.Field{
-	Description: "Fetches a list of activity sub-types.",
+	Description: "Fetches a list of activity types.",
 	Type:        graphql.NewList(activityTypeQueryObject),
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
 		// get the activity id from the parent (activity) object
 		// note .Source is interface{} which can assert to activity
-		id := p.Source.(activity).ID
-		types, err := activityTypesData(id)
+		activityID := p.Source.(activity).ID
+		types, err := activityTypesData(activityID)
 		if err != nil {
 			return nil, nil
 		}
 
-		return types, nil
+		// Deal with sql.NullInt64 type from ce_activity.ce_activity_type_id
+		var xat []activityType
+		for _, v := range types {
+			at := activityType{}
+			if v.ID.Valid {
+				at.ID = int(v.ID.Int64)
+				at.Name = v.Name
+				xat = append(xat, at)
+			}
+		}
+
+		return xat, nil
 	},
 }
 
