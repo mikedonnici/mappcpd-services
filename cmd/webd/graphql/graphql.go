@@ -3,6 +3,7 @@ package graphql
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"net/http"
 
@@ -38,6 +39,7 @@ func Start(port string) {
 	}).Handler(h)
 
 	http.Handle("/graphql", ch)
-	fmt.Println("GraphQL server listening at", os.Getenv("MAPPCPD_API_URL")+":"+port+"/graphql")
+	host := strings.Join(strings.Split(os.Getenv("MAPPCPD_API_URL"), ":")[:2], "")
+	fmt.Println("GraphQL server listening at", host+":"+port+"/graphql")
 	http.ListenAndServe(":"+port, nil)
 }
