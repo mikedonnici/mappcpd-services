@@ -13,21 +13,22 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MemberActivity is the document format for an activity that is
-// recorded by a member - that is, a CPD diary entry
+// MemberActivity represents an instance of an activity recorded by a member - ie a CPD diary entry
 type MemberActivity struct {
-	ID          int                         `json:"id" bson:"id"`
-	MemberID    int                         `json:"memberId" bson:"memberId"`
-	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
-	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
-	Date        string                      `json:"date" bson:"date"`
-	DateISO     time.Time                   `json:"dateISO" bson:"dateISO"`
-	Credit      float64                     `json:"credit" bson:"credit"`
-	Description string                      `json:"description" bson:"description"`
-	Category    activities.ActivityCategory `json:"category" bson:"category"`
-	Activity    activities.Activity         `json:"activity" bson:"activity"`
-	Type        activities.ActivityType     `json:"type" bson:"type"`
-	CreditData  activities.ActivityCredit   `json:"creditData" bson:"creditData"`
+	ID            int                         `json:"id" bson:"id"`
+	MemberID      int                         `json:"memberId" bson:"memberId"`
+	CreatedAt     time.Time                   `json:"createdAt" bson:"createdAt"`
+	UpdatedAt     time.Time                   `json:"updatedAt" bson:"updatedAt"`
+	Date          string                      `json:"date" bson:"date"`
+	DateISO       time.Time                   `json:"dateISO" bson:"dateISO"`
+	//Quantity      float64                     `json:"quantity" bson:"quantity"`
+	//CreditPerUnit float32                     `json:"creditPerUnit" bson:"creditPerUnit"`
+	Credit        float64                     `json:"credit" bson:"credit"`
+	Description   string                      `json:"description" bson:"description"`
+	Category      activities.ActivityCategory `json:"category" bson:"category"`
+	Activity      activities.Activity         `json:"activity" bson:"activity"`
+	Type          activities.ActivityType     `json:"type" bson:"type"`
+	CreditData    activities.ActivityCredit   `json:"creditData" bson:"creditData"`
 }
 
 // MemberActivityInput contains fields required to add / update a Member Activity.
@@ -55,7 +56,6 @@ type MemberActivityInput struct {
 //	UnitCredit  float64 `json:"unitCredit"`
 //	Description string  `json:"description" validate:"required"`
 //}
-
 
 // MemberActivities is a collection of MemberActivity values
 type MemberActivities []MemberActivity

@@ -40,7 +40,13 @@ type memberActivity struct {
 	Date     string    `json:"date"`
 	DateTime time.Time `json:"dateTime"`
 
-	// Credit is generally the number of hours
+	// Quantity is generally the number of hours, but may be other units
+	Quantity float64 `json:"quantity"`
+
+	// Credit is generally the number of hours multiplied by credit-per-unit for a particular activity
+	CreditPerUnit float64 `json:"creditPerUnit"`
+
+	// Credit is generally the number of hours multiplied by credit-per-unit for a particular activity
 	Credit float64 `json:"credit"`
 
 	// Description is the user-input that further describes the activity itself
@@ -359,9 +365,17 @@ var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 				"any time information is discarded. This field returns the date in RFC3339 format with the time set " +
 				"to 00:00:00 UTC to facilitate date ordering and other date-related operations.",
 		},
+		"quantity": &graphql.Field{
+			Type:        graphql.Float,
+			Description: "Quantity, generally number of hours, for an activity",
+		},
+		"creditPerUnit": &graphql.Field{
+			Type:        graphql.Float,
+			Description: "Credit per unit of the activity, ie multiply this x quantity = total credit",
+		},
 		"credit": &graphql.Field{
 			Type:        graphql.Float,
-			Description: "Value or credit for the memberActivityQueryField",
+			Description: "Credit gained is quanity x credit-per-unit for the particular activity",
 		},
 		"activity": &graphql.Field{
 			Type:        graphql.String,
@@ -501,7 +515,7 @@ var memberActivityAttachmentsQueryField = &graphql.Field{
 
 // memberActivitiesQueryField resolves a query for member activities
 var memberActivitiesQueryField = &graphql.Field{
-	Description: "Fetches a list of member memberActivities",
+	Description: "Fetches a list of member activities",
 	Type:        graphql.NewList(memberActivityQueryObject),
 	Args: graphql.FieldConfigArgument{
 		"last": &graphql.ArgumentConfig{
@@ -776,6 +790,12 @@ func (ma *memberActivity) unpack(obj map[string]interface{}) error {
 		}
 		ma.DateTime = d
 	}
+	if val, ok := obj["quantity"].(float64); ok {
+		ma.Quantity = val
+	}
+	if val, ok := obj["creditPerUnit"].(float64); ok {
+		ma.CreditPerUnit = val
+	}
 	if val, ok := obj["credit"].(float64); ok {
 		ma.Credit = val
 	}
@@ -882,6 +902,8 @@ func memberActivitiesData(memberID int, filter map[string]interface{}) ([]member
 			ID:          v.ID,
 			Date:        v.Date,
 			DateTime:    v.DateISO,
+			Quantity:    v.CreditData.Quantity,
+			CreditPerUnit:    v.CreditData.UnitCredit,
 			Credit:      v.Credit,
 			CategoryID:  v.Category.ID,
 			Category:    v.Category.Name,
@@ -928,6 +950,8 @@ func memberActivityData(memberID, memberActivityID int) (memberActivity, error) 
 	a.ID = ma.ID
 	a.Date = ma.Date
 	a.DateTime = ma.DateISO
+	a.Quantity = ma.CreditData.Quantity
+	a.CreditPerUnit = ma.CreditData.UnitCredit
 	a.Credit = ma.Credit
 	a.CategoryID = ma.Category.ID
 	a.Category = ma.Category.Name

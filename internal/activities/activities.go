@@ -12,17 +12,31 @@ import (
 	"github.com/mappcpd/web-services/internal/utility"
 )
 
-// Activity describes a type of activity, eg online learning. This is NOT the same
-// as the category which is a much broader grouping.
+// ActivityCategory is the broadest grouping of activity and is purely descriptive
+type ActivityCategory struct {
+	ID          int    `json:"id" bson:"id"`
+	Code        string `json:"code" bson:"code"`
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description" bson:"description"`
+}
+
+// Activity describes a group of related activity types. This is the entity that includes the credit value
+// and caps for the activity (types) contained within.
 type Activity struct {
-	ID          int            `json:"id" bson:"id"`
-	Code        string         `json:"code" bson:"code"`
-	Name        string         `json:"name" bson:"name"`
-	Description string         `json:"description" bson:"description"`
-	Credit      ActivityCredit `json:"credit" bson:"credit"`
+	ID            int     `json:"id" bson:"id"`
+	Code          string  `json:"code" bson:"code"`
+	Name          string  `json:"name" bson:"name"`
+	Description   string  `json:"description" bson:"description"`
+	CategoryID    int     `json:"categoryId" bson:"categoryId"`
+	CategoryName  string  `json:"categoryName" bson:"categoryName"`
+	UnitID        int     `json:"unitId" bson:"unitId"`
+	UnitName      string  `json:"unitName" bson:"unitName"`
+	CreditPerUnit float32 `json:"creditPerUnit" bson:"creditPerUnit"`
+	// Credit       ActivityCredit `json:"credit" bson:"credit"`
 }
 
 // ActivityCredit holds the detail about how the credit is calculated for the activity
+// todo remove this and flatten into the Activity type - too complex
 type ActivityCredit struct {
 	QuantityFixed   bool    `json:"quantityFixed"`
 	Quantity        float64 `json:"quantity" bson:"quantity"`
@@ -32,46 +46,68 @@ type ActivityCredit struct {
 	UnitCredit      float64 `json:"unitCredit" bson:"unitCredit"`
 }
 
-// ActivityCategory stored details about the category
-type ActivityCategory struct {
-	ID          int    `json:"id" bson:"id"`
-	Code        string `json:"code" bson:"code"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-}
-
-// ActivityType represents a further classification of an Activity into a 'type' of the activity in question.
+// ActivityType represents a specific form, or example, of an Activity, Where ActivityCategory is the broadest
+// descriptive attribute, ActivityType is the most specific. However, it is also purely descriptive as the numbers all
+// occur in the Activity entity.
 type ActivityType struct {
-	ID   sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
-	Name string        `json:"name" bson:"name"`
-	Activity Activity `json:"activity: bson: "activity"`
+	ID       sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
+	Name     string        `json:"name" bson:"name"`
+	Activity Activity      `json:"activity: bson: "activity"`
 }
 
-//type Activities []Activity
-
-// Activities fetches activity (types)
+// Activities fetches active activity records
 func Activities() ([]Activity, error) {
 
 	var xa []Activity
 
-	query := "SELECT id, ce_activity_unit_id, code, name, description FROM ce_activity WHERE active = 1"
+	q := `SELECT
+			a.id AS ActivityID,
+			a.code AS ActivityCode,
+			a.name AS ActivityName,
+			a.description AS ActivityDescription,
+			a.ce_activity_category_id AS ActivityCategoryID,
+			c.name AS ActivityCategoryName,
+			a.ce_activity_unit_id AS ActivityUnitID,
+    		u.name AS ActivityUnitName,
+    		a.points_per_unit AS CreditPerUnit
+		  FROM
+			ce_activity a
+				LEFT JOIN
+			ce_activity_category c ON a.ce_activity_category_id = c.id
+				LEFT JOIN
+			ce_activity_unit u ON a.ce_activity_unit_id = u.id
+		  WHERE
+			a.active = 1`
 
-	rows, err := datastore.MySQL.Session.Query(query)
+	rows, err := datastore.MySQL.Session.Query(q)
 	if err != nil {
 		return xa, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		at := Activity{}
-		// map ce_activity.ce_activity_unit_id
-		var ceActivityUnitID int
-		rows.Scan(&at.ID, &ceActivityUnitID, &at.Code, &at.Name, &at.Description)
-		at.Credit, err = ActivityCreditData(ceActivityUnitID)
-		if err != nil {
-			return xa, err
-		}
-		xa = append(xa, at)
+		a := Activity{}
+
+		rows.Scan(
+			&a.ID,
+			&a.Code,
+			&a.Name,
+			&a.Description,
+			&a.CategoryID,
+			&a.CategoryName,
+			&a.UnitID,
+			&a.UnitName,
+			&a.CreditPerUnit,
+		)
+
+		// More detail about the way the activity is credited
+		//// is stored in the Credit field...
+		//a.Credit, err = ActivityCreditData(a.UnitID)
+		//if err != nil {
+		//	return xa, err
+		//}
+
+		xa = append(xa, a)
 	}
 
 	return xa, nil
@@ -148,10 +184,10 @@ func ActivityByID(id int) (Activity, error) {
 	}
 
 	// Add credit info
-	a.Credit, err = ActivityCreditData(ceActivityUnitID)
-	if err != nil {
-		return a, err
-	}
+	//a.Credit, err = ActivityCreditData(ceActivityUnitID)
+	//if err != nil {
+	//	return a, err
+	//}
 
 	return a, nil
 }

@@ -6,13 +6,20 @@ import (
 	"github.com/mappcpd/web-services/internal/activities"
 )
 
-// activity is a trimmer version of an activities.activity
-type activity struct {
-	ID          int    `json:"id" bson:"id"`
-	Code        string `json:"code" bson:"code"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-}
+// activity maps activities.activity
+//type activity activities.Activity
+//type activity struct {
+//	ID           int    `json:"id" bson:"id"`
+//	Code         string `json:"code" bson:"code"`
+//	Name         string `json:"name" bson:"name"`
+//	Description  string `json:"description" bson:"description"`
+//	CategoryID   int    `json:"categoryId" bson:"categoryId"`
+//	CategoryName string `json:"categoryName" bson:"categoryName"`
+//	UnitID       int    `json:"unitId" bson:"unitId"`
+//	UnitName     string
+//	CreditPerUnit float32 `json:"creditPerUnit" bson:"creditPerUnit"`
+//	//Credit       activities.ActivityCredit `json:"credit" bson:"credit"`
+//}
 
 // activityType is a local version of activities.ActivityType, to remove to the sql.NullInt64
 type activityType struct {
@@ -21,26 +28,32 @@ type activityType struct {
 }
 
 // activitiesData returns a list of activity types
-func activitiesData() ([]activity, error) {
+func activitiesData() ([]activities.Activity, error) {
 
-	var xla []activity
+	return activities.Activities()
 
-	xa, err := activities.Activities()
-	if err != nil {
-		return nil, err
-	}
-
-	// map to local type
-	for _, a := range xa {
-		at := activity{}
-		at.ID = a.ID
-		at.Code = a.Code
-		at.Name = a.Name
-		at.Description = a.Description
-		xla = append(xla, at)
-	}
-
-	return xla, nil
+	//var xla []activity
+	//
+	//xa, err := activities.Activities()
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//// map to local type
+	//for _, a := range xa {
+	//	at := activity{}
+	//	at.ID = a.ID
+	//	at.Code = a.Code
+	//	at.Name = a.Name
+	//	at.Description = a.Description
+	//	at.CategoryID = a.CategoryID
+	//	at.CategoryName = a.CategoryName
+	//	at.UnitID = a.UnitID
+	//	at.UnitName = a.UnitName
+	//	xla = append(xla, at)
+	//}
+	//
+	//return xla,
 }
 
 // activityTypesData returns sub types for an activity
@@ -68,24 +81,44 @@ var activitiesQueryField = &graphql.Field{
 // activityQueryObject defines the fields (properties) of an activity
 var activityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name: "activity",
-	Description: "Represents a type of activity that can be recorded by a member (memberActivityQueryField). " +
-		"This query should be used to create select lists, etc.",
+	Description: "Activity describes a group of related activity types. This is the entity that includes the credit " +
+		"value and caps for the activity (types) contained within.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The id of the activity type, required when adding member activities",
+			Description: "The id of the activity",
 		},
 		"code": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The code representing the activity type",
+			Description: "The code representing the activity",
 		},
 		"name": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The name of the activity type - use for select lists etc",
+			Description: "The name of the activity",
 		},
 		"description": &graphql.Field{
 			Type:        graphql.String,
-			Description: "A more detailed description of the activity type",
+			Description: "A description of the activity",
+		},
+		"categoryId": &graphql.Field{
+			Type:        graphql.Int,
+			Description: "ID of the category to which the activity belongs",
+		},
+		"categoryName": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Name of the category to which the activity belongs",
+		},
+		"unitId": &graphql.Field{
+			Type:        graphql.Int,
+			Description: "ID of the unit record used to measure the activity",
+		},
+		"unitName": &graphql.Field{
+			Type:        graphql.String,
+			Description: "Name of the unit used to measure the activity",
+		},
+		"creditPerUnit": &graphql.Field{
+			Type:        graphql.Float,
+			Description: "CPD credit per per unit of activity",
 		},
 		"types": activityTypesQueryField,
 	},
@@ -99,7 +132,7 @@ var activityTypesQueryField = &graphql.Field{
 
 		// get the activity id from the parent (activity) object
 		// note .Source is interface{} which can assert to activity
-		activityID := p.Source.(activity).ID
+		activityID := p.Source.(activities.Activity).ID
 		types, err := activityTypesData(activityID)
 		if err != nil {
 			return nil, nil
