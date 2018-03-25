@@ -347,23 +347,20 @@ var positionQueryObject = graphql.NewObject(graphql.ObjectConfig{
 
 // memberActivityQueryObject defines fields for a member activity
 var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
-	Name: "memberActivity",
-	Description: "An activity record belonging to a member. This is an instance of an activity recorded " +
-		"by a member, having been completed on a particular date, with additional information such as duration and description.",
+	Name:        "memberActivity",
+	Description: "An instance of an activity recorded by a member - ie an entry in the CPD diary.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The id of the member activity record",
+			Description: "ID of the member activity record.",
 		},
 		"date": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The date the activity was undertaken, as string format 'YYYY-MM-DD'.",
+			Description: "The date the activity was undertaken, format 'YYYY-MM-DD'.",
 		},
 		"dateTime": &graphql.Field{
-			Type: graphql.DateTime,
-			Description: "The date the activity was undertaken. Note only a date string is required, eg '2017-12-07' and " +
-				"any time information is discarded. This field returns the date in RFC3339 format with the time set " +
-				"to 00:00:00 UTC to facilitate date ordering and other date-related operations.",
+			Type:        graphql.DateTime,
+			Description: "The date the activity was undertaken in RFC3339 format time set to 00:00:00 UTC.",
 		},
 		"quantity": &graphql.Field{
 			Type:        graphql.Float,
@@ -375,35 +372,36 @@ var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"credit": &graphql.Field{
 			Type:        graphql.Float,
-			Description: "Credit gained is quanity x credit-per-unit for the particular activity",
+			Description: "The total credit for the activity, ie quanity x creditPerUnit.",
 		},
 		"activity": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The activity (type)",
+			Description: "The name of the activity.",
 		},
 		"activityId": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The id of the activity (type)",
+			Description: "The id of the activity.",
 		},
 		"categoryId": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The memberActivityQueryField category id",
+			Description: "The id of the category to which the activity belongs.",
 		},
 		"category": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The top-level category of the memberActivityQueryField",
+			Description: "The name of the category to which the activity belongs",
 		},
 		"type": &graphql.Field{
-			Type:        graphql.String,
-			Description: "The type of memberActivityQueryField",
+			Type: graphql.String,
+			Description: "Type represents a specific form, or example of an activity, Where 'category' is the broadest" +
+				"descriptive attribute, 'type' is the most specific.",
 		},
 		"typeId": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The memberActivityQueryField type id",
+			Description: "Activity type ID.",
 		},
 		"description": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The specifics of the memberActivityQueryField described by the member",
+			Description: "Descriptive details about the activity, supplied by the member.",
 		},
 
 		"attachments": memberActivityAttachmentsQueryField,
@@ -742,7 +740,7 @@ var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectCon
 		// optional member activity id - if supplied then it is an update
 		"id": &graphql.InputObjectFieldConfig{
 			Type:        graphql.Int,
-			Description: "Optional id of the member activity record - if supplied triggers an update",
+			Description: "Optional id of the member activity record, if present will update existing, otherwise will add new.",
 		},
 
 		// activityId specifies the activity (type)
@@ -751,10 +749,10 @@ var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectCon
 		//	Description: "The activity (type) id",
 		//},
 
-		// typeId specifies the activity sub-type id - yes, confusing!
+		// typeId specifies the type of activity
 		"typeId": &graphql.InputObjectFieldConfig{
 			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "The member activity sub-type id",
+			Description: "ID of the activity type",
 		},
 
 		// date on which the activity was undertaken
@@ -899,19 +897,19 @@ func memberActivitiesData(memberID int, filter map[string]interface{}) ([]member
 
 		// Passed through date filters, add the record to our simplified struct
 		a := memberActivity{
-			ID:          v.ID,
-			Date:        v.Date,
-			DateTime:    v.DateISO,
-			Quantity:    v.CreditData.Quantity,
-			CreditPerUnit:    v.CreditData.UnitCredit,
-			Credit:      v.Credit,
-			CategoryID:  v.Category.ID,
-			Category:    v.Category.Name,
-			ActivityID:  v.Activity.ID,
-			Activity:    v.Activity.Name,
-			TypeID:      int(v.Type.ID.Int64), // null-able field
-			Type:        v.Type.Name,
-			Description: v.Description,
+			ID:            v.ID,
+			Date:          v.Date,
+			DateTime:      v.DateISO,
+			Quantity:      v.CreditData.Quantity,
+			CreditPerUnit: v.CreditData.UnitCredit,
+			Credit:        v.Credit,
+			CategoryID:    v.Category.ID,
+			Category:      v.Category.Name,
+			ActivityID:    v.Activity.ID,
+			Activity:      v.Activity.Name,
+			TypeID:        int(v.Type.ID.Int64), // null-able field
+			Type:          v.Type.Name,
+			Description:   v.Description,
 		}
 		xa = append(xa, a)
 	}
@@ -992,7 +990,7 @@ func addMemberActivity(memberID int, activity memberActivityInput) (memberActivi
 
 }
 
-// updateMemberActivity adds a member activity
+// updateMemberActivity updates an existing member activity record
 func updateMemberActivity(memberID int, activity memberActivityInput) (memberActivity, error) {
 
 	// Create the required value
