@@ -58,8 +58,8 @@ type Module struct {
 	Data interface{}
 }
 
+// flags
 var collections = flag.String("c", "none", "collections to sync - 'none' for check, 'all' for everything or 'only' followed by 'name:all' or 'name:id1,id2,id3'.\neg 'members:all' to sync member records, 'resources:1234' to sync resource with id=1234")
-
 var backdays = flag.Int("b", 1, "how many days back to check for updated records")
 
 // The filters string passed on the url

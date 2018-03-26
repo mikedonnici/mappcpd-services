@@ -50,6 +50,10 @@ type Docs struct {
 	Data  []map[string]interface{}
 }
 
+// flags
+var collections = flag.String("c", "none", "collections to sync - 'none' for check, 'all' for everything or 'only' followed by a collection name")
+var backdays = flag.Int("b", 1, "how many days back to check for updated records")
+
 // backDate is a string date in format "2017-01-21T13:35:30+10:00" (RFC3339) so we can pass it to the API
 var backDate string
 
@@ -86,24 +90,33 @@ func init() {
 func main() {
 
 	// set backDate from -b flag
-	d := flag.Int("b", 2, "Specifies number of days back to check for updated records")
 	flag.Parse()
 	t := time.Now()
-	backDate = t.AddDate(0, 0, -(*d)).Format(time.RFC3339)
+	backDate = t.AddDate(0, 0, -(*backdays)).Format(time.RFC3339)
 
-	log.Println("Running algr...")
-	log.Println("Test connection to API...")
-	test()
-	log.Println("Authenticating...")
-	auth()
-	indexMembers()
-	indexResources()
-	indexModules()
+	switch *collections {
+	case "none":
+		test()
+		auth()
+	case "all":
+		test()
+		auth()
+		indexMembers()
+		indexResources()
+		indexModules()
+	case "only":
+		test()
+		auth()
+		only()
+	default:
+		fmt.Println("Not sure what to do, specify -c 'none', 'all' or 'only'")
+	}
 }
 
 func test() {
 
-	t := TestRequest{}
+	fmt.Print("Test connection to API... ")
+
 	hc := &http.Client{Timeout: 90 * time.Second}
 	r, err := hc.Get(api)
 	if err != nil {
@@ -111,11 +124,12 @@ func test() {
 	}
 	defer r.Body.Close()
 
-	json.NewDecoder(r.Body).Decode(&t)
-	log.Println("Response:", t.Status)
+	fmt.Println(r.Status)
 }
 
 func auth() {
+
+	fmt.Print("Authenticating with API... ")
 
 	a := AuthRequest{}
 	b := `{"login": "` + os.Getenv("MAPPCPD_ADMIN_USER") + `","password": "` + os.Getenv("MAPPCPD_ADMIN_PASS") + `"}`
@@ -127,16 +141,40 @@ func auth() {
 	defer res.Body.Close()
 	json.NewDecoder(res.Body).Decode(&a)
 	token = a.Data.Token
+	fmt.Println("ok")
+}
+
+// only runs algr on just one of the collections
+func only() {
+
+	args := flag.Args()
+	var col string
+	if len(args) > 0 {
+		col = strings.ToLower(args[0])
+	}
+
+	switch col {
+	case "members":
+		indexMembers()
+	case "resources":
+		indexResources()
+	case "modules":
+		indexModules()
+	default:
+		log.Fatalln("'only' flag required a valid collection name")
+	}
 }
 
 func indexMembers() {
 
+	fmt.Println("Indexing member records... ")
+
 	if strings.ToLower(membersIndex) == "off" {
-		fmt.Println("Member index is set to OFF... nothing to do")
+		fmt.Println("... member index is set to 'OFF' - nothing to do")
 		return
 	}
 
-	fmt.Println("Fetch Member Docs updated since", backDate)
+	fmt.Println("... fetching member docs updated since", backDate)
 	xm := Docs{
 		Index: membersIndex,
 	}
@@ -144,7 +182,13 @@ func indexMembers() {
 	// mongo shell query is: db.Members.find({"memberships.title": {$exists : true}})
 	q := `{ "query": { "memberships.title": {"$exists": true}, "updatedAt": {"$gte": "` + backDate + `"} }}`
 	fetchDocs(apiMembers, q, &xm)
-	fmt.Println("Index member docs...")
+
+
+	// reshape the Resources Docs for algolia
+	fmt.Println("... reshaping member docs for Algolia index")
+	xm.Data = reshapeMembers(xm.Data)
+
+	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX"))
 	indexDocs(&xm)
 }
 
@@ -153,61 +197,56 @@ func indexMembers() {
 // removed from the index.
 func indexResources() {
 
+	fmt.Println("Indexing resource records... ")
+
 	if strings.ToLower(resourcesIndex) == "off" {
-		fmt.Println("Resource index is set to OFF... nothing to do")
+		fmt.Println("... resource index is set to OFF - nothing to do")
 		return
 	}
 
-	fmt.Println("Fetch Resource Docs updated since", backDate)
+	fmt.Println("... fetching resource docs updated since", backDate)
 	xr := Docs{
 		Index: resourcesIndex,
 	}
 	q := `{"find": {"primary": true, "updatedAt": {"$gte": "` + backDate + `"}}}`
 	fetchDocs(apiResources, q, &xr)
 
-	// reshape the Resources Docs for algolia
+	fmt.Println("... reshaping resource docs for Algolia index")
 	xr.Data = reshapeResources(xr.Data)
 
-	fmt.Println("Update resources index...")
-
-	// check new pubmed source attributes
-	//for _, v := range xr.Data {
-	//	_, ok := v["sourceId"]
-	//	if ok {
-	//		fmt.Println(v["sourceId"], v["sourceName"], v["sourceRef"])
-	//	}
-	//}
-
+	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_RESOURCES_INDEX"))
 	indexDocs(&xr)
 
 	// Remove inactive resources from index
+	fmt.Println("... removing inactive resources")
 	q = `{"find": {"active": false}}`
 	fetchDocs(apiResources, q, &xr)
-	fmt.Println("Removing inactive resources...")
 	var objectIDs []string
 	for _, v := range xr.Data {
 		objectIDs = append(objectIDs, v["_id"].(string))
 	}
 	if err := deleteObjects(objectIDs, xr.Index); err != nil {
-		fmt.Println("Error deleting resource objects -", err)
+		fmt.Println("... error deleting resource objects -", err)
 	}
 }
 
 func indexModules() {
 
+	fmt.Println("Indexing module records... ")
+
 	if strings.ToLower(modulesIndex) == "off" {
-		fmt.Println("Modules index is set to OFF... nothing to do")
+		fmt.Println("... modules index is set to 'OFF' - nothing to do")
 		return
 	}
 
-	fmt.Println("Fetch Module Docs updated since", backDate)
+	fmt.Println("... fetching module docs updated since", backDate)
 	xm := Docs{
 		Index: modulesIndex,
 	}
 	q := `{"find": {"current": true, "updatedAt": {"$gte": "` + backDate + `"}}}`
-	fmt.Println(q)
 	fetchDocs(apiModules, q, &xm)
-	fmt.Println("Index module docs...")
+
+	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX"))
 	indexDocs(&xm)
 
 }
@@ -234,7 +273,7 @@ func fetchDocs(api string, query string, docs *Docs) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println("Have ", len(docs.Data), "docs to add to index:", docs.Index)
+	fmt.Println("... have", len(docs.Data), "docs to add to index:", docs.Index)
 }
 
 func indexDocs(docs *Docs) {
@@ -361,6 +400,68 @@ func reshapeResources(data []map[string]interface{}) []map[string]interface{} {
 
 		d = append(d, r)
 	}
+
+	return d
+}
+
+// reshapeMembers modifies the members values into a more suitable format for the Algolia index
+func reshapeMembers(data []map[string]interface{}) []map[string]interface{} {
+
+	var d []map[string]interface{}
+
+	for _, v := range data {
+
+		// concat name fields
+		name := fmt.Sprintf("%s %s %s", v["title"], v["firstName"], v["lastName"])
+
+		// personal contact details
+		contact := v["contact"].(map[string]interface{})
+		email := contact["emailPrimary"]
+		mobile := contact["mobile"]
+
+		// only use location info from the directory contact record, and only the general locality
+		var location string
+		for _, v := range contact["locations"].([]interface{}) {
+			l := v.(map[string]interface{})
+			if l["type"] == "Directory" {
+				location = fmt.Sprintf("%s %s %s", l["city"], l["state"], l["postcode"])
+				fmt.Println(location)
+			}
+		}
+
+		// Membership title - dig into the memberships array even though there is only one for now.
+		var memberships []string
+		for _, v := range v["memberships"].([]interface{}) {
+			m := v.(map[string]interface{})
+			memberships = append(memberships, fmt.Sprintf("%s %s", m["orgCode"], m["title"]))
+		}
+
+		// Affiliations are positions / affiliations with certain groups. Only include positions
+		// where the end date is not set, or is in the future
+		var affiliations []string
+		for _, v := range v["positions"].([]interface{}) {
+			a := v.(map[string]interface{})
+			endDate, err := time.Parse("2006-01-02", a["end"].(string))
+			if err != nil || endDate.After(time.Now()) {
+				affiliations = append(affiliations, a["orgName"].(string))
+			}
+		}
+
+		r := map[string]interface{}{
+			"_id": v["_id"],
+			"id":  v["id"],
+			"name": name,
+			"email": email,
+			"mobile": mobile,
+			"location": location,
+			"membership": memberships,
+			"affiliations": affiliations,
+		}
+
+		d = append(d, r)
+	}
+
+	fmt.Println(d)
 
 	return d
 }
