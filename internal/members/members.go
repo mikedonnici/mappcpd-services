@@ -60,6 +60,10 @@ type MemberContact struct {
 	EmailSecondary string           `json:"emailSecondary" bson:"emailSecondary"`
 	Mobile         string           `json:"mobile" bson:"mobile"`
 	Locations      []MemberLocation `json:"locations" bson:"locations"`
+
+	// Flags that indicate members consent to appear in the directory, and to have contact details shared in directory
+	Directory bool `json:"directory" bson:"directory"`
+	Consent   bool `json:"consent" bson:"consent"`
 }
 
 // Location defines a contact place or contact 'card'
@@ -551,9 +555,11 @@ func MemberByID(id int) (*Member, error) {
 	COALESCE(gender, ''),
 	COALESCE(date_of_birth, ''),
 	COALESCE(primary_email, ''),
-        COALESCE(secondary_email, ''),
-        COALESCE(mobile_phone, '')
-        FROM member WHERE id = ?`
+    COALESCE(secondary_email, ''),
+    COALESCE(mobile_phone, ''),
+    consent_directory,
+    consent_contact
+    FROM member WHERE id = ?`
 
 	// TODO - post nominal fields need to be more cleanly handled in the actual MappCPD application
 
@@ -573,6 +579,8 @@ func MemberByID(id int) (*Member, error) {
 		&m.Contact.EmailPrimary,
 		&m.Contact.EmailSecondary,
 		&m.Contact.Mobile,
+		&m.Contact.Directory,
+		&m.Contact.Consent,
 	)
 	switch {
 	case err == sql.ErrNoRows:
