@@ -48,6 +48,8 @@ type Member struct {
 	Contact        MemberContact   `json:"contact" bson:"contact"`
 	Qualifications []Qualification `json:"qualifications" bson:"qualifications"`
 	Positions      []Position      `json:"positions" bson:"positions"`
+	Specialities   []Speciality    `json:"specialities" bson:"specialities"`
+
 	// omitempty to exclude this from sync
 	RecurringActivities []RecurringActivity `json:"recurringActivities,omitempty" bson:"recurringActivities,omitempty"`
 }
@@ -116,6 +118,13 @@ type Position struct {
 	Description string `json:"description" bson:"description"`
 	Start       string `json:"start" bson:"start"`
 	End         string `json:"end" bson:"end"`
+}
+
+// Speciality are particular areas of professional expertise or interest
+type Speciality struct {
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description" bson:"description"`
+	Start       string `json:"start" bson:"start"`
 }
 
 // SetActive sets the Active boolean value
@@ -430,7 +439,7 @@ func (m *Member) SetQualifications() error {
 	return nil
 }
 
-// Get Positions fetches the Positions held by a member
+// SetPositions fetches the Positions held by a member and sets the corresponding fields
 func (m *Member) SetPositions() error {
 
 	query := `SELECT
@@ -480,6 +489,49 @@ func (m *Member) SetPositions() error {
 		//l.Address = strings.Trim(l.Address, "\n")
 
 		m.Positions = append(m.Positions, p)
+	}
+
+	return nil
+}
+
+// SetSpecialities fetches the specialities for a member and sets the corresponding fields
+func (m *Member) SetSpecialities() error {
+
+	query := `SELECT
+			COALESCE(s.name, ''),
+			COALESCE(s.description, ''),
+			COALESCE(ms.start_on, '')
+			FROM mp_m_speciality ms
+			LEFT JOIN mp_speciality s ON ms.mp_speciality_id = s.id
+			WHERE ms.member_id = ?`
+
+	rows, err := datastore.MySQL.Session.Query(query, m.ID)
+	switch {
+	case err == sql.ErrNoRows:
+		return nil
+	case err != nil:
+		msg := ".SetSpecialities() sql error"
+		fmt.Println(msg, err)
+		return errors.Wrap(err, msg)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+
+		s := Speciality{}
+
+		err := rows.Scan(
+			&s.Name,
+			&s.Description,
+			&s.Start,
+		)
+		if err != nil {
+			msg := ".SetSpecialities() failed to scan row"
+			log.Println(msg, err)
+			return errors.Wrap(err, msg)
+		}
+
+		m.Specialities = append(m.Specialities, s)
 	}
 
 	return nil
@@ -660,6 +712,14 @@ func MemberByID(id int) (*Member, error) {
 	err = m.SetPositions()
 	if err != nil {
 		msg := "MemberByID() failed to set positions"
+		log.Println(msg, err)
+		return &m, errors.Wrap(err, msg)
+	}
+
+	// Set Specialities
+	err = m.SetSpecialities()
+	if err != nil {
+		msg := "MemberByID() failed to set specialities"
 		log.Println(msg, err)
 		return &m, errors.Wrap(err, msg)
 	}
