@@ -180,7 +180,7 @@ func indexMembers() {
 	}
 	// Only members with a membership record
 	// mongo shell query is: db.Members.find({"memberships.title": {$exists : true}})
-	q := `{ "query": { "memberships.title": {"$exists": true}, "updatedAt": {"$gte": "` + backDate + `"} }}`
+	q := `{ "query": { "memberships.title": {"$exists": true}, "contact.directory": true, "updatedAt": {"$gte": "` + backDate + `"} }}`
 	fetchDocs(apiMembers, q, &xm)
 
 	// reshape the Resources Docs for algolia
