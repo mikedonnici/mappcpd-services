@@ -183,7 +183,6 @@ func indexMembers() {
 	q := `{ "query": { "memberships.title": {"$exists": true}, "updatedAt": {"$gte": "` + backDate + `"} }}`
 	fetchDocs(apiMembers, q, &xm)
 
-
 	// reshape the Resources Docs for algolia
 	fmt.Println("... reshaping member docs for Algolia index")
 	xm.Data = reshapeMembers(xm.Data)
@@ -409,53 +408,72 @@ func reshapeMembers(data []map[string]interface{}) []map[string]interface{} {
 
 	var d []map[string]interface{}
 
-	for _, v := range data {
+	for _, dv := range data {
 
 		// concat name fields
-		name := fmt.Sprintf("%s %s %s", v["title"], v["firstName"], v["lastName"])
+		name := fmt.Sprintf("%s %s %s", dv["title"], dv["firstName"], dv["lastName"])
 
 		// personal contact details
-		contact := v["contact"].(map[string]interface{})
+		contact := dv["contact"].(map[string]interface{})
 		email := contact["emailPrimary"]
 		mobile := contact["mobile"]
 
 		// only use location info from the directory contact record, and only the general locality
 		var location string
-		for _, v := range contact["locations"].([]interface{}) {
-			l := v.(map[string]interface{})
-			if l["type"] == "Directory" {
-				location = fmt.Sprintf("%s %s %s", l["city"], l["state"], l["postcode"])
-				fmt.Println(location)
+		xl, ok := contact["locations"].([]interface{})
+		if ok {
+			for _, v := range xl {
+				l := v.(map[string]interface{})
+				if l["type"] == "Directory" {
+					location = fmt.Sprintf("%s %s %s", l["city"], l["state"], l["postcode"])
+				}
 			}
 		}
 
 		// Membership title - dig into the memberships array even though there is only one for now.
 		var memberships []string
-		for _, v := range v["memberships"].([]interface{}) {
-			m := v.(map[string]interface{})
-			memberships = append(memberships, fmt.Sprintf("%s %s", m["orgCode"], m["title"]))
+		xm, ok := dv["memberships"].([]interface{})
+		if ok {
+			for _, v := range xm {
+				m := v.(map[string]interface{})
+				memberships = append(memberships, fmt.Sprintf("%s %s", m["orgCode"], m["title"]))
+			}
+		}
+
+		// Specialities
+		var specialities []string
+		xs, ok := dv["specialities"].([]interface{})
+		if ok {
+			for _, v := range xs {
+				s := v.(map[string]interface{})
+				specialities = append(specialities, s["name"].(string))
+			}
 		}
 
 		// Affiliations are positions / affiliations with certain groups. Only include positions
 		// where the end date is not set, or is in the future
 		var affiliations []string
-		for _, v := range v["positions"].([]interface{}) {
-			a := v.(map[string]interface{})
-			endDate, err := time.Parse("2006-01-02", a["end"].(string))
-			if err != nil || endDate.After(time.Now()) {
-				affiliations = append(affiliations, a["orgName"].(string))
+		xa, ok := dv["positions"].([]interface{})
+		if ok {
+			for _, v := range xa {
+				a := v.(map[string]interface{})
+				endDate, err := time.Parse("2006-01-02", a["end"].(string))
+				if err != nil || endDate.After(time.Now()) {
+					affiliations = append(affiliations, a["orgName"].(string))
+				}
 			}
 		}
 
 		r := map[string]interface{}{
-			"_id": v["_id"],
-			"id":  v["id"],
-			"name": name,
-			"email": email,
-			"mobile": mobile,
-			"location": location,
-			"membership": memberships,
+			"_id":          dv["_id"],
+			"id":           dv["id"],
+			"name":         name,
+			"email":        email,
+			"mobile":       mobile,
+			"location":     location,
+			"membership":   memberships,
 			"affiliations": affiliations,
+			"specialities": specialities,
 		}
 
 		d = append(d, r)
