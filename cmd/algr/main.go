@@ -425,7 +425,7 @@ func reshapeMembers(data []map[string]interface{}) []map[string]interface{} {
 			for _, v := range xl {
 				l := v.(map[string]interface{})
 				if l["type"] == "Directory" {
-					location = fmt.Sprintf("%s %s %s", l["city"], l["state"], l["postcode"])
+					location = fmt.Sprintf("%s %s %s %s", l["city"], l["state"], l["postcode"], l["country"])
 				}
 			}
 		}
