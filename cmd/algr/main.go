@@ -513,7 +513,6 @@ func reshapeDirectory(data []map[string]interface{}) []map[string]interface{} {
 
 		if excludeMemberFromDirectory(dv) {
 			fmt.Printf(" - excluding '%s' from directory\n", name)
-			fmt.Println()
 			continue
 		}
 
@@ -587,6 +586,18 @@ func reshapeDirectory(data []map[string]interface{}) []map[string]interface{} {
 
 // excludeMemberFromDirectory returns true if member record should be excluded from the directory
 func excludeMemberFromDirectory(member map[string]interface{}) bool {
+
+	// no active status value
+	s, ok := member["active"]
+	if !ok {
+		fmt.Print("no active field, member status unknown")
+		return true
+	}
+	// status is false (inactive)
+	if s.(bool) == false {
+		fmt.Print("active value is false - member inactive")
+		return true
+	}
 
 	// No directory consent value
 	c, ok := member["contact"].(map[string]interface{})
