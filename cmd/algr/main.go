@@ -20,6 +20,7 @@ var api string
 var apiAuth string
 var apiMembers string
 var membersIndex string
+var directoryIndex string
 var apiResources string
 var resourcesIndex string
 var apiModules string
@@ -65,19 +66,24 @@ func init() {
 		"MAPPCPD_ALGOLIA_API_KEY",
 		"MAPPCPD_ALGOLIA_BATCH_SIZE",
 		"MAPPCPD_API_URL",
+		"MAPPCPD_ALGOLIA_DIRECTORY_INDEX",
 		"MAPPCPD_ALGOLIA_MEMBERS_INDEX",
 		"MAPPCPD_ALGOLIA_MODULES_INDEX",
 		"MAPPCPD_ALGOLIA_RESOURCES_INDEX",
+		"MAPPCPD_ALGOLIA_DIRECTORY_EXCLUDE_TITLES",
 	}).Auto()
+
+	directoryIndex = os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_INDEX")
+	membersIndex = os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX")
+	resourcesIndex = os.Getenv("MAPPCPD_ALGOLIA_RESOURCES_INDEX")
+	modulesIndex = os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX")
 
 	api = os.Getenv("MAPPCPD_API_URL")
 	apiAuth = api + "/v1/auth/admin"
-	apiMembers = api + "/v1/a/members"
-	membersIndex = os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX")
+	apiMembers = api + "/v1/a/members" // used for both members and directory indexes
 	apiResources = api + "/v1/a/resources"
-	resourcesIndex = os.Getenv("MAPPCPD_ALGOLIA_RESOURCES_INDEX")
 	apiModules = api + "/v1/a/modules"
-	modulesIndex = os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX")
+
 
 	// Don't shadow maxBatch!
 	var err error
@@ -174,21 +180,32 @@ func indexMembers() {
 		return
 	}
 
+	// Two indexes to update - members and directory, however can use the same query to MongoDB to do both.
+	// The reshape function can be used to filter out records not suitable for the directory.
+	// In all cases we only want members with a membership record
+	// mongo shell query is: db.Members.find({"memberships.title": {$exists : true}})
 	fmt.Println("... fetching member docs updated since", backDate)
 	xm := Docs{
 		Index: membersIndex,
 	}
-	// Only members with a membership record
-	// mongo shell query is: db.Members.find({"memberships.title": {$exists : true}})
-	q := `{ "query": { "memberships.title": {"$exists": true}, "contact.directory": true, "updatedAt": {"$gte": "` + backDate + `"} }}`
+	xd := Docs{
+		Index: directoryIndex,
+	}
+
+	q := `{ "query": { "memberships.title": {"$exists": true}, "updatedAt": {"$gte": "` + backDate + `"} }}`
 	fetchDocs(apiMembers, q, &xm)
+	xd.Data = xm.Data // danger!! is this the same location in memory?
 
-	// reshape the Resources Docs for algolia
-	fmt.Println("... reshaping member docs for Algolia index")
+	fmt.Println("... reshaping docs for MEMBER index")
 	xm.Data = reshapeMembers(xm.Data)
-
 	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX"))
 	indexDocs(&xm)
+
+	fmt.Println("... reshaping docs for DIRECTORY index")
+	xd.Data = reshapeDirectory(xd.Data)
+	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_INDEX"))
+	indexDocs(&xd)
+
 }
 
 // indexResources manages the resources index. Note the Mongo collection now has a bool field called 'active'
@@ -430,14 +447,12 @@ func reshapeMembers(data []map[string]interface{}) []map[string]interface{} {
 			}
 		}
 
-		// Membership title - dig into the memberships array even though there is only one for now.
-		var memberships []string
+		// Membership title - dig into the memberships array even though there is only one.
+		var membership string
 		xm, ok := dv["memberships"].([]interface{})
 		if ok {
-			for _, v := range xm {
-				m := v.(map[string]interface{})
-				memberships = append(memberships, fmt.Sprintf("%s %s", m["orgCode"], m["title"]))
-			}
+			m := xm[0].(map[string]interface{})
+			membership = m["title"].(string)
 		}
 
 		// Specialities
@@ -467,11 +482,12 @@ func reshapeMembers(data []map[string]interface{}) []map[string]interface{} {
 		r := map[string]interface{}{
 			"_id":          dv["_id"],
 			"id":           dv["id"],
+			"active":       dv["active"],
 			"name":         name,
 			"email":        email,
 			"mobile":       mobile,
 			"location":     location,
-			"membership":   memberships,
+			"membership":   membership,
 			"affiliations": affiliations,
 			"specialities": specialities,
 		}
@@ -482,6 +498,133 @@ func reshapeMembers(data []map[string]interface{}) []map[string]interface{} {
 	fmt.Println(d)
 
 	return d
+}
+
+// reshapeDirectory modifies the members values into a more suitable format for the Algolia index
+func reshapeDirectory(data []map[string]interface{}) []map[string]interface{} {
+
+	var d []map[string]interface{}
+
+	for _, dv := range data {
+
+
+		// concat name fields
+		name := fmt.Sprintf("%s %s %s", dv["title"], dv["firstName"], dv["lastName"])
+
+		if excludeMemberFromDirectory(dv) {
+			fmt.Printf(" - excluding '%s' from directory\n", name)
+			fmt.Println()
+			continue
+		}
+
+		// personal contact details
+		contact := dv["contact"].(map[string]interface{})
+		email := contact["emailPrimary"]
+		mobile := contact["mobile"]
+
+		// only use location info from the directory contact record, and only the general locality
+		var location string
+		xl, ok := contact["locations"].([]interface{})
+		if ok {
+			for _, v := range xl {
+				l := v.(map[string]interface{})
+				if l["type"] == "Directory" {
+					location = fmt.Sprintf("%s %s %s %s", l["city"], l["state"], l["postcode"], l["country"])
+				}
+			}
+		}
+
+		// Membership title - dig into the memberships array even though there is only one.
+		var membership string
+		xm, ok := dv["memberships"].([]interface{})
+		if ok {
+			m := xm[0].(map[string]interface{})
+			membership = m["title"].(string)
+		}
+
+		// Specialities
+		var specialities []string
+		xs, ok := dv["specialities"].([]interface{})
+		if ok {
+			for _, v := range xs {
+				s := v.(map[string]interface{})
+				specialities = append(specialities, s["name"].(string))
+			}
+		}
+
+		// Affiliations are positions / affiliations with certain groups. Only include positions
+		// where the end date is not set, or is in the future
+		var affiliations []string
+		xa, ok := dv["positions"].([]interface{})
+		if ok {
+			for _, v := range xa {
+				a := v.(map[string]interface{})
+				endDate, err := time.Parse("2006-01-02", a["end"].(string))
+				if err != nil || endDate.After(time.Now()) {
+					affiliations = append(affiliations, a["orgName"].(string))
+				}
+			}
+		}
+
+		r := map[string]interface{}{
+			"_id":          dv["_id"],
+			"id":           dv["id"],
+			"active":       dv["active"],
+			"name":         name,
+			"email":        email,
+			"mobile":       mobile,
+			"location":     location,
+			"membership":   membership,
+			"affiliations": affiliations,
+			"specialities": specialities,
+		}
+
+		d = append(d, r)
+	}
+
+	return d
+}
+
+// excludeMemberFromDirectory returns true if member record should be excluded from the directory
+func excludeMemberFromDirectory(member map[string]interface{}) bool {
+
+	// No directory consent value
+	c, ok := member["contact"].(map[string]interface{})
+	if !ok {
+		fmt.Print("no contact record, therefore no directory consent value")
+		return true
+	}
+	dc, ok := c["directory"]
+	if !ok {
+		fmt.Print("no directory consent value")
+		return true
+	}
+	// explicity false for directory consent
+	if dc == false {
+		fmt.Print("directory consent is false")
+		return true
+	}
+
+	// no membership title
+	xm, ok := member["memberships"].([]interface{})
+	if !ok {
+		fmt.Print("no membership title")
+		return true
+	}
+	// membership title in exclude list
+	xs := strings.Split(os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_EXCLUDE_TITLES"), ",")
+	mt := xm[0].(map[string]interface{})
+	title := strings.ToLower(mt["title"].(string))
+	for _, s := range xs {
+		excludeTitle := strings.ToLower(strings.TrimSpace(s))
+		if title == excludeTitle {
+			fmt.Printf("title '%s' matches exclude list value '%s'", title, excludeTitle)
+			return true
+		}
+	}
+
+	// include in directory
+	return false
 }
 
 func timeStampFromDate(date string) int64 {
