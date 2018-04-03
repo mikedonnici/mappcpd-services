@@ -127,22 +127,22 @@ func indexMembers() {
 	}
 
 	fmt.Println("... creating index")
-	i := Index{
+	mi := Index{
 		Name:     membersIndex,
 		TempName: membersIndex + tempNameSuffix,
 	}
-	i.Data = createMemberIndex(members)
+	mi.Data = createMemberIndex(members)
 	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX"))
-	i.atomicUpdate()
+	mi.atomicUpdate()
 
 	fmt.Println("... creating index")
-	i = Index{
+	di := Index{
 		Name:     directoryIndex,
 		TempName: directoryIndex + tempNameSuffix,
 	}
-	i.Data = createDirectoryIndex(members)
+	di.Data = createDirectoryIndex(members)
 	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_INDEX"))
-	i.atomicUpdate()
+	di.atomicUpdate()
 }
 
 // indexResources manages the resources index. Note the Mongo collection now has a bool field called 'active'
@@ -340,6 +340,11 @@ func createDirectoryIndex(members []members.Member) []map[string]interface{} {
 		// concat name fields
 		name := fmt.Sprintf("%s %s %s", member.Title, member.FirstName, member.LastName)
 
+		if excludeMemberFromDirectory(member) {
+			fmt.Println(" - excluding", name)
+			continue
+		}
+
 		// personal contact details
 		email := member.Contact.EmailPrimary
 		mobile := member.Contact.Mobile
@@ -415,47 +420,29 @@ func createModuleIndex(modules []modules.Module) []map[string]interface{} {
 }
 
 // excludeMemberFromDirectory returns true if member record should be excluded from the directory
-func excludeMemberFromDirectory(member map[string]interface{}) bool {
+func excludeMemberFromDirectory(member members.Member) bool {
 
 	// no active status value
-	s, ok := member["active"]
-	if !ok {
-		fmt.Print("no active field, member status unknown")
-		return true
-	}
-	// status is false (inactive)
-	if s.(bool) == false {
-		fmt.Print("active value is false - member inactive")
+	if member.Active != true {
+		fmt.Print("Member inactive or status unknown")
 		return true
 	}
 
-	// No directory consent value
-	c, ok := member["contact"].(map[string]interface{})
-	if !ok {
-		fmt.Print("no contact record, therefore no directory consent value")
-		return true
-	}
-	dc, ok := c["directory"]
-	if !ok {
-		fmt.Print("no directory consent value")
-		return true
-	}
-	// explicity false for directory consent
-	if dc == false {
-		fmt.Print("directory consent is false")
+	// No directory consent
+	if member.Contact.Directory != true {
+		fmt.Print("Member has not consented to directory listing")
 		return true
 	}
 
 	// no membership title
-	xm, ok := member["memberships"].([]interface{})
-	if !ok {
-		fmt.Print("no membership title")
+	if member.Title == "" {
+		fmt.Print("No membership title")
 		return true
 	}
+
 	// membership title in exclude list
 	xs := strings.Split(os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_EXCLUDE_TITLES"), ",")
-	mt := xm[0].(map[string]interface{})
-	title := strings.ToLower(mt["title"].(string))
+	title := strings.ToLower(member.Title)
 	for _, s := range xs {
 		excludeTitle := strings.ToLower(strings.TrimSpace(s))
 		if title == excludeTitle {
