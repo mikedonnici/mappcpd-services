@@ -57,9 +57,6 @@ type Index struct {
 // flags
 var collections = flag.String("c", "", "collections to sync - 'all', 'members', 'modules' or 'resources'")
 
-// backDate is a string date in format "2017-01-21T13:35:30+10:00" (RFC3339) so we can pass it to the API
-var backDate string
-
 func init() {
 	envr.New("algrEnv", []string{
 		"MAPPCPD_ALGOLIA_APP_ID",
@@ -118,7 +115,7 @@ func indexMembers() {
 	// The reshape function can be used to filter out records not suitable for the directory.
 	// In all cases we only want members with a membership record
 	// mongo shell query is: db.Members.find({"memberships.title": {$exists : true}})
-	fmt.Println("... fetching member docs updated since", backDate)
+	fmt.Println("... fetching member docs")
 	query := bson.M{"memberships.title": bson.M{"$exists": true}}
 	members, err := members.FetchMembers(query, 0)
 	if err != nil {
@@ -156,7 +153,7 @@ func indexResources() {
 		return
 	}
 
-	fmt.Println("... fetching resource docs updated since", backDate)
+	fmt.Println("... fetching resource docs")
 	query := bson.M{"active": true, "primary": true}
 	resources, err := resources.FetchResources(query, 0)
 	if err != nil {
@@ -184,7 +181,7 @@ func indexModules() {
 		return
 	}
 
-	fmt.Println("... fetching module docs updated since", backDate)
+	fmt.Println("... fetching module docs")
 	query := bson.M{"current": true}
 	modules, err := modules.FetchModules(query, 0)
 	if err != nil {
