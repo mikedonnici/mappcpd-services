@@ -185,7 +185,7 @@ func ResourceByID(id int) (*Resource, error) {
 // is specified. TODO - see if we can use a the proper struct when there is no projection
 func DocResourcesAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	resources, err := datastore.MongoDB.ResourcesCol()
+	resources, err := datastore.MongoDB.ResourcesCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func DocResourcesLimit(q map[string]interface{}, p map[string]interface{}, l int
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
-	resources, err := datastore.MongoDB.ResourcesCol()
+	resources, err := datastore.MongoDB.ResourcesCollection()
 	if err != nil {
 		return r, err
 	}
@@ -231,7 +231,7 @@ func DocResourcesOne(q map[string]interface{}) (Resource, error) {
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
 
-	resources, err := datastore.MongoDB.ResourcesCol()
+	resources, err := datastore.MongoDB.ResourcesCollection()
 	if err != nil {
 		return r, err
 	}
@@ -253,7 +253,7 @@ func QueryResourcesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 	utility.MongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
 
 	// get a pointer to the resources collection
-	c, err := datastore.MongoDB.ResourcesCol()
+	c, err := datastore.MongoDB.ResourcesCollection()
 	if err != nil {
 		return r, err
 	}
@@ -265,6 +265,24 @@ func QueryResourcesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 	}
 
 	return r, nil
+}
+
+// FetchResources returns values of type Resource from the Resources collection in MongoDB, based on the query and
+// limited by the value of limit. If limit is 0 all results are returned.
+func FetchResources(query map[string]interface{}, limit int) ([]Resource, error) {
+
+	var data []Resource
+
+	// Convert string date filters to time.Time
+	utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
+
+	c, err := datastore.MongoDB.ResourcesCollection()
+	if err != nil {
+		return nil, err
+	}
+	err = c.Find(query).Limit(limit).All(&data)
+
+	return data, err
 }
 
 // SyncResource synchronises the Resource record from MySQL -> MongoDB
@@ -299,7 +317,7 @@ func UpdateResourceDoc(r *Resource, w *sync.WaitGroup) {
 	id := map[string]int{"id": r.ID}
 
 	// Get pointer to the collection
-	mc, err := datastore.MongoDB.ResourcesCol()
+	mc, err := datastore.MongoDB.ResourcesCollection()
 	if err != nil {
 		log.Printf("Error getting pointer to Resources collection: %s\n", err.Error())
 		return

@@ -63,8 +63,8 @@ func (m *MongoDBConnection) Connect() error {
 	return nil
 }
 
-// MembersCol returns a pointer to the Members collection
-func (m *MongoDBConnection) MembersCol() (*mgo.Collection, error) {
+// MembersCollection returns a pointer to the Members collection
+func (m *MongoDBConnection) MembersCollection() (*mgo.Collection, error) {
 
 	return m.session.DB(m.db).C("Members"), nil
 }
@@ -75,14 +75,14 @@ func (m *MongoDBConnection) ActivitiesCol() (*mgo.Collection, error) {
 	return m.session.DB(m.db).C("Activities"), nil
 }
 
-// ResourcesCol returns a pointer to the Resources collection
-func (m *MongoDBConnection) ResourcesCol() (*mgo.Collection, error) {
+// ResourcesCollection returns a pointer to the Resources collection
+func (m *MongoDBConnection) ResourcesCollection() (*mgo.Collection, error) {
 
 	return m.session.DB(m.db).C("Resources"), nil
 }
 
-// ModulesCol returns a pointer to the Modules collection
-func (m *MongoDBConnection) ModulesCol() (*mgo.Collection, error) {
+// ModulesCollection returns a pointer to the Modules collection
+func (m *MongoDBConnection) ModulesCollection() (*mgo.Collection, error) {
 
 	return m.session.DB(m.db).C("Modules"), nil
 }

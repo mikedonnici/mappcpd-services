@@ -14,17 +14,17 @@ import (
 
 // Module defines struct for a CPD module
 type Module struct {
-	_id             string    `json:"_id" bson:"_id"`
-	ID              int       `json:"id" bson:"id"`
-	CreatedAt       time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt       time.Time `json:"updatedAt" bson:"updatedAt"`
-	PublishedAt     time.Time `json:"publishedAt" bson:"publishedAt"`
-	Name            string    `json:"name" bson:"name"`
-	Description     string    `json:"description" bson:"description"`
-	DurationMinutes int       `json:"durationMinutes" bson:"durationMinutes"`
-	Started         int       `json:"started" bson:"started"`
-	Finished        int       `json:"finished" bson:"finished"`
-	Current         bool      `json:"current" bson:"current"`
+	OID             bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID              int           `json:"id" bson:"id"`
+	CreatedAt       time.Time     `json:"createdAt" bson:"createdAt"`
+	UpdatedAt       time.Time     `json:"updatedAt" bson:"updatedAt"`
+	PublishedAt     time.Time     `json:"publishedAt" bson:"publishedAt"`
+	Name            string        `json:"name" bson:"name"`
+	Description     string        `json:"description" bson:"description"`
+	DurationMinutes int           `json:"durationMinutes" bson:"durationMinutes"`
+	Started         int           `json:"started" bson:"started"`
+	Finished        int           `json:"finished" bson:"finished"`
+	Current         bool          `json:"current" bson:"current"`
 }
 
 type Modules []Module
@@ -77,7 +77,7 @@ func ModuleByID(id int) (*Module, error) {
 // DocModulesAll searches the Modules collection.
 func DocModulesAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	modules, err := datastore.MongoDB.ModulesCol()
+	modules, err := datastore.MongoDB.ModulesCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func DocModulesLimit(q map[string]interface{}, p map[string]interface{}, l int) 
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
-	modules, err := datastore.MongoDB.ModulesCol()
+	modules, err := datastore.MongoDB.ModulesCollection()
 	if err != nil {
 		return m, err
 	}
@@ -124,7 +124,7 @@ func DocModulesOne(q map[string]interface{}) (Module, error) {
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
-	modules, err := datastore.MongoDB.ModulesCol()
+	modules, err := datastore.MongoDB.ModulesCollection()
 	if err != nil {
 		return m, err
 	}
@@ -146,7 +146,7 @@ func QueryModulesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 	utility.MongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
 
 	// get a pointer to the modules collection
-	c, err := datastore.MongoDB.ModulesCol()
+	c, err := datastore.MongoDB.ModulesCollection()
 	if err != nil {
 		return r, err
 	}
@@ -158,6 +158,24 @@ func QueryModulesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 	}
 
 	return r, nil
+}
+
+// FetchModules returns values of type Module from the Modules collection in MongoDB, based on the query and
+// limited by the value of limit. If limit is 0 all results are returned.
+func FetchModules(query map[string]interface{}, limit int) ([]Module, error) {
+
+	var data []Module
+
+	// Convert string date filters to time.Time
+	utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
+
+	c, err := datastore.MongoDB.ModulesCollection()
+	if err != nil {
+		return nil, err
+	}
+	err = c.Find(query).Limit(limit).All(&data)
+
+	return data, err
 }
 
 // SyncModule synchronises the Module record from MySQL -> MongoDB
@@ -192,7 +210,7 @@ func UpdateModuleDoc(m *Module, w *sync.WaitGroup) {
 	id := map[string]int{"id": m.ID}
 
 	// Get pointer to the Modules collection
-	mc, err := datastore.MongoDB.ModulesCol()
+	mc, err := datastore.MongoDB.ModulesCollection()
 	if err != nil {
 		log.Printf("Error getting pointer to Modules collection: %s\n", err.Error())
 		return

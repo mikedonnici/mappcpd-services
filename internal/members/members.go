@@ -29,10 +29,10 @@ import (
 
 // Member defines struct for member record
 type Member struct {
-	_id       string    `json:"_id" bson:"_id"`
-	ID        int       `json:"id" bson:"id"`
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
+	OID       bson.ObjectId `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID        int           `json:"id" bson:"id"`
+	CreatedAt time.Time     `json:"createdAt" bson:"createdAt"`
+	UpdatedAt time.Time     `json:"updatedAt" bson:"updatedAt"`
 
 	// Active refers to the members status in relation to the organisation, ie ms_m_status.ms_status_id = 1 (MySQL)
 	// In this model this really belongs in the memberships, however is here from simplicity.
@@ -136,7 +136,7 @@ func (m *Member) SetActive() error {
 	// store result from db query
 	var active int
 
-	query := `SELECT ms_status_id from ms_m_status WHERE
+	query := `SELECT ms_status_id FROM ms_m_status WHERE
 	active = 1 AND current = 1 AND member_id = ?`
 	err := datastore.MySQL.Session.QueryRow(query, m.ID).Scan(&active)
 	switch {
@@ -399,7 +399,7 @@ func (m *Member) SetQualifications() error {
 	COALESCE(mq.description, ''),
 	COALESCE(mmq.year, '')
 	FROM mp_m_qualification mmq
-	LEFT JOIN mp_qualification mq on mmq.mp_qualification_id = mq.id
+	LEFT JOIN mp_qualification mq ON mmq.mp_qualification_id = mq.id
 	WHERE mmq.member_id = ?
 	ORDER BY year DESC`
 
@@ -782,7 +782,7 @@ func UpdateMemberDoc(m *Member, w *sync.WaitGroup) {
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := datastore.MongoDB.MembersCol()
+	mc, err := datastore.MongoDB.MembersCollection()
 	if err != nil {
 		msg := "UpdateMemberDoc() could not get pointer to collection"
 		log.Println(msg, err)
@@ -836,7 +836,7 @@ func SyncMember(m *Member) {
 // is specified.
 func DocMembersAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	members, err := datastore.MongoDB.MembersCol()
+	members, err := datastore.MongoDB.MembersCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -857,7 +857,7 @@ func DocMembersAll(q map[string]interface{}, p map[string]interface{}) ([]interf
 // todo ... deprecate this func in favour of one that returns []Member?
 func DocMembersLimit(q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
 
-	members, err := datastore.MongoDB.MembersCol()
+	members, err := datastore.MongoDB.MembersCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -880,7 +880,7 @@ func DocMembersOne(q map[string]interface{}, p map[string]interface{}) (Member, 
 
 	m := Member{}
 
-	members, err := datastore.MongoDB.MembersCol()
+	members, err := datastore.MongoDB.MembersCollection()
 	if err != nil {
 		return m, err
 	}
@@ -896,24 +896,22 @@ func DocMembersOne(q map[string]interface{}, p map[string]interface{}) (Member, 
 	return m, nil
 }
 
-func SearchMembersCollection(q map[string]interface{}, p map[string]interface{}, l int) ([]Member, error) {
+// FetchMembers returns values of type Member from the Members collection in MongoDB, based on the query and
+// limited by the value of limit. If limit is 0 all results are returned.
+func FetchMembers(query map[string]interface{}, limit int) ([]Member, error) {
 
-	members, err := datastore.MongoDB.MembersCol()
-	if err != nil {
-		return nil, err
-	}
+	var data []Member
 
 	// Convert string date filters to time.Time
-	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
 
-	// Run query and return results
-	var xm []Member
-	err = members.Find(q).Select(p).Limit(l).All(&xm)
+	c, err := datastore.MongoDB.MembersCollection()
 	if err != nil {
 		return nil, err
 	}
+	err = c.Find(query).Limit(limit).All(&data)
 
-	return xm, nil
+	return data, err
 }
 
 // SaveDoc method upserts Member doc to MongoDB
@@ -923,7 +921,7 @@ func (m *Member) SaveDoc() error {
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := datastore.MongoDB.MembersCol()
+	mc, err := datastore.MongoDB.MembersCollection()
 	if err != nil {
 		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
 		return err
@@ -946,7 +944,7 @@ func (m *Member) UpdateDoc() error {
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := datastore.MongoDB.MembersCol()
+	mc, err := datastore.MongoDB.MembersCollection()
 	if err != nil {
 		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
 		return err
