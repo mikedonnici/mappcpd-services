@@ -55,8 +55,7 @@ type Index struct {
 }
 
 // flags
-var collections = flag.String("c", "none", "collections to sync - 'none' for check, 'all' for everything or 'only' followed by a collection name")
-var backdays = flag.Int("b", 1, "how many days back to check for updated records")
+var collections = flag.String("c", "", "collections to sync - 'all', 'members', 'modules' or 'resources'")
 
 // backDate is a string date in format "2017-01-21T13:35:30+10:00" (RFC3339) so we can pass it to the API
 var backDate string
@@ -89,33 +88,13 @@ func init() {
 
 func main() {
 
-	// set backDate from -b flag
 	flag.Parse()
-	t := time.Now()
-	backDate = t.AddDate(0, 0, -(*backdays)).Format(time.RFC3339)
 
 	switch *collections {
 	case "all":
 		indexMembers()
 		indexResources()
 		indexModules()
-	case "only":
-		only()
-	default:
-		fmt.Println("Not sure what to do, specify -c 'none', 'all' or 'only [index name]'")
-	}
-}
-
-// only runs algr on just one of the collections
-func only() {
-
-	args := flag.Args()
-	var col string
-	if len(args) > 0 {
-		col = strings.ToLower(args[0])
-	}
-
-	switch col {
 	case "members":
 		indexMembers()
 	case "resources":
@@ -123,7 +102,7 @@ func only() {
 	case "modules":
 		indexModules()
 	default:
-		log.Fatalln("'only' flag required a valid collection name")
+		fmt.Println("Unknown flag. Try -h for help.")
 	}
 }
 
@@ -140,7 +119,7 @@ func indexMembers() {
 	// In all cases we only want members with a membership record
 	// mongo shell query is: db.Members.find({"memberships.title": {$exists : true}})
 	fmt.Println("... fetching member docs updated since", backDate)
-	query := bson.M{"memberships.title": bson.M{"$exists": true}, "updatedAt": bson.M{"$gte": "` + backDate + `"}}
+	query := bson.M{"memberships.title": bson.M{"$exists": true}}
 	members, err := members.FetchMembers(query, 0)
 	if err != nil {
 		fmt.Println(err)
@@ -178,7 +157,7 @@ func indexResources() {
 	}
 
 	fmt.Println("... fetching resource docs updated since", backDate)
-	query := bson.M{"active": true, "primary": true, "updatedAt": bson.M{"$gte": "` + backDate + `"}}
+	query := bson.M{"active": true, "primary": true}
 	resources, err := resources.FetchResources(query, 0)
 	if err != nil {
 		fmt.Println(err)
@@ -206,7 +185,7 @@ func indexModules() {
 	}
 
 	fmt.Println("... fetching module docs updated since", backDate)
-	query := bson.M{"current": true, "updatedAt": bson.M{"$gte": "` + backDate + `"}}
+	query := bson.M{"current": true}
 	modules, err := modules.FetchModules(query, 0)
 	if err != nil {
 		fmt.Println(err)
