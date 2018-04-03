@@ -384,7 +384,7 @@ func setResourcesActiveField(ids []int, active bool) error {
 
 	fmt.Printf("Setting %v Resources to active: %v", len(ids), active)
 
-	c, err := datastore.MongoDB.ResourcesCol()
+	c, err := datastore.MongoDB.ResourcesCollection()
 	if err != nil {
 		return errors.Wrap(err, "error connecting to collection")
 	}
