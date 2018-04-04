@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 	"strings"
 	"time"
 
@@ -20,35 +19,21 @@ import (
 	"github.com/mappcpd/web-services/internal/modules"
 )
 
-var api string
-var apiAuth string
-var apiMembers string
-var membersIndex string
-var directoryIndex string
-var apiResources string
-var resourcesIndex string
-var apiModules string
-var modulesIndex string
+const maxUpdateBatchCount = 1000
+const tempIndexSuffix = "_TEMP_COPY"
 
-const tempNameSuffix = "_TEMP_COPY"
+var memberIndexName string
+var directoryIndexName string
+var resourceIndexName string
+var moduleIndexName string
 
-var maxBatch int
-
-var token string
-
-type AuthRequest struct {
-	Status  int
-	Message string
-	Data    AuthData
+type indexer interface{
+	getData() []map[string]interface{}
+	createIndex() []algoliasearch.Index
+	updateIndex()
 }
 
-type AuthData struct {
-	Token     string
-	IssuedAt  time.Time
-	ExpiresAt time.Time
-}
-
-type Index struct {
+type AlgoliaIndex struct {
 	Name     string
 	TempName string
 	Data     []map[string]interface{}
@@ -69,16 +54,10 @@ func init() {
 		"MAPPCPD_ALGOLIA_DIRECTORY_EXCLUDE_TITLES",
 	}).Auto()
 
-	directoryIndex = os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_INDEX")
-	membersIndex = os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX")
-	resourcesIndex = os.Getenv("MAPPCPD_ALGOLIA_RESOURCES_INDEX")
-	modulesIndex = os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX")
-
-	var err error
-	maxBatch, err = strconv.Atoi(os.Getenv("MAPPCPD_ALGOLIA_BATCH_SIZE"))
-	if err != nil {
-		log.Fatalln("Could not set batch size:", err)
-	}
+	directoryIndexName = os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_INDEX")
+	memberIndexName = os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX")
+	resourceIndexName = os.Getenv("MAPPCPD_ALGOLIA_RESOURCES_INDEX")
+	moduleIndexName = os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX")
 
 	datastore.Connect()
 }
@@ -106,7 +85,7 @@ func main() {
 func indexMembers() {
 
 	fmt.Println("Indexing member records... ")
-	if strings.ToLower(membersIndex) == "off" {
+	if strings.ToLower(memberIndexName) == "off" {
 		fmt.Println("... member index is set to 'OFF' - nothing to do")
 		return
 	}
@@ -124,18 +103,18 @@ func indexMembers() {
 	}
 
 	fmt.Println("... creating index")
-	mi := Index{
-		Name:     membersIndex,
-		TempName: membersIndex + tempNameSuffix,
+	mi := AlgoliaIndex{
+		Name:     memberIndexName,
+		TempName: memberIndexName + tempIndexSuffix,
 	}
 	mi.Data = createMemberIndex(members)
 	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX"))
 	mi.atomicUpdate()
 
 	fmt.Println("... creating index")
-	di := Index{
-		Name:     directoryIndex,
-		TempName: directoryIndex + tempNameSuffix,
+	di := AlgoliaIndex{
+		Name:     directoryIndexName,
+		TempName: directoryIndexName + tempIndexSuffix,
 	}
 	di.Data = createDirectoryIndex(members)
 	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_INDEX"))
@@ -148,7 +127,7 @@ func indexMembers() {
 func indexResources() {
 
 	fmt.Println("Indexing resource records... ")
-	if strings.ToLower(resourcesIndex) == "off" {
+	if strings.ToLower(resourceIndexName) == "off" {
 		fmt.Println("... resource index is set to OFF - nothing to do")
 		return
 	}
@@ -162,9 +141,9 @@ func indexResources() {
 	}
 
 	fmt.Println("... creating index")
-	i := Index{
-		Name:     resourcesIndex,
-		TempName: resourcesIndex + tempNameSuffix,
+	i := AlgoliaIndex{
+		Name:     resourceIndexName,
+		TempName: resourceIndexName + tempIndexSuffix,
 	}
 	i.Data = createResourceIndex(resources)
 
@@ -176,7 +155,7 @@ func indexModules() {
 
 	fmt.Println("Indexing module records... ")
 
-	if strings.ToLower(modulesIndex) == "off" {
+	if strings.ToLower(moduleIndexName) == "off" {
 		fmt.Println("... modules index is set to 'OFF' - nothing to do")
 		return
 	}
@@ -190,9 +169,9 @@ func indexModules() {
 	}
 
 	fmt.Println("... creating index")
-	i := Index{
-		Name:     modulesIndex,
-		TempName: modulesIndex + tempNameSuffix,
+	i := AlgoliaIndex{
+		Name:     moduleIndexName,
+		TempName: moduleIndexName + tempIndexSuffix,
 	}
 	i.Data = createModuleIndex(modules)
 	fmt.Println("... updating Algolia index:", os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX"))
@@ -200,9 +179,9 @@ func indexModules() {
 }
 
 // createResourceIndex creates a json document suitable for the Algolia resources index
-func createResourceIndex(resources []resources.Resource) []map[string]interface{} {
+func createResourceIndex(resources []resources.Resource) []algoliasearch.Object {
 
-	var resourceIndex []map[string]interface{}
+	var resourceIndex []algoliasearch.Object
 
 	for _, resource := range resources {
 
@@ -210,6 +189,7 @@ func createResourceIndex(resources []resources.Resource) []map[string]interface{
 		pubStamp := resource.PubDate.Date.Unix()
 
 		r := map[string]interface{}{
+			"objectID":             resource.OID, // Specify Algolia ObjectID
 			"_id":                  resource.OID,
 			"id":                   resource.ID,
 			"createdAt":            resource.CreatedAt,
@@ -269,9 +249,9 @@ func createResourceIndex(resources []resources.Resource) []map[string]interface{
 }
 
 // createMemberIndex creates a json document suitable for the Algolia member index
-func createMemberIndex(members []members.Member) []map[string]interface{} {
+func createMemberIndex(members []members.Member) []algoliasearch.Object {
 
-	var memberIndex []map[string]interface{}
+	var memberIndex []algoliasearch.Object
 
 	for _, member := range members {
 
@@ -309,6 +289,7 @@ func createMemberIndex(members []members.Member) []map[string]interface{} {
 		}
 
 		m := map[string]interface{}{
+			"objectID":     member.OID, // Specify Algolia ObjectID
 			"_id":          member.OID,
 			"id":           member.ID,
 			"active":       member.Active,
@@ -328,9 +309,9 @@ func createMemberIndex(members []members.Member) []map[string]interface{} {
 }
 
 // createDirectoryIndex creates a json document suitable for the Algolia directory index
-func createDirectoryIndex(members []members.Member) []map[string]interface{} {
+func createDirectoryIndex(members []members.Member) []algoliasearch.Object {
 
-	var directoryIndex []map[string]interface{}
+	var directoryIndex []algoliasearch.Object
 
 	for _, member := range members {
 
@@ -373,6 +354,7 @@ func createDirectoryIndex(members []members.Member) []map[string]interface{} {
 		}
 
 		m := map[string]interface{}{
+			"objectID":     member.OID, // Specify Algolia ObjectID
 			"_id":          member.OID,
 			"id":           member.ID,
 			"active":       member.Active,
@@ -392,13 +374,14 @@ func createDirectoryIndex(members []members.Member) []map[string]interface{} {
 }
 
 // createModuleIndex creates a json document suitable for the Algolia modules index
-func createModuleIndex(modules []modules.Module) []map[string]interface{} {
+func createModuleIndex(modules []modules.Module) []algoliasearch.Object {
 
-	var moduleIndex []map[string]interface{}
+	var moduleIndex []algoliasearch.Object
 
 	for _, module := range modules {
 
 		m := map[string]interface{}{
+			"objectID":    module.OID, // Specify Algolia ObjectID
 			"_id":         module.OID,
 			"id":          module.ID,
 			"createdAt":   module.CreatedAt,
@@ -455,38 +438,43 @@ func excludeMemberFromDirectory(member members.Member) bool {
 // atomicUpdate creates a temporary index, pushes the data to the temporary index, and then moves the temporary (new) index
 // to the original index. The last step is atomic and there is no down time or interruption to queries.
 // ref: https://www.algolia.com/doc/tutorials/indexing/synchronization/atomic-reindexing/
-func (i Index) atomicUpdate() {
+func (ai AlgoliaIndex) atomicUpdate() {
 
 	client := algoliasearch.NewClient(os.Getenv("MAPPCPD_ALGOLIA_APP_ID"), os.Getenv("MAPPCPD_ALGOLIA_API_KEY"))
 
-	// temp index
-	_, err := client.ScopedCopyIndex(i.Name, i.TempName, []string{"settings", "synonyms"})
+	// create temporary index
+	_, err := client.ScopedCopyIndex(ai.Name, ai.TempName, []string{"settings", "synonyms"})
 	if err != nil {
-		fmt.Println("Could not create temporary index for", i.Name)
+		fmt.Println("Could not create temporary index for", ai.Name)
 		os.Exit(1)
 	}
+	tempIndex := client.InitIndex(ai.TempName)
 
-	tempIndex := client.InitIndex(i.TempName)
+	objects := []algoliasearch.Object{}
+	for i, o := range ai.Data {
 
-	batchSize := maxBatch
-	for j := 0; j < len(i.Data); j++ {
+		objects = append(objects, o)
 
-		// Reset this or we accumulate!!!
+		// if we hit max batch size, or the end, upload
+
+	}
+
+	objectCount := maxUpdateBatchCount
+	for j := 0; j < len(ai.Data); j++ {
+
+		// Get the next batch of objects ready
 		objects := []algoliasearch.Object{}
-
-		// If remaining items is less than batch size...
-		if len(i.Data)-j < batchSize {
-			batchSize = len(i.Data) - j
+		if len(ai.Data)-j < objectCount {
+			objectCount = len(ai.Data) - j
 		}
 
-		fmt.Println("--- next batch of", batchSize)
-		for c := 0; c < batchSize; c++ {
-			// set algolia objectID to _id
-			i.Data[j]["objectID"] = i.Data[j]["_id"]
-			objects = append(objects, i.Data[j])
+		for c := 0; c < objectCount; c++ {
+			ai.Data[j]["objectID"] = ai.Data[j]["_id"] // Algolia objectID
+			objects = append(objects, ai.Data[j])
+
 			// Don't increment j on the last loop because the outer loop
 			// also increments it so we end up missing a value
-			if c < (batchSize - 1) {
+			if c < (objectCount - 1) {
 				j++
 			}
 		}
@@ -496,11 +484,11 @@ func (i Index) atomicUpdate() {
 			fmt.Println("Error indexing batch -", err)
 			os.Exit(1)
 		}
-		fmt.Println("Algolia batch taskID:", batch.TaskID, "completed indexing of", len(batch.ObjectIDs), "objects for index:", i.TempName)
+		fmt.Println("Algolia batch taskID:", batch.TaskID, "completed indexing of", len(batch.ObjectIDs), "objects for index:", ai.TempName)
 	}
 
 	// Move temp index into place then delete it
-	_, err = client.MoveIndex(i.TempName, i.Name)
+	_, err = client.MoveIndex(ai.TempName, ai.Name)
 	if err != nil {
 		fmt.Println("Error moving temp index -", err)
 		os.Exit(1)
