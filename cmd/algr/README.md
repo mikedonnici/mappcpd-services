@@ -1,40 +1,29 @@
 # algr
 
-MappCPD worker that leverages the [API](/cmd/webd/README.md) to maintains [Algolia](https://www.algolia.com/) search indexes.
+MappCPD utility that completely rebuilds the [Algolia](https://www.algolia.com/) search indexes.
 
 ## Configuration
 
 **Env Vars**
 
 ```bash
-# Admin auth credentials
-MAPPCPD_ADMIN_PASS="demo-user"
-MAPPCPD_ADMIN_USER"demo-pass"
-
-# API
-MAPPCPD_API_URL="https://mappcpd-api.com"
-
-# Algolia creds - need write access
-MAPPCPD_ALGOLIA_APP_ID=MZ......
-MAPPCPD_ALGOLIA_API_KEY=7e2................
-MAPPCPD_ALGOLIA_MEMBERS_INDEX=mappcpd_demo_MEMBERS
-MAPPCPD_ALGOLIA_MODULES_INDEX=mappcpd_demo_MODULES
-MAPPCPD_ALGOLIA_RESOURCES_INDEX=mappcpd_demo_RESOURCES
-MAPPCPD_ALGOLIA_BATCH_SIZE=1000
-
-# Index names, setting to "OFF" will skip 
-MEMBERS_INDEX="mappcpd_demo_MEMBERS"
-MODULES_INDEX="mappcpd_demo_MODULES"
-RESOURCES_INDEX="mappcpd_demo_RESOURCES" 
+MAPPCPD_ALGOLIA_APP_ID = [Algolia app id]
+MAPPCPD_ALGOLIA_API_KEY = [Algolia api key with write access]
+MAPPCPD_ALGOLIA_DIRECTORY_INDEX = [name of member contact directory index]
+MAPPCPD_ALGOLIA_MEMBERS_INDEX = [name of member admin index]
+MAPPCPD_ALGOLIA_MODULES_INDEX = [name of modules index]
+MAPPCPD_ALGOLIA_RESOURCES_INDEX = [name of resources index]
+MAPPCPD_ALGOLIA_DIRECTORY_EXCLUDE_TITLES = [comma-sep list of titles to exclude from directory index]
 ```
+
+
 
 ## Usage
 
 ```bash
-$ algr -b [int]
+$ algr -c ['all', 'directory', 'members', 'modules', 'resources']
 ```
 
 **Flags** 
 
-`-b` - include records with a modification date up to *this many* days back - default 2
-
+`-c` - collection to be updated

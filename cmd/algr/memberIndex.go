@@ -3,48 +3,48 @@ package main
 import (
 	"fmt"
 
+	"gopkg.in/mgo.v2/bson"
 	"github.com/mappcpd/web-services/internal/members"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
-	"gopkg.in/mgo.v2/bson"
 )
 
-type MemberIndex struct {
+type memberIndex struct {
 	Name      string
 	RawData   []members.Member
 	IndexData []algoliasearch.Object
 	Error     error
 }
 
-// NewMemberIndex returns a pointer to MemberIndex value initialised with the index name
-func NewMemberIndex(name string) MemberIndex {
-	return MemberIndex{
+// newMemberIndex returns a pointer to memberIndex value initialised with the index name
+func newMemberIndex(name string) memberIndex {
+	return memberIndex{
 		Name: name,
 	}
 }
 
-func (mi *MemberIndex) FreshIndex() ([]algoliasearch.Object, error) {
+func (mi *memberIndex) freshIndex() ([]algoliasearch.Object, error) {
 	mi.fetchRawData()
 	mi.createIndexObjects()
 	return mi.IndexData, mi.Error
 }
 
-func (mi *MemberIndex) IndexName() string {
+func (mi *memberIndex) indexName() string {
 	return mi.Name
 }
 
-func (mi *MemberIndex) fetchRawData() {
+func (mi *memberIndex) fetchRawData() {
 	query := bson.M{"memberships.title": bson.M{"$exists": true}}
 	mi.RawData, mi.Error = members.FetchMembers(query, 0)
 }
 
-func (mi *MemberIndex) createIndexObjects() {
+func (mi *memberIndex) createIndexObjects() {
 	for i := range mi.RawData {
 		mi.IndexData = append(mi.IndexData, algoliasearch.Object{})
 		mi.createObject(i)
 	}
 }
 
-func (mi *MemberIndex) createObject(i int) {
+func (mi *memberIndex) createObject(i int) {
 
 	member := mi.RawData[i]
 
@@ -63,7 +63,7 @@ func (mi *MemberIndex) createObject(i int) {
 	mi.setAffiliations(i)
 }
 
-func (mi *MemberIndex) setLocationByType(i int, locationType string) {
+func (mi *memberIndex) setLocationByType(i int, locationType string) {
 	var s string
 	for _, l := range mi.RawData[i].Contact.Locations {
 		if l.Description == locationType {
@@ -73,7 +73,7 @@ func (mi *MemberIndex) setLocationByType(i int, locationType string) {
 	mi.IndexData[i]["location"] = s
 }
 
-func (mi *MemberIndex) setSpecialities(i int) {
+func (mi *memberIndex) setSpecialities(i int) {
 	var xs []string
 	for _, s := range mi.RawData[i].Specialities {
 		xs = append(xs, s.Name)
@@ -81,7 +81,7 @@ func (mi *MemberIndex) setSpecialities(i int) {
 	mi.IndexData[i]["specialities"] = xs
 }
 
-func (mi *MemberIndex) setAffiliations(i int) {
+func (mi *memberIndex) setAffiliations(i int) {
 	var xs []string
 	for _, s := range mi.RawData[i].Positions {
 		xs = append(xs, s.OrgName)

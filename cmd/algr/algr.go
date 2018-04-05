@@ -1,103 +1,57 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"os"
-	"log"
 
 	"encoding/json"
-	"github.com/pkg/errors"
 
-	"github.com/34South/envr"
+	"github.com/pkg/errors"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/34South/envr"
 )
 
 const maxUpdateBatchCount = 1000
 
-var memberIndexName string
-var directoryIndexName string
-var resourceIndexName string
-var moduleIndexName string
-
 var algoliaClient algoliasearch.Client
-
-type Indexer interface {
-	// FreshIndex creates a fresh set of objects to be indexed
-	FreshIndex() ([]algoliasearch.Object, error)
-
-	// IndexName returns the name of the algolia index
-	IndexName() string
-}
-
-// flags
-var collections = flag.String("c", "", "collections to sync - 'all', 'members', 'modules' or 'resources'")
 
 func init() {
 
 	envr.New("algrEnv", []string{
 		"MAPPCPD_ALGOLIA_APP_ID",
 		"MAPPCPD_ALGOLIA_API_KEY",
-		"MAPPCPD_ALGOLIA_BATCH_SIZE",
-		"MAPPCPD_ALGOLIA_DIRECTORY_INDEX",
-		"MAPPCPD_ALGOLIA_MEMBERS_INDEX",
-		"MAPPCPD_ALGOLIA_MODULES_INDEX",
-		"MAPPCPD_ALGOLIA_RESOURCES_INDEX",
-		"MAPPCPD_ALGOLIA_DIRECTORY_EXCLUDE_TITLES",
 	}).Auto()
 
-	directoryIndexName = os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_INDEX")
-	memberIndexName = os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX")
-	resourceIndexName = os.Getenv("MAPPCPD_ALGOLIA_RESOURCES_INDEX")
-	moduleIndexName = os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX")
-
-	datastore.Connect()
 	algoliaClient = algoliasearch.NewClient(os.Getenv("MAPPCPD_ALGOLIA_APP_ID"), os.Getenv("MAPPCPD_ALGOLIA_API_KEY"))
 }
 
-func main() {
-
-	flag.Parse()
-
-	switch *collections {
-	case "all":
-		updateMemberIndex()
-		//indexResources()
-		//indexModules()
-	case "members":
-		updateMemberIndex()
-	case "resources":
-		//indexResources()
-	case "modules":
-		//indexModules()
-	default:
-		fmt.Println("Unknown flag. Try -h for help.")
-	}
+type indexer interface {
+	freshIndex() ([]algoliasearch.Object, error)
+	indexName() string
 }
 
-func updateMemberIndex() {
-	mi := NewMemberIndex(memberIndexName)
-	updateIndex(&mi)
-}
+func updateIndex(i indexer) error {
 
-func updateIndex(i Indexer) {
-
-	name := i.IndexName()
-	objects, err := i.FreshIndex()
+	name := i.indexName()
+	objects, err := i.freshIndex()
 	if err != nil {
-		log.Fatalln("updateIndex error:", err)
+		return err
 	}
 
 	err = atomicUpdate(name, objects)
 	if err != nil {
-		log.Fatalln("updateIndex error:", err)
+		return err
 	}
+
+	return nil
 }
 
+// atomicUpdate updates an index without interruption to any queries that may be in progress.
+// It makes an empty copy of the original index with the same settings, and then populates the
+// temporary index with fresh data. Once that is done the temporary index is moved to replace the original.
 func atomicUpdate(indexName string, objects []algoliasearch.Object) error {
 
-	tempIndexName := indexName+"_TEMP_COPY"
+	tempIndexName := indexName + "_TEMP_COPY"
 	tempIndex, err := copyOfIndex(indexName, tempIndexName)
 	if err != nil {
 		return errors.New("Error making copy of index - " + err.Error())
@@ -133,7 +87,7 @@ func copyOfIndex(sourceIndexName, destIndexName string) (algoliasearch.Index, er
 
 func populateIndex(index algoliasearch.Index, objects []algoliasearch.Object) error {
 
-	batches := determineSlices(maxUpdateBatchCount, len(objects))
+	batches := sliceBoundaries(maxUpdateBatchCount, len(objects))
 	for _, b := range batches {
 		batch, err := index.AddObjects(objects[b["start"]:b["end"]])
 		if err != nil {
@@ -145,11 +99,12 @@ func populateIndex(index algoliasearch.Index, objects []algoliasearch.Object) er
 	return nil
 }
 
-// determineSlices returns a set of start and end index values for iterating through a slice of totalElements in length
-// and ensuring the maximum sub slice size is maxElements. It returns an array of tuples with start and end values.
-// For example, determineSlices(3, 10) will return
+// sliceBoundaries returns a set of start and end index values which can be used to iterate over a slice in batches,
+// where totalElements is the len of the target slice, and maxElements is the maximum size of the batch.
+// For example, sliceBoundaries(3, 10) will return:
 // [{"start": 0, "end": 3}, {"start": 3, "end": 6}, {"start": 6, "end": 9}, {"start": 9, "end": 10}]
-func determineSlices(maxElements, totalElements int) []map[string]int {
+// - 3 slices containing 3 elements and a final slice containing one element.
+func sliceBoundaries(maxElements, totalElements int) []map[string]int {
 
 	var xm []map[string]int
 
@@ -165,10 +120,7 @@ func determineSlices(maxElements, totalElements int) []map[string]int {
 		if end > totalElements {
 			end = start + remainder
 		}
-		s := map[string]int{
-			"start": start,
-			"end":   end,
-		}
+		s := map[string]int{"start": start, "end":   end}
 		xm = append(xm, s)
 	}
 
