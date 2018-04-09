@@ -271,6 +271,20 @@ func DuplicateMemberActivity(a MemberActivityInput) int {
 	return dupId
 }
 
+// DeleteMemberActivity deletes a member activity record
+func DeleteMemberActivity(memberID, activityID int) error {
+
+	query := `DELETE FROM ce_m_activity WHERE member_id = %d AND id = %d LIMIT 1`
+	query = fmt.Sprintf(query, memberID, activityID)
+	_, err := datastore.MySQL.Session.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+
 // Save a recurring activity
 //func (a *members.RecurringActivity) Save() error {
 //

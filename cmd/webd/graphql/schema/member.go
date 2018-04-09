@@ -653,19 +653,20 @@ var memberMutationObject = graphql.NewObject(graphql.ObjectConfig{
 			Description: "A fresh token",
 		},
 
-		"setActivity": memberActivityMutationField,
+		"saveActivity": memberActivitySaveField,
+		"deleteActivity": memberActivityDeleteField,
 	},
 })
 
-// memberActivityMutationField handles mutation (add / update) of a member activity
-var memberActivityMutationField = &graphql.Field{
+// memberActivitySaveField handles mutation (add / update) of a member activity
+var memberActivitySaveField = &graphql.Field{
 	Description: "Add or update a member activity. If `activityId` is present in the argument object, and the record " +
 		"belongs to the member identified by the token, then it will be updated. If `activityId` is not present, or does not belong " +
 		"to the authenticated user, a new member activity record will be created.",
 	Type: memberActivityQueryObject, // this type will be returned this operation
 	Args: graphql.FieldConfigArgument{
 		"obj": &graphql.ArgumentConfig{
-			Type:        memberActivityMutationObject, // this is the type required as the arg
+			Type:        memberActivitySaveObject, // this is the type required as the arg
 			Description: "An object containing the necessary fields to add or update a member activity",
 		},
 	},
@@ -695,22 +696,6 @@ var memberActivityMutationField = &graphql.Field{
 				return nil, errors.Wrap(err, msg)
 			}
 
-			//xat, err := activityTypesData(ma.ActivityID)
-			//t := false
-			//for _, v := range xat {
-			//
-			//	// handles nullable data
-			//	if int64(ma.TypeID) == v.ID.Int64  {
-			//		t = true
-			//		break
-			//	}
-			//}
-			//if t == false {
-			//	msg := fmt.Sprintf("Incorrect activity type (typeId: %v) for specified activity (activityId: %v) "+
-			//		"- query 'activities' for correct values", ma.TypeID, ma.ActivityID)
-			//	return nil, errors.New(msg)
-			//}
-
 			// update record
 			if ma.ID > 0 {
 				return updateMemberActivity(memberID, ma)
@@ -731,8 +716,8 @@ var memberActivityMutationField = &graphql.Field{
 	},
 }
 
-// memberActivityMutationObject defines fields for mutating a member activity
-var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectConfig{
+// memberActivitySaveObject defines fields for mutating a member activity
+var memberActivitySaveObject = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name:        "memberActivityInput",
 	Description: "An input object type used as an argument for adding / updating a member activity",
 	Fields: graphql.InputObjectConfigFieldMap{
@@ -742,12 +727,6 @@ var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectCon
 			Type:        graphql.Int,
 			Description: "Optional id of the member activity record, if present will update existing, otherwise will add new.",
 		},
-
-		// activityId specifies the activity (type)
-		//"activityId": &graphql.InputObjectFieldConfig{
-		//	Type:        &graphql.NonNull{OfType: graphql.Int},
-		//	Description: "The activity (type) id",
-		//},
 
 		// typeId specifies the type of activity
 		"typeId": &graphql.InputObjectFieldConfig{
@@ -774,6 +753,50 @@ var memberActivityMutationObject = graphql.NewInputObject(graphql.InputObjectCon
 		},
 	},
 })
+
+
+// memberActivityDeleteField handles mutation (add / update) of a member activity
+var memberActivityDeleteField = &graphql.Field{
+	Description: "Delete an activity that belongs to the member identified by the token",
+	Type: graphql.String, // this type will be returned this operation
+	Args: graphql.FieldConfigArgument{
+		"id": &graphql.ArgumentConfig{
+			Type:        graphql.Int, // this is the type required as the arg
+			Description: "The id of the record to be deleted",
+		},
+	},
+	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+
+		// Always extract the member id from the token, available thus:
+		token := p.Info.VariableValues["token"]
+		at, err := jwt.Check(token.(string))
+		if err != nil {
+			return nil, err
+		}
+		memberID := at.Claims.ID
+
+		activityID, ok := p.Args["id"].(int)
+		if ok {
+			return "Record deleted", deleteMemberActivity(memberID, activityID)
+		}
+		return nil, nil
+	},
+}
+
+// memberActivityDeleteObject defines fields for deleting a member activity
+var memberActivityDeleteObject = graphql.NewInputObject(graphql.InputObjectConfig{
+	Name:        "memberActivityInput",
+	Description: "An input object type used as an argument for adding / updating a member activity",
+	Fields: graphql.InputObjectConfigFieldMap{
+
+		// optional member activity id - if supplied then it is an update
+		"id": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.Int},
+			Description: "ID of the member activity record to be deleted.",
+		},
+	},
+})
+
 
 // unpack an object into a value of type MemberActivity
 func (ma *memberActivity) unpack(obj map[string]interface{}) error {
@@ -987,7 +1010,6 @@ func addMemberActivity(memberID int, activity memberActivityInput) (memberActivi
 	}
 
 	return memberActivityData(memberID, newID)
-
 }
 
 // updateMemberActivity updates an existing member activity record
@@ -1015,6 +1037,10 @@ func updateMemberActivity(memberID int, activity memberActivityInput) (memberAct
 	}
 
 	return memberActivityData(memberID, ma.ID)
+}
+
+func deleteMemberActivity(memberID, activityID int) error {
+	return members.DeleteMemberActivity(memberID, activityID)
 }
 
 // memberActivityDuplicate returns the id of a matching member activity, or 0 if not found

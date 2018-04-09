@@ -41,7 +41,7 @@ Note that the activityId and TypeId must be present, and must be related.
 ```graphql
 mutation Member($token: String!) {
   member(token: $token) {
-    setActivity(obj: {
+    saveActivity(obj: {
       date:"2018-02-03"
       description: "Update the internal member activity data funcs"
       quantity: 4

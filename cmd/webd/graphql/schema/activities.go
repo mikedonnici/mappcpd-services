@@ -6,21 +6,6 @@ import (
 	"github.com/mappcpd/web-services/internal/activities"
 )
 
-// activity maps activities.activity
-//type activity activities.Activity
-//type activity struct {
-//	ID           int    `json:"id" bson:"id"`
-//	Code         string `json:"code" bson:"code"`
-//	Name         string `json:"name" bson:"name"`
-//	Description  string `json:"description" bson:"description"`
-//	CategoryID   int    `json:"categoryId" bson:"categoryId"`
-//	CategoryName string `json:"categoryName" bson:"categoryName"`
-//	UnitID       int    `json:"unitId" bson:"unitId"`
-//	UnitName     string
-//	CreditPerUnit float32 `json:"creditPerUnit" bson:"creditPerUnit"`
-//	//Credit       activities.ActivityCredit `json:"credit" bson:"credit"`
-//}
-
 // activityType is a local version of activities.ActivityType, to remove to the sql.NullInt64
 type activityType struct {
 	ID   int    `json:"id"`
@@ -29,31 +14,7 @@ type activityType struct {
 
 // activitiesData returns a list of activity types
 func activitiesData() ([]activities.Activity, error) {
-
 	return activities.Activities()
-
-	//var xla []activity
-	//
-	//xa, err := activities.Activities()
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//// map to local type
-	//for _, a := range xa {
-	//	at := activity{}
-	//	at.ID = a.ID
-	//	at.Code = a.Code
-	//	at.Name = a.Name
-	//	at.Description = a.Description
-	//	at.CategoryID = a.CategoryID
-	//	at.CategoryName = a.CategoryName
-	//	at.UnitID = a.UnitID
-	//	at.UnitName = a.UnitName
-	//	xla = append(xla, at)
-	//}
-	//
-	//return xla,
 }
 
 // activityTypesData returns sub types for an activity
@@ -63,9 +24,7 @@ func activityTypesData(activityID int) ([]activities.ActivityType, error) {
 
 // activityIDByActivityTypeID returns the activity id for an activity type id
 func activityIDByActivityTypeID(activityTypeID int) (int, error) {
-
 	a, err := activities.ActivityByActivityTypeID(activityTypeID)
-
 	return a.ID, err
 }
 
