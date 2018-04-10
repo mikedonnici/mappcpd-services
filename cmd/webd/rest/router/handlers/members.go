@@ -89,3 +89,28 @@ func MembersEvaluation(w http.ResponseWriter, r *http.Request) {
 	p.Data = es
 	p.Send(w)
 }
+
+// MembersReports
+func MembersReports(w http.ResponseWriter, r *http.Request) {
+
+	p := responder.New(middleware.UserAuthToken.Token)
+
+	ce, err := members.CurrentEvaluation(middleware.UserAuthToken.Claims.ID)
+
+	// Response
+	switch {
+	case err == sql.ErrNoRows:
+		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
+		p.Send(w)
+		return
+	case err != nil:
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Send(w)
+		return
+	}
+
+	// All good
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+	p.Data = ce
+	p.Send(w)
+}

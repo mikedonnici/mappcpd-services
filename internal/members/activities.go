@@ -149,6 +149,52 @@ func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 	return activities, nil
 }
 
+// MemberActivitiesQuery allows for any filter clause
+func MemberActivitiesQuery(sqlClause string) ([]MemberActivity, error) {
+
+	activities := MemberActivities{}
+
+	query := selectMemberActivityQuery + ` ` + sqlClause
+
+	rows, err := datastore.MySQL.Session.Query(query)
+	if err != nil {
+		return activities, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+
+		a := MemberActivity{}
+
+		err := rows.Scan(
+			&a.ID,
+			&a.MemberID,
+			&a.Date,
+			&a.Description,
+			&a.Credit,
+			&a.CreditData.Quantity,
+			&a.CreditData.UnitName,
+			&a.CreditData.UnitCredit,
+			&a.Category.ID,
+			&a.Category.Name,
+			&a.Category.Description,
+			&a.Activity.ID,
+			&a.Activity.Code,
+			&a.Activity.Name,
+			&a.Activity.Description,
+			&a.Type.ID,
+			&a.Type.Name,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		activities = append(activities, a)
+	}
+
+	return activities, nil
+}
+
 // UpdateMemberActivityDoc updates the JSON-formatted activity record in the Doc DB (MongoDB)
 func UpdateMemberActivityDoc(a *MemberActivity, w *sync.WaitGroup) {
 

@@ -44,6 +44,8 @@ func MemberSubRouter(prefix string) *mux.Router {
 
 	members.Methods("GET").Path("/evaluations").HandlerFunc(handlers.MembersEvaluation)
 
+	members.Methods("GET").Path("/reports/test").HandlerFunc(handlers.MembersReports)
+
 	return members
 }
 

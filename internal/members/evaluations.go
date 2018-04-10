@@ -2,16 +2,12 @@ package members
 
 import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"fmt"
+	"database/sql"
 )
 
-// Evaluation is a struct representing an 'ep' or evaluation period. This is
-// a defined but arbitrary period of time over which the CPD activities are reported
-// on. The Evaluation definition is represented here, and MemberEvaluation used to
-// represent an instance of an Evaluation belonging to a Member.
-type Evaluation struct {
-}
-
-// MemberEvaluation represents an Evaluation belonging to a Member
+// MemberEvaluation represents a reporting period for CPD activity, for a particular member - a defined period
+// over which the credit for CPD activity is summed, and caps applied.
 type MemberEvaluation struct {
 	ID             int                  `json:"id" bson:"id"`
 	MemberID       int                  `json:"memberId" bson:"memberId"`
@@ -20,22 +16,25 @@ type MemberEvaluation struct {
 	EndDate        string               `json:"endDate" bson:"endDate"`
 	Closed         bool                 `json:"closed"`
 	CreditRequired int                  `json:"creditRequired" bson:"creditRequired"`
-	CreditObtained int                  `json:"creditObtained" bson:"creditObtained"`
+	CreditObtained float64              `json:"creditObtained" bson:"creditObtained"`
 	Activities     []EvaluationActivity `json:"activities" bson:"activities"`
 }
 
 // EvaluationActivity represents a summary of a specific activity type
 // that was recorded within an evaluation period
 type EvaluationActivity struct {
-	Activity string  `json:"activity" bson:"activity"`
-	Total    float64 `json:"total" bson:"total"`
-	Cap      float64 `json:"cap" bson:"cap"`
-	Credit   float64 `json:"credit" bson:"credit"`
+	ActivityID    int                      `json:"activityId" bson:"activityId"`
+	ActivityName  string                   `json:"activityName" bson:"activityName"`
+	ActivityUnits float64                  `json:"activityUnits" bson:"activityUnits"`
+	CreditPerUnit float64                  `json:"creditPerUnit" bson:"creditPerUnit"`
+	CreditTotal   float64                  `json:"creditTotal" bson:"creditTotal"`
+	MaxCredit     float64                  `json:"maxCredit" bson:"maxCredit"`
+	CreditAwarded float64                  `json:"creditAwarded" bson:"creditAwarded"`
+	Records       []map[string]interface{} `json:"records" bson:"records"`
 }
 
-// EvaluationsByMemberID fetches all evaluation records for a member
-// Received a member id, return a []MemberEvaluation
-func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
+// EvaluationsByMemberID generates evaluation period reports for a member.
+func EvaluationsByMemberID(memberID int) ([]MemberEvaluation, error) {
 
 	es := []MemberEvaluation{}
 
@@ -45,7 +44,7 @@ func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
 	LEFT JOIN ce_evaluation ce ON cme.ce_evaluation_id = ce.id
 	WHERE member_id = ?`
 
-	rows, err := datastore.MySQL.Session.Query(query, id)
+	rows, err := datastore.MySQL.Session.Query(query, memberID)
 	if err != nil {
 		return es, err
 	}
@@ -63,8 +62,7 @@ func EvaluationsByMemberID(id int) ([]MemberEvaluation, error) {
 			&e.Closed,
 		)
 
-		// Evaluate activities for this evaluation period
-		err := e.evaluate()
+		err := e.generateActivitySummary()
 		if err != nil {
 			return es, err
 		}
@@ -94,22 +92,25 @@ func CurrentEvaluation(memberID int) (MemberEvaluation, error) {
 	return me, nil
 }
 
-// evaluate adds the activities to the MemberEvaluation value
-// including total activity by types, caps and credit allowed.
-func (e *MemberEvaluation) evaluate() error {
+func (e *MemberEvaluation) generateActivitySummary() error {
 
-	// Gather activities by types, between the start and end dates...
-	query := `SELECT ca.name,
-			 SUM(cma.quantity),
-			 cma.points_per_unit,
-    		  	 SUM(cma.quantity * cma.points_per_unit)
-	          FROM ce_m_activity cma
-        	  LEFT JOIN ce_activity ca ON cma.ce_activity_id = ca.id
-		  WHERE cma.active = 1
-      		  AND cma.activity_on >= ?
-                  AND cma.activity_on <= ?
-                  AND cma.member_id = ?
-                  GROUP BY cma.ce_activity_id`
+	query := `SELECT
+					ca.id as ActivityID,
+    				ca.name as ActivityName,
+    				SUM(cma.quantity) as TotalUnits,
+    				cma.points_per_unit as UnitCredit,
+    				SUM(cma.quantity * cma.points_per_unit) as CreditObtained,
+    				cma.annual_points_cap as CappedCredit
+				FROM
+    				ce_m_activity cma
+        		LEFT JOIN
+    				ce_activity ca ON cma.ce_activity_id = ca.id
+				WHERE
+    				cma.active = 1
+        			AND cma.activity_on >= ?
+        			AND cma.activity_on <= ?
+        			AND cma.member_id = ?
+				GROUP BY cma.ce_activity_id`
 
 	rows, err := datastore.MySQL.Session.Query(query, e.StartDate, e.EndDate, e.MemberID)
 	if err != nil {
@@ -118,33 +119,66 @@ func (e *MemberEvaluation) evaluate() error {
 	defer rows.Close()
 
 	for rows.Next() {
-
-		a := EvaluationActivity{}
-		rows.Scan(
-			&a.Activity,
-			&a.Total,
-			&a.Cap,
-			&a.Credit,
-		)
-		e.Activities = append(e.Activities, a)
+		e.fetchActivitySummary(rows)
 	}
 
-	// Work out total credit for this evaluation (period)
-	e.creditObtained()
+	e.calcTotalCredit()
 
 	return nil
 }
 
-// creditObtained sets the .CreditObtained value by adding up all of the credit
-// for each activity type within the evaluation
-func (e *MemberEvaluation) creditObtained() error {
+func (e *MemberEvaluation) fetchActivitySummary(rows *sql.Rows) {
+	a := EvaluationActivity{}
+	rows.Scan(
+		&a.ActivityID,
+		&a.ActivityName,
+		&a.ActivityUnits,
+		&a.CreditPerUnit,
+		&a.CreditTotal,
+		&a.MaxCredit,
+	)
+	a.capCreditTotal()
+	a.fetchActivityRecords(e.MemberID, e.StartDate, e.EndDate)
+	e.Activities = append(e.Activities, a)
+}
 
-	var c float64
-	for _, v := range e.Activities {
-		c += v.Credit
+func (a *EvaluationActivity) fetchActivityRecords(memberID int, startDate, endDate string) {
+	clause := `WHERE member_id = %d AND cma.activity_on >= "%s" AND cma.activity_on <= "%s" ORDER BY cma.activity_on DESC`
+	clause = fmt.Sprintf(clause, memberID, startDate, endDate)
+	ma, err := MemberActivitiesQuery(clause)
+	if err != nil {
+		fmt.Println(err)
+		return
 	}
-	// store it is an int
-	e.CreditObtained = int(c)
+	for _, r := range ma {
+		nr := reducedMemberActivity(r)
+		a.Records = append(a.Records, nr)
+	}
+}
 
-	return nil
+func (a *EvaluationActivity) capCreditTotal() {
+	a.CreditAwarded = a.CreditTotal
+	if a.CreditTotal > a.MaxCredit {
+		a.CreditAwarded = a.MaxCredit
+	}
+}
+
+func reducedMemberActivity(r MemberActivity) map[string]interface{} {
+	nr := map[string]interface{}{
+		"activityDate":        r.Date,
+		"activityType":        r.Type.Name,
+		"activityDescription": r.Description,
+		"activityQuantity":    r.CreditData.Quantity,
+		"unit":                r.CreditData.UnitName,
+		"activityCredit":      r.CreditData.UnitCredit * r.CreditData.Quantity,
+	}
+	return nr
+}
+
+// calcTotalCredit sets the .CreditObtained value by adding up all of the credit
+// for each activity type within the evaluation
+func (e *MemberEvaluation) calcTotalCredit() {
+	for _, v := range e.Activities {
+		e.CreditObtained += v.CreditAwarded
+	}
 }
