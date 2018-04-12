@@ -65,7 +65,7 @@ var activityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"categoryName": &graphql.Field{
 			Type:        graphql.String,
-			Description: "Name of the category to which the activity belongs",
+			Description: "ReportName of the category to which the activity belongs",
 		},
 		"unitId": &graphql.Field{
 			Type:        graphql.Int,
@@ -73,7 +73,7 @@ var activityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"unitName": &graphql.Field{
 			Type:        graphql.String,
-			Description: "Name of the unit used to measure the activity",
+			Description: "ReportName of the unit used to measure the activity",
 		},
 		"creditPerUnit": &graphql.Field{
 			Type:        graphql.Float,

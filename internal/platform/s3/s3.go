@@ -1,13 +1,13 @@
 package s3
 
 import (
-	"time"
 	"os"
+	"time"
 
+	"github.com/34South/envr"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/34South/envr"
 )
 
 func init() {

@@ -112,7 +112,7 @@ type memberActivityAttachment struct {
 // memberEvaluation representations the localMember evaluation data
 type memberEvaluation struct {
 	//ID          int       `json:"id"`
-	Name           string  `json:"name"`
+	ReportName     string  `json:"name"`
 	StartDate      string  `json:"startDate"`
 	EndDate        string  `json:"endDate"`
 	CreditRequired float64 `json:"creditRequired"`
@@ -1067,7 +1067,7 @@ func memberEvaluationsData(memberID int) ([]memberEvaluation, error) {
 
 	for _, v := range xma {
 		e := memberEvaluation{
-			Name:           v.Name,
+			ReportName:     v.ReportName,
 			StartDate:      v.StartDate,
 			EndDate:        v.EndDate,
 			CreditRequired: float64(v.CreditRequired),
@@ -1091,7 +1091,7 @@ func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
 		return me, err
 	}
 
-	me.Name = ce.Name
+	me.ReportName = ce.ReportName
 	me.StartDate = ce.StartDate
 	me.EndDate = ce.EndDate
 	me.CreditRequired = float64(ce.CreditRequired)

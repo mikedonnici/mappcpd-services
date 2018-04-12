@@ -3,8 +3,8 @@ package datastore
 import (
 	"os"
 
-	"gopkg.in/mgo.v2"
 	"github.com/34South/envr"
+	"gopkg.in/mgo.v2"
 )
 
 func init() {

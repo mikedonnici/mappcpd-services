@@ -63,7 +63,6 @@ func New() *Attachment {
 //	return &Attachment{}
 //}
 
-
 // Validate checks the Attachment for the required values prior to registration
 func (a *Attachment) Validate() error {
 
@@ -236,7 +235,6 @@ func (a *Attachment) setURL() error {
 	return nil
 }
 
-
 // MemberActivityAttachments fetches the attachments for a member activity.
 func MemberActivityAttachments(memberActivityID int) ([]Attachment, error) {
 
@@ -269,9 +267,8 @@ func MemberActivityAttachments(memberActivityID int) ([]Attachment, error) {
 			&a.Path,
 			&a.URL,
 		)
-		 xa = append(xa, a)
+		xa = append(xa, a)
 	}
 
 	return xa, nil
 }
-

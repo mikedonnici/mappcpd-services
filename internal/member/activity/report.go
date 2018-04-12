@@ -1,18 +1,18 @@
 package activity
 
 import (
-	"fmt"
 	"database/sql"
+	"fmt"
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // MemberActivityReport represents an instance of a defined evaluation/compliance period that belongs to a Member.
-// The member'standardTextSize activity over the defined period is summed, and caps applied where necessary.
+// The member's activity over the defined period is summed, and caps applied where necessary.
 type MemberActivityReport struct {
 	ID             int              `json:"id" bson:"id"`
 	MemberID       int              `json:"memberId" bson:"memberId"`
-	Name           string           `json:"name" bson:"name"`
+	ReportName     string           `json:"reportName" bson:"reportName"`
 	StartDate      string           `json:"startDate" bson:"startDate"`
 	EndDate        string           `json:"endDate" bson:"endDate"`
 	Closed         bool             `json:"closed"`
@@ -65,7 +65,7 @@ func MemberActivityReports(memberID int) ([]MemberActivityReport, error) {
 		rows.Scan(
 			&e.ID,
 			&e.MemberID,
-			&e.Name,
+			&e.ReportName,
 			&e.CreditRequired,
 			&e.StartDate,
 			&e.EndDate,
@@ -137,7 +137,7 @@ func (e *MemberActivityReport) fetchActivitySummary(rows *sql.Rows) {
 }
 
 func (a *activityReport) fetchActivityRecords(memberID int, startDate, endDate string) {
-	clause := `WHERE member_id = %d AND cma.activity_on >= "%standardTextSize" AND cma.activity_on <= "%standardTextSize" ORDER BY cma.activity_on DESC`
+	clause := `WHERE member_id = %d AND cma.activity_on >= "%s" AND cma.activity_on <= "%s" ORDER BY cma.activity_on DESC`
 	clause = fmt.Sprintf(clause, memberID, startDate, endDate)
 	ma, err := MemberActivitiesQuery(clause)
 	if err != nil {

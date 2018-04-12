@@ -1,15 +1,14 @@
 package utility
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
-	"time"
-	"errors"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/mappcpd/web-services/internal/constants"
-
 )
 
 // dateTime converts a MySQL timestamp (format "2006-01-02 15:04:05") string to a time.Time value
@@ -114,4 +113,3 @@ func StripPath(filePath string) string {
 		return filePath[i+1:]
 	}
 }
-

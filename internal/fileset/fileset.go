@@ -16,13 +16,13 @@ import (
 // FileSet represent a row from the fs_set table and describes a "set" of related files in cloud storage.
 type FileSet struct {
 	// ID - fs_set id value
-	ID     int    `json:"id"`
+	ID int `json:"id"`
 	// Entity - db table containing the records to which files in this set are 'attached'
 	Entity string `json:"entity"`
 	// Volume - the name of the bucket - eg 'notes'
 	Volume string `json:"volume"`
 	// Path - or pseudo path (S3), excluding the file name, eg '/cpd/', '/note/'
-	Path   string `json:"path"`
+	Path string `json:"path"`
 }
 
 // NoteAttachment returns a pointer to a FileSet with relevant values for a Note attachment

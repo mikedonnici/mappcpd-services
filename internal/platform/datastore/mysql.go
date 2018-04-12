@@ -5,8 +5,8 @@ import (
 
 	"database/sql"
 
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/34South/envr"
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func init() {

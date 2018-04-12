@@ -12,10 +12,10 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
 
+	"github.com/mappcpd/web-services/internal/member/activity"
 	"github.com/mappcpd/web-services/internal/notes"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
-	"github.com/mappcpd/web-services/internal/member/activity"
 )
 
 // Note trying to scan NULL db values into strings throws an error. This is discussed here:

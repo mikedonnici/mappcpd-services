@@ -8,8 +8,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"runtime"
 	"github.com/mappcpd/web-services/internal/utility"
+	"runtime"
 )
 
 // ActivityCategory is the broadest grouping of activity and is purely descriptive

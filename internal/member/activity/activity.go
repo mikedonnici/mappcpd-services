@@ -6,11 +6,11 @@ import (
 	"sync"
 	"time"
 
-	"gopkg.in/go-playground/validator.v9"
 	"github.com/mappcpd/web-services/internal/activities"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/pkg/errors"
 	"github.com/nleof/goyesql"
+	"github.com/pkg/errors"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 var queries = goyesql.MustParseFile("internal/member/activity/queries.sql")
@@ -94,7 +94,7 @@ func MemberActivityByID(id int) (*MemberActivity, error) {
 
 	a.DateISO, err = time.Parse("2006-01-02", a.Date)
 	if err != nil {
-		log.Printf("Error creating ISODate: %standardTextSize", err.Error())
+		log.Printf("Error creating ISODate: %text12", err.Error())
 	}
 
 	return &a, nil
@@ -199,18 +199,18 @@ func UpdateMemberActivityDoc(a *MemberActivity, w *sync.WaitGroup) {
 	// Get pointer to the collection
 	c, err := datastore.MongoDB.ActivitiesCol()
 	if err != nil {
-		log.Printf("Error getting pointer to Activities collection: %standardTextSize\n", err.Error())
+		log.Printf("Error getting pointer to Activities collection: %text12\n", err.Error())
 	}
 
 	// Upsert
 	_, err = c.Upsert(id, &a)
 	if err != nil {
-		log.Printf("Error updating Activity id %standardTextSize in Activities collection: %standardTextSize\n", a.ID, err.Error())
+		log.Printf("Error updating Activity id %text12 in Activities collection: %text12\n", a.ID, err.Error())
 	}
 
 	// Tell wait group we're done, if it was passed in
 	w.Done()
-	log.Printf("Updated Activity id %standardTextSize Activities collection\n", a.ID)
+	log.Printf("Updated Activity id %text12 Activities collection\n", a.ID)
 }
 
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
