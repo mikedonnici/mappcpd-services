@@ -119,7 +119,7 @@ var activityTypeQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The id of the activity sub-type, required when adding member activities",
+			Description: "The id of the activity sub-type, required when adding localMember activities",
 		},
 		"name": &graphql.Field{
 			Type:        graphql.String,

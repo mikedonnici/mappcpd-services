@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	"gopkg.in/mgo.v2/bson"
-	"github.com/mappcpd/web-services/internal/members"
+	"github.com/mappcpd/web-services/internal/member"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 )
 
 type memberIndex struct {
 	Name      string
-	RawData   []members.Member
+	RawData   []member.Member
 	IndexData []algoliasearch.Object
 	Error     error
 }
@@ -34,7 +34,7 @@ func (mi *memberIndex) indexName() string {
 
 func (mi *memberIndex) fetchRawData() {
 	query := bson.M{"memberships.title": bson.M{"$exists": true}}
-	mi.RawData, mi.Error = members.FetchMembers(query, 0)
+	mi.RawData, mi.Error = member.FetchMembers(query, 0)
 }
 
 func (mi *memberIndex) createIndexObjects() {

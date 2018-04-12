@@ -6,8 +6,9 @@ import (
 
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
-	"github.com/mappcpd/web-services/internal/members"
+	"github.com/mappcpd/web-services/internal/member"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/internal/member/activity"
 )
 
 // MembersProfile fetches a member record by id
@@ -19,7 +20,7 @@ func MembersProfile(w http.ResponseWriter, r *http.Request) {
 	id := middleware.UserAuthToken.Claims.ID
 
 	// Get the Member record
-	m, err := members.MemberByID(id)
+	m, err := member.MemberByID(id)
 	// Response
 	switch {
 	case err == sql.ErrNoRows:
@@ -31,7 +32,7 @@ func MembersProfile(w http.ResponseWriter, r *http.Request) {
 		p.Data = m
 
 		// TODO: remove this when fetching - should only be on update
-		members.SyncMember(m)
+		member.SyncMember(m)
 	}
 
 	p.Send(w)
@@ -42,7 +43,7 @@ func MembersActivities(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	a, err := members.MemberActivitiesByMemberID(middleware.UserAuthToken.Claims.ID)
+	a, err := activity.MemberActivitiesByMemberID(middleware.UserAuthToken.Claims.ID)
 
 	// Response
 	switch {
@@ -70,7 +71,7 @@ func MembersEvaluation(w http.ResponseWriter, r *http.Request) {
 	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Collect the evaluation periods
-	es, err := members.EvaluationsByMemberID(middleware.UserAuthToken.Claims.ID)
+	es, err := activity.MemberActivityReports(middleware.UserAuthToken.Claims.ID)
 	// Response
 	switch {
 	case err == sql.ErrNoRows:
@@ -95,7 +96,10 @@ func MembersReports(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	ce, err := members.CurrentEvaluation(middleware.UserAuthToken.Claims.ID)
+	ce, err := activity.CurrentMemberActivityReport(middleware.UserAuthToken.Claims.ID)
+
+	// todo: testing trigger
+	activity.PDFReport(ce)
 
 	// Response
 	switch {

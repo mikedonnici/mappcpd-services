@@ -134,6 +134,18 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/jung-kurt/gofpdf"
+  packages = ["."]
+  revision = "14c1db30737a138f8d9797cffea58783892b2fae"
+  version = "v1.0.0"
+
+[[projects]]
+  name = "github.com/nleof/goyesql"
+  packages = ["."]
+  revision = "736fe14cafb0b195a659821fb90ecfa9226441b5"
+  version = "v1.0.1"
+
+[[projects]]
   name = "github.com/pkg/errors"
   packages = ["."]
   revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
@@ -172,6 +184,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d969bf78b1a3d0dea9bf268fe9cc46952fb9f052e37b3800e0c742ccc6fcefea"
+  inputs-digest = "6945f11407e5a96525e30f1217cc2f4bda7fcc08bbaaf0dc7718becac654957a"
   solver-name = "gps-cdcl"
   solver-version = 1

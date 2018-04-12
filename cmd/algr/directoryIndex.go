@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"gopkg.in/mgo.v2/bson"
-	"github.com/mappcpd/web-services/internal/members"
+	"github.com/mappcpd/web-services/internal/member"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 	"github.com/34South/envr"
 )
@@ -20,7 +20,7 @@ func init() {
 
 type directoryIndex struct {
 	Name      string
-	RawData   []members.Member
+	RawData   []member.Member
 	IndexData []algoliasearch.Object
 	Error     error
 }
@@ -44,11 +44,11 @@ func (di *directoryIndex) indexName() string {
 
 func (di *directoryIndex) fetchRawData() {
 	query := bson.M{"memberships.title": bson.M{"$exists": true}}
-	di.RawData, di.Error = members.FetchMembers(query, 0)
+	di.RawData, di.Error = member.FetchMembers(query, 0)
 }
 
 func (di *directoryIndex) removeExcludedMembers() {
-	var xm []members.Member
+	var xm []member.Member
 	for _, m := range di.RawData {
 		if shouldInclude(m) {
 			xm = append(xm, m)
@@ -109,32 +109,32 @@ func (di *directoryIndex) setAffiliations(i int) {
 	di.IndexData[i]["affiliations"] = xs
 }
 
-func shouldInclude(m members.Member) bool {
+func shouldInclude(m member.Member) bool {
 	return isActive(m)
 }
 
-func isActive(m members.Member) bool {
+func isActive(m member.Member) bool {
 	if m.Active != true {
 		return false
 	}
 	return hasDirectoryConsent(m)
 }
 
-func hasDirectoryConsent(m members.Member) bool {
+func hasDirectoryConsent(m member.Member) bool {
 	if m.Contact.Directory != true {
 		return false
 	}
 	return hasMembershipTitle(m)
 }
 
-func hasMembershipTitle(m members.Member) bool {
+func hasMembershipTitle(m member.Member) bool {
 	if m.Title == "" {
 		return false
 	}
 	return hasMembershipTitleNotExcluded(m)
 }
 
-func hasMembershipTitleNotExcluded(m members.Member) bool {
+func hasMembershipTitleNotExcluded(m member.Member) bool {
 	xs := strings.Split(os.Getenv("MAPPCPD_ALGOLIA_DIRECTORY_EXCLUDE_TITLES"), ",")
 	title := strings.ToLower(m.Title)
 	for _, s := range xs {

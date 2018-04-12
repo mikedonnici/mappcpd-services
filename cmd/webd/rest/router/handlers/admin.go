@@ -15,7 +15,7 @@ import (
 	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/generic"
-	"github.com/mappcpd/web-services/internal/members"
+	"github.com/mappcpd/web-services/internal/member"
 	"github.com/mappcpd/web-services/internal/notes"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/platform/s3"
@@ -79,9 +79,9 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 	// Run the query...
 	var res []interface{}
 	if limit > 0 {
-		res, err = members.DocMembersLimit(query, projection, limit)
+		res, err = member.DocMembersLimit(query, projection, limit)
 	} else {
-		res, err = members.DocMembersAll(query, projection)
+		res, err = member.DocMembersAll(query, projection)
 	}
 
 	if err != nil {
@@ -126,9 +126,9 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 	// Limit query
 	var res []interface{}
 	if f.Limit > 0 {
-		res, err = members.DocMembersLimit(f.Query, f.Projection, f.Limit)
+		res, err = member.DocMembersLimit(f.Query, f.Projection, f.Limit)
 	} else {
-		res, err = members.DocMembersAll(f.Query, f.Projection)
+		res, err = member.DocMembersAll(f.Query, f.Projection)
 	}
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
@@ -156,7 +156,7 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Response
-	m, err := members.MemberByID(int(id))
+	m, err := member.MemberByID(int(id))
 
 	switch {
 	case err == sql.ErrNoRows:
@@ -195,15 +195,15 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		err := members.UpdateMember(j)
+		err := member.UpdateMember(j)
 		if err != nil {
 			p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 			p.Send(w)
 			return
 		}
 
-		m, _ = members.MemberByID(int(id)) // Re-fetch
-		members.SyncMember(m)              // Sync to doc db
+		m, _ = member.MemberByID(int(id)) // Re-fetch
+		member.SyncMember(m)              // Sync to doc db
 
 		p.Message = responder.Message{http.StatusOK, "success", "MySQLConnection record updated and copied to MongoDB"}
 		p.Data = m
@@ -279,7 +279,7 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the Member record
-	m, err := members.MemberByID(int(id))
+	m, err := member.MemberByID(int(id))
 	// Response
 	switch {
 	case err == sql.ErrNoRows:
@@ -289,7 +289,7 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 	default:
 		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
 		p.Data = m
-		members.SyncMember(m)
+		member.SyncMember(m)
 	}
 
 	p.Send(w)
