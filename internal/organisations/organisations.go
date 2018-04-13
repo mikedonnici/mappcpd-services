@@ -4,7 +4,7 @@ import "github.com/mappcpd/web-services/internal/platform/datastore"
 
 // Organisation defines a business, society or similar legal entity
 type Organisation struct {
-	_id         string `json:"_id" bson:"_id"`
+	OID         string `json:"_id" bson:"_id"`
 	ID          int    `json:"id" bson:"id"`
 	Code        string `json:"code" bson:"code"`
 	Name        string `json:"name" bson:"name"`
@@ -95,7 +95,7 @@ func OrganisationByID(id int) (Organisation, error) {
 // OrganisationList fetches a list of all the 'active' Organisations
 func OrganisationsList() ([]Organisation, error) {
 
-	var orgs []Organisation
+	var xo []Organisation
 
 	// Top-level organisations have parent_organisation_id = NULL
 	query := `SELECT
@@ -110,17 +110,17 @@ func OrganisationsList() ([]Organisation, error) {
 
 	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
-		return orgs, err
+		return xo, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
 		org := Organisation{}
 		rows.Scan(&org.ID, &org.Code, &org.Name, &org.Description)
-		orgs = append(orgs, org)
+		xo = append(xo, org)
 	}
 
-	return orgs, nil
+	return xo, nil
 }
 
 // OrganisationGroupsList fetches a list of all the 'active' Organisations. Currently this reads
@@ -162,7 +162,7 @@ func OrganisationGroupsList(id int) ([]OrganisationGroup, error) {
 // SetCurrentGroupPositions sets the Positions field in an OrganisationGroup
 func (og *OrganisationGroup) SetCurrentGroupPositions() error {
 
-	ps := []OrganisationGroupPosition{}
+	var ps []OrganisationGroupPosition
 
 	//ot.name as 'Group Type',
 	// CONCAT(m.first_name, ' ', m.last_name) as 'Member',

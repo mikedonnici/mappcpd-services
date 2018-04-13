@@ -19,9 +19,9 @@ import (
 	"github.com/mappcpd/web-services/internal/activities"
 	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/fileset"
+	"github.com/mappcpd/web-services/internal/member/activity"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/platform/s3"
-	"github.com/mappcpd/web-services/internal/member/activity"
 )
 
 // Activities fetches list of activity types

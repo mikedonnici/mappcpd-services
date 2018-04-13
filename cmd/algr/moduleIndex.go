@@ -1,9 +1,9 @@
 package main
 
 import (
-	"gopkg.in/mgo.v2/bson"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 	"github.com/mappcpd/web-services/internal/modules"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type moduleIndex struct {

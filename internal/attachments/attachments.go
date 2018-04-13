@@ -26,7 +26,7 @@ type Attachment struct {
 	EntityID int `json:"entityId"`
 
 	// UserID is a stored with attachment records when they are added by an admin user.
-	UserID int `json:"userId""`
+	UserID int `json:"userId"`
 
 	// CleanFilename is a sanitised version of the original filename
 	CleanFilename string `json:"cleanFilename"`

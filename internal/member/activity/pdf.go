@@ -2,13 +2,13 @@ package activity
 
 import (
 	"fmt"
+	"io"
+	"log"
+	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/jung-kurt/gofpdf"
-	"io"
-	"log"
-	"net/http"
 )
 
 // standard widths, heights, font sizes - for convenience

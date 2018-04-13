@@ -2,13 +2,13 @@ package main
 
 import (
 	"fmt"
-	"strings"
 	"os"
+	"strings"
 
-	"gopkg.in/mgo.v2/bson"
-	"github.com/mappcpd/web-services/internal/member"
-	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 	"github.com/34South/envr"
+	"github.com/algolia/algoliasearch-client-go/algoliasearch"
+	"github.com/mappcpd/web-services/internal/member"
+	"gopkg.in/mgo.v2/bson"
 )
 
 func init() {

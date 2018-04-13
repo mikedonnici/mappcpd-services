@@ -3,9 +3,9 @@ package main
 import (
 	"fmt"
 
-	"gopkg.in/mgo.v2/bson"
-	"github.com/mappcpd/web-services/internal/member"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
+	"github.com/mappcpd/web-services/internal/member"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type memberIndex struct {

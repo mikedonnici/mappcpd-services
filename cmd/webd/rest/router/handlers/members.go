@@ -1,23 +1,23 @@
 package handlers
 
 import (
-	"io"
 	"fmt"
-	"os"
+	"io"
 	"log"
+	"os"
 
-	"io/ioutil"
 	"database/sql"
-	"net/http"
+	"encoding/base64"
+	"github.com/34South/envr"
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	"github.com/mappcpd/web-services/internal/member"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/member/activity"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/sendgrid/sendgrid-go"
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
-	"github.com/34South/envr"
-	"encoding/base64"
+	"io/ioutil"
+	"net/http"
 )
 
 func init() {
@@ -150,7 +150,6 @@ func MembersReports(w http.ResponseWriter, r *http.Request) {
 
 	message := mail.NewSingleEmail(from, subject, to, plainTextContent, htmlContent)
 	message.AddAttachment(a)
-
 
 	client := sendgrid.NewSendClient(os.Getenv("SENDGRID_API_KEY"))
 	response, err := client.Send(message)

@@ -6,9 +6,9 @@ import (
 
 	"encoding/json"
 
-	"github.com/pkg/errors"
-	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 	"github.com/34South/envr"
+	"github.com/algolia/algoliasearch-client-go/algoliasearch"
+	"github.com/pkg/errors"
 )
 
 const maxUpdateBatchCount = 1000
@@ -120,7 +120,7 @@ func sliceBoundaries(maxElements, totalElements int) []map[string]int {
 		if end > totalElements {
 			end = start + remainder
 		}
-		s := map[string]int{"start": start, "end":   end}
+		s := map[string]int{"start": start, "end": end}
 		xm = append(xm, s)
 	}
 

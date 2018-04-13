@@ -52,7 +52,7 @@ type ActivityCredit struct {
 type ActivityType struct {
 	ID       sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
 	Name     string        `json:"name" bson:"name"`
-	Activity Activity      `json:"activity: bson: "activity"`
+	Activity Activity      `json:"activity" bson:"activity"`
 }
 
 // Activities fetches active activity records

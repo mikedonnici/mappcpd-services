@@ -37,7 +37,7 @@ type Member struct {
 
 	// Active refers to the members status in relation to the organisation, ie ms_m_status.ms_status_id = 1 (MySQL)
 	// In this model this really belongs in the memberships, however is here from simplicity.
-	Active         bool            `json:"active" bson:"active""`
+	Active         bool            `json:"active" bson:"active"`
 	Title          string          `json:"title" bson:"title"`
 	FirstName      string          `json:"firstName" bson:"firstName"`
 	MiddleNames    string          `json:"middleNames" bson:"middleNames"`

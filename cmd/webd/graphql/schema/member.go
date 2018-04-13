@@ -7,11 +7,11 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/pkg/errors"
 
+	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/member"
 	"github.com/mappcpd/web-services/internal/member/activity"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 	"github.com/mappcpd/web-services/internal/utility"
-	"github.com/mappcpd/web-services/internal/attachments"
 )
 
 // localMember is a local representation of localMember.Member

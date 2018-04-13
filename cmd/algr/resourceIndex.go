@@ -3,9 +3,9 @@ package main
 import (
 	"time"
 
-	"gopkg.in/mgo.v2/bson"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 	"github.com/mappcpd/web-services/internal/resources"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type resourceIndex struct {
@@ -52,7 +52,6 @@ func (ri *resourceIndex) createObject(i int) {
 	pubDate := resource.PubDate.Date.Format(time.RFC3339)
 	pubStamp := resource.PubDate.Date.Unix()
 
-	
 	obj["objectID"] = resource.OID
 	obj["_id"] = resource.OID
 	obj["id"] = resource.ID
@@ -76,7 +75,7 @@ func (ri *resourceIndex) createObject(i int) {
 		v, ok := resource.Attributes[a]
 		if ok {
 			obj[a] = v
-		}	
+		}
 	}
 
 	ri.IndexData[i] = obj

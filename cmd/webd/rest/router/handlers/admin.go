@@ -225,7 +225,7 @@ func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Response
-	ns, err := notes.NotesByMemberID(id)
+	ns, err := notes.MemberNotes(id)
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}

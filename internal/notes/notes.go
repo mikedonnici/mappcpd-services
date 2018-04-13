@@ -10,7 +10,7 @@ type Note struct {
 	MemberID      int          `json:"memberId" bson:"memberId"`
 	DateCreated   string       `json:"dateCreated" bson:"dateCreated"`
 	DateUpdated   string       `json:"dateUpdated" bson:"dateUpdated"`
-	DateEffective string       `json:"dateEffective" bson:"dateEffective`
+	DateEffective string       `json:"dateEffective" bson:"dateEffective"`
 	Content       string       `json:"content" bson:"content"`
 	Attachments   []Attachment `json:"attachments" bson:"attachments"`
 }
@@ -95,8 +95,8 @@ func NoteByID(id int) (*Note, error) {
 	return &n, nil
 }
 
-// NotesByMemberID fetches all the notes linked to a Member
-func NotesByMemberID(id int) (*Notes, error) {
+// MemberNotes fetches all the notes linked to a Member
+func MemberNotes(memberID int) (*Notes, error) {
 
 	ns := Notes{}
 
@@ -114,7 +114,7 @@ func NotesByMemberID(id int) (*Notes, error) {
 		WHERE m.id = ?
 		ORDER BY wn.effective_on DESC`
 
-	rows, err := datastore.MySQL.Session.Query(query, id)
+	rows, err := datastore.MySQL.Session.Query(query, memberID)
 	if err != nil {
 		return &ns, err
 	}

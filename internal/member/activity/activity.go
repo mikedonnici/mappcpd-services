@@ -3,7 +3,6 @@ package activity
 import (
 	"fmt"
 	"log"
-	"sync"
 	"time"
 
 	"github.com/mappcpd/web-services/internal/activities"
@@ -94,7 +93,7 @@ func MemberActivityByID(id int) (*MemberActivity, error) {
 
 	a.DateISO, err = time.Parse("2006-01-02", a.Date)
 	if err != nil {
-		log.Printf("Error creating ISODate: %text12", err.Error())
+		log.Printf("Error creating ISODate: %s", err.Error())
 	}
 
 	return &a, nil
@@ -103,12 +102,12 @@ func MemberActivityByID(id int) (*MemberActivity, error) {
 // MemberActivitiesByMemberID fetches activities for a particular member
 func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 
-	activities := MemberActivities{}
+	memberActivities := MemberActivities{}
 
 	query := queries["select-member-activity"] + ` WHERE member_id = ? ORDER BY activity_on DESC`
 	rows, err := datastore.MySQL.Session.Query(query, memberID)
 	if err != nil {
-		return activities, err
+		return memberActivities, err
 	}
 	defer rows.Close()
 
@@ -139,21 +138,21 @@ func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 			fmt.Println(err)
 		}
 
-		activities = append(activities, a)
+		memberActivities = append(memberActivities, a)
 	}
 
-	return activities, nil
+	return memberActivities, nil
 }
 
 // MemberActivitiesQuery allows for any filter clause
 func MemberActivitiesQuery(sqlClause string) ([]MemberActivity, error) {
 
-	activities := MemberActivities{}
+	memberActivities := MemberActivities{}
 
 	query := queries["select-member-activity"] + ` ` + sqlClause
 	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
-		return activities, err
+		return memberActivities, err
 	}
 	defer rows.Close()
 
@@ -184,33 +183,10 @@ func MemberActivitiesQuery(sqlClause string) ([]MemberActivity, error) {
 			fmt.Println(err)
 		}
 
-		activities = append(activities, a)
+		memberActivities = append(memberActivities, a)
 	}
 
-	return activities, nil
-}
-
-// UpdateMemberActivityDoc updates the JSON-formatted activity record in the Doc DB (MongoDB)
-func UpdateMemberActivityDoc(a *MemberActivity, w *sync.WaitGroup) {
-
-	// Make the selector for Upsert
-	id := map[string]int{"id": a.ID}
-
-	// Get pointer to the collection
-	c, err := datastore.MongoDB.ActivitiesCol()
-	if err != nil {
-		log.Printf("Error getting pointer to Activities collection: %text12\n", err.Error())
-	}
-
-	// Upsert
-	_, err = c.Upsert(id, &a)
-	if err != nil {
-		log.Printf("Error updating Activity id %text12 in Activities collection: %text12\n", a.ID, err.Error())
-	}
-
-	// Tell wait group we're done, if it was passed in
-	w.Done()
-	log.Printf("Updated Activity id %text12 Activities collection\n", a.ID)
+	return memberActivities, nil
 }
 
 // AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
