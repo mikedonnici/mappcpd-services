@@ -83,12 +83,11 @@ func MemberActivityReports(memberID int) ([]MemberActivityReport, error) {
 	return es, nil
 }
 
-// CurrentMemberActivityReport returns a value with fields describing the current evaluation period
-func CurrentMemberActivityReport(memberID int) (MemberActivityReport, error) {
+// CurrentEvaluationPeriodReport returns a MemberActivityReport for the current evaluation period.
+func CurrentEvaluationPeriodReport(memberID int) (MemberActivityReport, error) {
 
 	var me MemberActivityReport
 
-	// find the current one
 	xme, err := MemberActivityReports(memberID)
 	if err != nil {
 		return me, err

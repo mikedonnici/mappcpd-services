@@ -1086,7 +1086,7 @@ func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
 	var me memberEvaluation
 
 	// This returns a nested struct which is simplified below.
-	ce, err := activity.CurrentMemberActivityReport(memberID)
+	ce, err := activity.CurrentEvaluationPeriodReport(memberID)
 	if err != nil {
 		return me, err
 	}
