@@ -26,8 +26,8 @@ const (
 	width140 = 140
 )
 
-// PDFReport
-func PDFReport(reportData MemberActivityReport, w *io.PipeWriter) {
+// PDFReport generates a PDF report and writes it to w
+func PDFReport(reportData MemberActivityReport, w io.Writer) {
 
 	pdf := initPDF()
 	addPageHeaderImage(pdf)
@@ -159,7 +159,7 @@ func addActivityDetailRows(pdf *gofpdf.Fpdf, colWidths []float64, records []acti
 func addRowDividerLine(pdf *gofpdf.Fpdf, width float64) {
 	pdf.Ln(2)
 	pdf.MultiCell(width, 2, "", "B", "C", false)
-	pdf.Ln(2)
+	pdf.Ln(4)
 }
 
 func addActivityDetailHeading(pdf *gofpdf.Fpdf, a activityReport) {
