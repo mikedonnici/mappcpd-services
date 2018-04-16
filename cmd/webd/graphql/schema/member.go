@@ -14,7 +14,7 @@ import (
 	"github.com/mappcpd/web-services/internal/utility"
 )
 
-// localMember is a local representation of localMember.Member
+// localMember is a local representation of member.Member
 type localMember struct {
 	ID             int                     `json:"id"`
 	Token          string                  `json:"token"`
@@ -34,7 +34,7 @@ type localMember struct {
 
 // memberActivity is a leaner representation of members.memberActivity
 type memberActivity struct {
-	// ID is the unique id of the localMember activity record
+	// ID is the unique id of the member activity record
 	ID int `json:"id"`
 
 	// Date on which the activity was undertaken, and an equivalent Time value
@@ -60,7 +60,7 @@ type memberActivity struct {
 
 	// ActivityID is the id of the activity (type), ie, a record from the ce_activity table. Until the new 'type'
 	// came along this was often described as activityType in var names etc. This was to avoid confusion with an
-	// actual localMember activity, but has now caused more confusion.
+	// actual member activity, but has now caused more confusion.
 	ActivityID int `json:"activityId"`
 	// Activity is the string name of the ce_activity record
 	Activity string `json:"activity"`
@@ -82,7 +82,7 @@ type memberActivity struct {
 	UploadURL string `json:"uploadUrl"`
 }
 
-// memberActivityInput represents an object for mutating a localMember activity
+// memberActivityInput represents an object for mutating a member activity
 type memberActivityInput struct {
 	// ID - if present triggers and update, else record will be added
 	ID int `json:"id"`
@@ -103,13 +103,13 @@ type memberActivityInput struct {
 	TypeID int `json:"typeId"`
 }
 
-// memberActivityAttachment represents an file associated with a localMember activity
+// memberActivityAttachment represents an file associated with a member activity
 type memberActivityAttachment struct {
 	ID  int    `json:"id"`
 	URL string `json:"url"`
 }
 
-// memberEvaluation representations the localMember evaluation data
+// memberEvaluation representations the member evaluation data
 type memberEvaluation struct {
 	//ID          int       `json:"id"`
 	ReportName     string  `json:"name"`
@@ -120,10 +120,10 @@ type memberEvaluation struct {
 	Closed         bool    `json:"closed"`
 }
 
-// memberQueryField resolves localMember queries, is a 'viewer' field for the localMember (user) identified by the token
+// memberQueryField resolves member queries, is a 'viewer' field for the member (user) identified by the token
 var memberQueryField = &graphql.Field{
 	Description: "Member queries require a valid JSON Web Token for auth and data in child nodes will always " +
-		"belong to the localMember identified by the token.",
+		"belong to the member identified by the token.",
 	Type: memberQueryObject,
 	Args: graphql.FieldConfigArgument{
 		"token": &graphql.ArgumentConfig{
@@ -136,7 +136,7 @@ var memberQueryField = &graphql.Field{
 		token, ok := p.Args["token"].(string)
 		if ok {
 
-			// Validate the token, and extract the localMember id
+			// Validate the token, and extract the member id
 			at, err := jwt.Check(token)
 			if err != nil {
 				return nil, err
@@ -147,7 +147,7 @@ var memberQueryField = &graphql.Field{
 			// As a final step we can verify that the id is a valid user in the system,
 			// for example, that it is active. Although this is a bit redundant for each request?
 
-			// create the localMember value
+			// create the member value
 			m, err := memberData(id)
 			if err != nil {
 				return nil, err
@@ -166,14 +166,14 @@ var memberQueryField = &graphql.Field{
 	},
 }
 
-// memberQueryObject defines fields for a localMember.
+// memberQueryObject defines fields for a Member.
 var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
-	Name:        "localMember",
-	Description: "localMember query object that provides access to data for the localMember identified by the token.",
+	Name:        "member",
+	Description: "member query object that provides access to data for the member identified by the token.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The localMember's unique id number",
+			Description: "The member's unique id number",
 		},
 		"token": &graphql.Field{
 			Type:        graphql.String,
@@ -181,15 +181,15 @@ var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"active": &graphql.Field{
 			Type:        graphql.Boolean,
-			Description: "Boolean flag indicating if the localMember is currently active in the system",
+			Description: "Boolean flag indicating if the member is currently active in the system",
 		},
 		"title": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The localMember's membership title",
+			Description: "The member's membership title",
 		},
 		"firstName": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The localMember's first name",
+			Description: "The member's first name",
 		},
 		"middleNames": &graphql.Field{
 			Type:        graphql.String,
@@ -197,7 +197,7 @@ var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"lastName": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The localMember's surname / family name",
+			Description: "The member's surname / family name",
 		},
 		"postNominal": &graphql.Field{
 			Type:        graphql.String,
@@ -205,15 +205,15 @@ var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"dateOfBirth": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The localMember's date of birth, as a string value",
+			Description: "The member's date of birth, as a string value",
 		},
 		"email": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The localMember's primary email address",
+			Description: "The member's primary email address",
 		},
 		"mobile": &graphql.Field{
 			Type:        graphql.String,
-			Description: "The localMember's mobile phone number",
+			Description: "The member's mobile phone number",
 		},
 		"locations": &graphql.Field{
 			Type:        graphql.NewList(locationQueryObject),
@@ -221,11 +221,11 @@ var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"qualifications": &graphql.Field{
 			Type:        graphql.NewList(qualificationQueryObject),
-			Description: "The localMember's qualifications",
+			Description: "The member's qualifications",
 		},
 		"positions": &graphql.Field{
 			Type:        graphql.NewList(positionQueryObject),
-			Description: "The localMember's positions or appointments to committees, councils etc",
+			Description: "The member's positions or appointments to committees, councils etc",
 		},
 
 		// child nodes / sub queries
@@ -239,7 +239,7 @@ var memberQueryObject = graphql.NewObject(graphql.ObjectConfig{
 // locationQueryObject defines fields for a contact location
 var locationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "location",
-	Description: "A contact location belonging to a localMember",
+	Description: "A contact location belonging to a member",
 	Fields: graphql.Fields{
 		"order": &graphql.Field{
 			Type: graphql.Int,
@@ -277,7 +277,7 @@ var locationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// contactQueryObject defines fields for a localMember's contact information, containing one or more locations
+// contactQueryObject defines fields for a member's contact information, containing one or more locations
 var contactQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "contact",
 	Description: "Member contact information which may include one or more contact locations.",
@@ -297,10 +297,10 @@ var contactQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// qualificationQueryObject defines fields for a qualification obtained by a localMember
+// qualificationQueryObject defines fields for a qualification obtained by a Member
 var qualificationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "qualification",
-	Description: "An academic qualification obtained by the localMember",
+	Description: "An academic qualification obtained by the Member",
 	Fields: graphql.Fields{
 		"code": &graphql.Field{
 			Type: graphql.String,
@@ -317,7 +317,7 @@ var qualificationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// positionQueryObject defines fields for a position held by a localMember
+// positionQueryObject defines fields for a position held by a Member
 var positionQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "position",
 	Description: "A position or affiliation with a council, committee or group",
@@ -346,14 +346,14 @@ var positionQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// memberActivityQueryObject defines fields for a localMember activity
+// memberActivityQueryObject defines fields for a Member activity
 var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "memberActivity",
-	Description: "An instance of an activity recorded by a localMember - ie an entry in the CPD diary.",
+	Description: "An instance of an activity recorded by a Member - ie an entry in the CPD diary.",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "ID of the localMember activity record.",
+			Description: "ID of the Member activity record.",
 		},
 		"date": &graphql.Field{
 			Type:        graphql.String,
@@ -402,21 +402,21 @@ var memberActivityQueryObject = graphql.NewObject(graphql.ObjectConfig{
 		},
 		"description": &graphql.Field{
 			Type:        graphql.String,
-			Description: "Descriptive details about the activity, supplied by the localMember.",
+			Description: "Descriptive details about the activity, supplied by the Member.",
 		},
 
 		"attachments": memberActivityAttachmentsQueryField,
 	},
 })
 
-// memberActivityAttachmentQueryObject defines fields for a localMember activity attachment
+// memberActivityAttachmentQueryObject defines fields for a Member activity attachment
 var memberActivityAttachmentQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "memberActivityAttachment",
-	Description: "An attachment associated with the localMember activity",
+	Description: "An attachment associated with the member activity",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "The id of the localMember activity attachment record",
+			Description: "The id of the member activity attachment record",
 		},
 		// todo this should be a signed url
 		"url": &graphql.Field{
@@ -426,7 +426,7 @@ var memberActivityAttachmentQueryObject = graphql.NewObject(graphql.ObjectConfig
 	},
 })
 
-// memberEvaluationQueryObject defines fields for a localMember evaluation
+// memberEvaluationQueryObject defines fields for a member evaluation
 var memberEvaluationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "memberEvaluation",
 	Description: "An evaluation of activity credited and required, for a given period of time - eg a calendar year.",
@@ -458,19 +458,19 @@ var memberEvaluationQueryObject = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// memberActivityQueryField resolves a query for a single localMember activity
+// memberActivityQueryField resolves a query for a single member activity
 var memberActivityQueryField = &graphql.Field{
-	Description: "Fetches a single localMember activity by id.",
+	Description: "Fetches a single member activity by id.",
 	Type:        memberActivityQueryObject,
 	Args: graphql.FieldConfigArgument{
 		"activityId": &graphql.ArgumentConfig{
 			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "ID of the localMember memberActivityQueryField",
+			Description: "ID of the member memberActivityQueryField",
 		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		// Always extract the localMember id from the token, available thus:
+		// Always extract the member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
 		at, err := jwt.Check(token.(string))
 		if err != nil {
@@ -487,13 +487,13 @@ var memberActivityQueryField = &graphql.Field{
 	},
 }
 
-// memberActivityAttachmentsQueryField resolves a query for localMember activity attachments
+// memberActivityAttachmentsQueryField resolves a query for member activity attachments
 var memberActivityAttachmentsQueryField = &graphql.Field{
-	Description: "Fetches a list of attachments for a localMember activity",
+	Description: "Fetches a list of attachments for a member activity",
 	Type:        graphql.NewList(memberActivityAttachmentQueryObject),
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		// Extract localMember id from the token, available thus:
+		// Extract member id from the token, available thus:
 		//token := p.Info.VariableValues["token"]
 		//at, err := jwt.Check(token.(string))
 		//if err != nil {
@@ -501,7 +501,7 @@ var memberActivityAttachmentsQueryField = &graphql.Field{
 		//}
 		//memberID := at.Claims.ID
 
-		// Get the localMember activity id from the parent
+		// Get the member activity id from the parent
 		maID := p.Source.(memberActivity).ID
 		//types, err := activityTypesData(id)
 		//if err != nil {
@@ -512,9 +512,9 @@ var memberActivityAttachmentsQueryField = &graphql.Field{
 	},
 }
 
-// memberActivitiesQueryField resolves a query for localMember activities
+// memberActivitiesQueryField resolves a query for member activities
 var memberActivitiesQueryField = &graphql.Field{
-	Description: "Fetches a list of localMember activities",
+	Description: "Fetches a list of member activities",
 	Type:        graphql.NewList(memberActivityQueryObject),
 	Args: graphql.FieldConfigArgument{
 		"last": &graphql.ArgumentConfig{
@@ -532,7 +532,7 @@ var memberActivitiesQueryField = &graphql.Field{
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		// Extract localMember id from the token, available thus:
+		// Extract member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
 		at, err := jwt.Check(token.(string))
 		if err != nil {
@@ -571,7 +571,7 @@ var memberCurrentEvaluationQueryField = &graphql.Field{
 	Type:        memberEvaluationQueryObject,
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		// Extract localMember id from the token, available thus:
+		// Extract member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
 		at, err := jwt.Check(token.(string))
 		if err != nil {
@@ -583,13 +583,13 @@ var memberCurrentEvaluationQueryField = &graphql.Field{
 	},
 }
 
-// memberEvaluationsQueryField resolves queries for multiple localMember evaluation periods
+// memberEvaluationsQueryField resolves queries for multiple member evaluation periods
 var memberEvaluationsQueryField = &graphql.Field{
-	Description: "Fetches a history of localMember activity evaluation periods",
+	Description: "Fetches a history of member activity evaluation periods",
 	Type:        graphql.NewList(memberEvaluationQueryObject),
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		// Extract localMember id from the token, available thus:
+		// Extract member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
 		at, err := jwt.Check(token.(string))
 		if err != nil {
@@ -601,9 +601,9 @@ var memberEvaluationsQueryField = &graphql.Field{
 	},
 }
 
-// memberMutationField handles mutations for localMember data
+// memberMutationField handles mutations for member data
 var memberMutationField = &graphql.Field{
-	Description: "Top-level input field for localMember data.",
+	Description: "Top-level input field for member data.",
 	Type:        memberMutationObject,
 	Args: graphql.FieldConfigArgument{
 		"token": &graphql.ArgumentConfig{
@@ -614,14 +614,14 @@ var memberMutationField = &graphql.Field{
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 		token, ok := p.Args["token"].(string)
 		if ok {
-			// Validate the token, and extract the localMember id
+			// Validate the token, and extract the member id
 			at, err := jwt.Check(token)
 			if err != nil {
 				return nil, err
 			}
 			id := at.Claims.ID
 
-			// create the localMember value
+			// create the member value
 			m, err := memberData(id)
 			if err != nil {
 				return nil, err
@@ -640,14 +640,14 @@ var memberMutationField = &graphql.Field{
 	},
 }
 
-// memberMutationObject defines fields for mutating localMember data
+// memberMutationObject defines fields for mutating member data
 var memberMutationObject = graphql.NewObject(graphql.ObjectConfig{
 	Name:        "memberInput",
-	Description: "Top-level input for localMember fields",
+	Description: "Top-level input for member fields",
 	Fields: graphql.Fields{
 		"id": &graphql.Field{
 			Type:        graphql.Int,
-			Description: "Unique id of the localMember performing the operation, extracted from the token.",
+			Description: "Unique id of the member performing the operation, extracted from the token.",
 		},
 		"token": &graphql.Field{
 			Type:        graphql.String,
@@ -659,21 +659,21 @@ var memberMutationObject = graphql.NewObject(graphql.ObjectConfig{
 	},
 })
 
-// memberActivitySaveField handles mutation (add / update) of a localMember activity
+// memberActivitySaveField handles mutation (add / update) of a member activity
 var memberActivitySaveField = &graphql.Field{
-	Description: "Add or update a localMember activity. If `activityId` is present in the argument object, and the record " +
-		"belongs to the localMember identified by the token, then it will be updated. If `activityId` is not present, or does not belong " +
-		"to the authenticated user, a new localMember activity record will be created.",
+	Description: "Add or update a member activity. If `activityId` is present in the argument object, and the record " +
+		"belongs to the member identified by the token, then it will be updated. If `activityId` is not present, or does not belong " +
+		"to the authenticated user, a new member activity record will be created.",
 	Type: memberActivityQueryObject, // this type will be returned this operation
 	Args: graphql.FieldConfigArgument{
 		"obj": &graphql.ArgumentConfig{
 			Type:        memberActivitySaveObject, // this is the type required as the arg
-			Description: "An object containing the necessary fields to add or update a localMember activity",
+			Description: "An object containing the necessary fields to add or update a member activity",
 		},
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		// Always extract the localMember id from the token, available thus:
+		// Always extract the member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
 		at, err := jwt.Check(token.(string))
 		if err != nil {
@@ -705,7 +705,7 @@ var memberActivitySaveField = &graphql.Field{
 			// add record, ensure not a duplicate
 			dupID := memberActivityDuplicate(memberID, ma)
 			if dupID > 0 {
-				msg := fmt.Sprintf("Cannot add new activity as it is a duplicate of localMember activity id %v - "+
+				msg := fmt.Sprintf("Cannot add new activity as it is a duplicate of member activity id %v - "+
 					"include { id: %v } in the object argument to update instead", dupID, dupID)
 				return nil, errors.New(msg)
 			}
@@ -717,15 +717,15 @@ var memberActivitySaveField = &graphql.Field{
 	},
 }
 
-// memberActivitySaveObject defines fields for mutating a localMember activity
+// memberActivitySaveObject defines fields for mutating a member activity
 var memberActivitySaveObject = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name:        "memberActivityInput",
-	Description: "An input object type used as an argument for adding / updating a localMember activity",
+	Description: "An input object type used as an argument for adding / updating a member activity",
 	Fields: graphql.InputObjectConfigFieldMap{
-		// optional localMember activity id - if supplied then it is an update
+		// optional member activity id - if supplied then it is an update
 		"id": &graphql.InputObjectFieldConfig{
 			Type:        graphql.Int,
-			Description: "Optional id of the localMember activity record, if present will update existing, otherwise will add new.",
+			Description: "Optional id of the member activity record, if present will update existing, otherwise will add new.",
 		},
 
 		// typeId specifies the type of activity
@@ -749,14 +749,14 @@ var memberActivitySaveObject = graphql.NewInputObject(graphql.InputObjectConfig{
 		// description supplied by the user
 		"description": &graphql.InputObjectFieldConfig{
 			Type:        &graphql.NonNull{OfType: graphql.String},
-			Description: "The specifics of the memberActivityQueryField described by the localMember",
+			Description: "The specifics of the memberActivityQueryField described by the member",
 		},
 	},
 })
 
-// memberActivityDeleteField handles mutation (add / update) of a localMember activity
+// memberActivityDeleteField handles mutation (add / update) of a member activity
 var memberActivityDeleteField = &graphql.Field{
-	Description: "Delete an activity that belongs to the localMember identified by the token",
+	Description: "Delete an activity that belongs to the member identified by the token",
 	Type:        graphql.String, // this type will be returned this operation
 	Args: graphql.FieldConfigArgument{
 		"id": &graphql.ArgumentConfig{
@@ -766,7 +766,7 @@ var memberActivityDeleteField = &graphql.Field{
 	},
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
-		// Always extract the localMember id from the token, available thus:
+		// Always extract the member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
 		at, err := jwt.Check(token.(string))
 		if err != nil {
@@ -782,15 +782,15 @@ var memberActivityDeleteField = &graphql.Field{
 	},
 }
 
-// memberActivityDeleteObject defines fields for deleting a localMember activity
+// memberActivityDeleteObject defines fields for deleting a member activity
 var memberActivityDeleteObject = graphql.NewInputObject(graphql.InputObjectConfig{
 	Name:        "memberActivityInput",
-	Description: "An input object type used as an argument for adding / updating a localMember activity",
+	Description: "An input object type used as an argument for adding / updating a member activity",
 	Fields: graphql.InputObjectConfigFieldMap{
-		// optional localMember activity id - if supplied then it is an update
+		// optional member activity id - if supplied then it is an update
 		"id": &graphql.InputObjectFieldConfig{
 			Type:        &graphql.NonNull{OfType: graphql.Int},
-			Description: "ID of the localMember activity record to be deleted.",
+			Description: "ID of the member activity record to be deleted.",
 		},
 	},
 })
@@ -854,7 +854,7 @@ func (mai *memberActivityInput) unpack(obj map[string]interface{}) error {
 	return nil
 }
 
-// memberData fetches the basic localMember record
+// memberData fetches the basic member record
 func memberData(id int) (localMember, error) {
 	var m localMember
 	mp, err := memberProfileData(id)
@@ -878,14 +878,14 @@ func memberData(id int) (localMember, error) {
 	return m, nil
 }
 
-// memberProfileData fetches a single localMember record by id
+// memberProfileData fetches a single member record by id
 func memberProfileData(memberID int) (member.Member, error) {
-	// MemberByID returns a pointer to a members.localMember so dereference in return
+	// MemberByID returns a pointer to a members.member so dereference in return
 	m, err := member.MemberByID(memberID)
 	return *m, err
 }
 
-// memberActivitiesData fetches activities for a localMember.
+// memberActivitiesData fetches activities for a member.
 func memberActivitiesData(memberID int, filter map[string]interface{}) ([]memberActivity, error) {
 	var xa []memberActivity
 
@@ -948,7 +948,7 @@ func memberActivitiesData(memberID int, filter map[string]interface{}) ([]member
 	return xa, err
 }
 
-// memberActivityData fetches a single localMember activity by ID after verifying ownership by memberID
+// memberActivityData fetches a single member activity by ID after verifying ownership by memberID
 func memberActivityData(memberID, memberActivityID int) (memberActivity, error) {
 
 	var a memberActivity
@@ -961,7 +961,7 @@ func memberActivityData(memberID, memberActivityID int) (memberActivity, error) 
 
 	// Verify owner match
 	if ma.MemberID != memberID {
-		msg := fmt.Sprintf("Member activity (id %v) does not belong to localMember (id %v)", memberActivityID, memberID)
+		msg := fmt.Sprintf("Member activity (id %v) does not belong to member (id %v)", memberActivityID, memberID)
 		return a, errors.New(msg)
 	}
 
@@ -982,7 +982,7 @@ func memberActivityData(memberID, memberActivityID int) (memberActivity, error) 
 	return a, nil
 }
 
-// addMemberActivity adds a localMember activity
+// addMemberActivity adds a member activity
 func addMemberActivity(memberID int, activityInput memberActivityInput) (memberActivity, error) {
 
 	// Create the required type for the insert
@@ -999,7 +999,7 @@ func addMemberActivity(memberID int, activityInput memberActivityInput) (memberA
 	// A return value for the new record
 	var mar memberActivity
 
-	// This just returns the new record id, so re-fetch the localMember activity record
+	// This just returns the new record id, so re-fetch the member activity record
 	// so that all the fields are populated for the response.
 	newID, err := activity.AddMemberActivity(ma)
 	if err != nil {
@@ -1009,7 +1009,7 @@ func addMemberActivity(memberID int, activityInput memberActivityInput) (memberA
 	return memberActivityData(memberID, newID)
 }
 
-// updateMemberActivity updates an existing localMember activity record
+// updateMemberActivity updates an existing member activity record
 func updateMemberActivity(memberID int, activityInput memberActivityInput) (memberActivity, error) {
 
 	// Create the required value
@@ -1026,7 +1026,7 @@ func updateMemberActivity(memberID int, activityInput memberActivityInput) (memb
 	// A return value for the new record
 	var mar memberActivity
 
-	// This just returns an error so re-fetch the localMember activity record
+	// This just returns an error so re-fetch the member activity record
 	// so that all the fields are populated for the response.
 	err := activity.UpdateMemberActivity(ma)
 	if err != nil {
@@ -1040,7 +1040,7 @@ func deleteMemberActivity(memberID, activityID int) error {
 	return activity.DeleteMemberActivity(memberID, activityID)
 }
 
-// memberActivityDuplicate returns the id of a matching localMember activity, or 0 if not found
+// memberActivityDuplicate returns the id of a matching member activity, or 0 if not found
 func memberActivityDuplicate(memberID int, activityInput memberActivityInput) int {
 
 	// Create the required value
@@ -1057,7 +1057,7 @@ func memberActivityDuplicate(memberID int, activityInput memberActivityInput) in
 	return activity.DuplicateMemberActivity(ma)
 }
 
-// memberEvaluationsData fetches evaluation data for a localMember.
+// memberEvaluationsData fetches evaluation data for a member.
 func memberEvaluationsData(memberID int) ([]memberEvaluation, error) {
 
 	var xme []memberEvaluation
@@ -1080,7 +1080,7 @@ func memberEvaluationsData(memberID int) ([]memberEvaluation, error) {
 	return xme, err
 }
 
-// memberCurrentEvaluationData fetches the current evaluation period data for a localMember
+// memberCurrentEvaluationData fetches the current evaluation period data for a member
 func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
 
 	var me memberEvaluation
@@ -1101,7 +1101,7 @@ func memberCurrentEvaluationData(memberID int) (memberEvaluation, error) {
 	return me, nil
 }
 
-// memberActivityAttachmentsData fetches the attachments for a localMember activity
+// memberActivityAttachmentsData fetches the attachments for a member activity
 func memberActivityAttachmentsData(memberActivityID int) ([]attachments.Attachment, error) {
 
 	return attachments.MemberActivityAttachments(memberActivityID)
