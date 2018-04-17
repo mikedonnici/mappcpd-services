@@ -2,6 +2,9 @@ package schema
 
 import (
 	"github.com/graphql-go/graphql"
+	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/activity"
+	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/events"
+	"github.com/mappcpd/web-services/cmd/webd/graphql/schema/member"
 )
 
 // Create generates the GraphQL schema starting with the root nodes
@@ -12,18 +15,18 @@ func Create() (graphql.Schema, error) {
 			Name:        "Query",
 			Description: "Root query",
 			Fields: graphql.Fields{
-				"member": memberQueryField,
-				"activities":  activitiesQueryField,
-				"events":      eventsQueryField,
+				"member":     member.Query,
+				"activities": activity.ActivitiesQueryField,
+				"events":     events.EventsQueryField,
 			},
 		})
 
 	rootMutation := graphql.NewObject(
 		graphql.ObjectConfig{
 			Name:        "Mutation",
-			Description: "...",
+			Description: "Root mutation",
 			Fields: graphql.Fields{
-				"member": memberMutationField,
+				"member": member.Mutation,
 			},
 		})
 

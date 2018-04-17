@@ -1,4 +1,4 @@
-package schema
+package events
 
 import (
 	"github.com/graphql-go/graphql"
@@ -43,8 +43,8 @@ func eventsData(daysBack, daysForward int) ([]event, error) {
 	return xle, nil
 }
 
-// eventsQueryField resolves queries for events
-var eventsQueryField = &graphql.Field{
+// EventsQueryField resolves queries for events
+var EventsQueryField = &graphql.Field{
 	Description: "Fetches a list of events. Optional args can be passed to specify how many days back, or forward, " +
 		"the event start date should be. Default is to show events with a start date in the past year.",
 	Type: graphql.NewList(eventQueryObject),

@@ -1,7 +1,6 @@
 package utility
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -56,36 +55,6 @@ func MongoDateFilters(i interface{}) map[string]interface{} {
 	}
 
 	return tmp
-}
-
-// DateStringToTime will attempt to parse a date, or datetime string and convert it to a viable time.Time value.
-// This function is intended for use when the format could be one of a few different types.
-func DateStringToTime(dateString string) (time.Time, error) {
-
-	var t time.Time
-	var err error
-
-	// Try MySQL timestamp format "2006-01-02 15:04:05"
-	t, err = time.Parse(constants.MySQLTimestampFormat, dateString)
-	if err == nil {
-		return t, err
-	}
-
-	// Try MySQL date format "2006-01-02"
-	t, err = time.Parse(constants.MySQLDateFormat, dateString)
-	if err == nil {
-		return t, err
-	}
-
-	// Try RFC3339 format "2006-01-02T15:04:05Z07:00"
-	t, err = time.Parse(time.RFC3339, dateString)
-	if err == nil {
-		return t, err
-	}
-
-	msg := "Error parsing date string - expected one of the following layouts: '%s', '%s', OR '%s'"
-	msg = fmt.Sprintf(msg, constants.MySQLTimestampFormat, constants.MySQLDateFormat, time.RFC3339)
-	return t, errors.New(msg)
 }
 
 // ErrorLocation gives the filename and function and line of the caller. Useful for errors triggered deeper in the stack

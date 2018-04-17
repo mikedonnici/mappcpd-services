@@ -1,8 +1,7 @@
-package schema
+package activity
 
 import (
 	"github.com/graphql-go/graphql"
-
 	"github.com/mappcpd/web-services/internal/activities"
 )
 
@@ -22,14 +21,8 @@ func activityTypesData(activityID int) ([]activities.ActivityType, error) {
 	return activities.ActivityTypesByActivity(activityID)
 }
 
-// activityIDByActivityTypeID returns the activity id for an activity type id
-func activityIDByActivityTypeID(activityTypeID int) (int, error) {
-	a, err := activities.ActivityByActivityTypeID(activityTypeID)
-	return a.ID, err
-}
-
-// activitiesQueryField resolves queries for activities (activity types)
-var activitiesQueryField = &graphql.Field{
+// ActivitiesQueryField resolves queries for activities (activity types)
+var ActivitiesQueryField = &graphql.Field{
 	Description: "Fetches a list of activity types.",
 	Type:        graphql.NewList(activityQueryObject),
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
