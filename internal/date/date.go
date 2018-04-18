@@ -1,14 +1,14 @@
 /*
 	Package date provides various date functions used in the application.
- */
+*/
 package date
 
 import (
-	"time"
 	"fmt"
+	"time"
 
-	"github.com/pkg/errors"
 	"github.com/mappcpd/web-services/internal/constants"
+	"github.com/pkg/errors"
 )
 
 // StringToTime returns a time.Time value from a number of date string formats.

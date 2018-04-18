@@ -1,9 +1,9 @@
 package activity
 
 import (
-	"database/sql"
 	"fmt"
 
+	"github.com/mappcpd/web-services/internal/activities"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
@@ -104,35 +104,42 @@ func CurrentEvaluationPeriodReport(memberID int) (MemberActivityReport, error) {
 
 func (e *MemberActivityReport) generateActivitySummary() error {
 
-	query := queries["select-member-activity-summary"]
-	rows, err := datastore.MySQL.Session.Query(query, e.StartDate, e.EndDate, e.MemberID)
+	// Need empty activities on the report, could not sort with JOIN in a single query as empty activities were omitted
+	xa, err := activities.Activities()
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		e.fetchActivitySummary(rows)
+	for _, a := range xa {
+		ar := activityReport{
+			ActivityID:   a.ID,
+			ActivityName: a.Name,
+			MaxCredit:    a.MaxCredit,
+		}
+		ar.summary(*e)
+		ar.fetchActivityRecords(e.MemberID, e.StartDate, e.EndDate)
+		e.Activities = append(e.Activities, ar)
 	}
-
-	e.calcTotalCredit()
 
 	return nil
 }
 
-func (e *MemberActivityReport) fetchActivitySummary(rows *sql.Rows) {
-	a := activityReport{}
-	rows.Scan(
-		&a.ActivityID,
-		&a.ActivityName,
+// summary fills in the details for one activity in a report
+func (a *activityReport) summary(e MemberActivityReport) error {
+
+	query := queries["select-member-activity-summary-by-activity-id"]
+	rows := datastore.MySQL.Session.QueryRow(query, e.StartDate, e.EndDate, e.MemberID, a.ActivityID)
+	err := rows.Scan(
 		&a.ActivityUnits,
 		&a.CreditPerUnit,
 		&a.CreditTotal,
-		&a.MaxCredit,
 	)
+	if err != nil {
+		return err
+	}
 	a.capCreditTotal()
-	a.fetchActivityRecords(e.MemberID, e.StartDate, e.EndDate)
-	e.Activities = append(e.Activities, a)
+
+	return nil
 }
 
 func (a *activityReport) fetchActivityRecords(memberID int, startDate, endDate string) {

@@ -117,7 +117,6 @@ func rebuildIndex(indexName string, objects []algoliasearch.Object) error {
 	return nil
 }
 
-
 func copyOfIndex(sourceIndexName, destIndexName string) (algoliasearch.Index, error) {
 
 	_, err := algoliaClient.ScopedCopyIndex(sourceIndexName, destIndexName, []string{"settings", "synonyms"})

@@ -6,8 +6,8 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/graphql-go/graphql"
-	"github.com/mappcpd/web-services/internal/platform/jwt"
 	"github.com/mappcpd/web-services/internal/member/activity"
+	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
 // activitySave handles mutation (add / update) of a member activity

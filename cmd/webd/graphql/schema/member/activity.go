@@ -1,14 +1,14 @@
 package member
 
 import (
-	"time"
 	"fmt"
+	"time"
 
 	"github.com/pkg/errors"
 
-	"github.com/mappcpd/web-services/internal/member/activity"
 	"github.com/mappcpd/web-services/internal/activities"
 	"github.com/mappcpd/web-services/internal/date"
+	"github.com/mappcpd/web-services/internal/member/activity"
 )
 
 // activityData is a leaner representation of members.activityData

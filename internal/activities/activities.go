@@ -31,7 +31,8 @@ type Activity struct {
 	CategoryName  string  `json:"categoryName" bson:"categoryName"`
 	UnitID        int     `json:"unitId" bson:"unitId"`
 	UnitName      string  `json:"unitName" bson:"unitName"`
-	CreditPerUnit float32 `json:"creditPerUnit" bson:"creditPerUnit"`
+	CreditPerUnit float64 `json:"creditPerUnit" bson:"creditPerUnit"`
+	MaxCredit     float64 `json:"creditPerUnit" bson:"creditPerUnit"`
 	// Credit       ActivityCredit `json:"credit" bson:"credit"`
 }
 
@@ -69,7 +70,8 @@ func Activities() ([]Activity, error) {
 			c.name AS ActivityCategoryName,
 			a.ce_activity_unit_id AS ActivityUnitID,
     		u.name AS ActivityUnitName,
-    		a.points_per_unit AS CreditPerUnit
+    		a.points_per_unit AS CreditPerUnit,
+    		a.annual_points_cap AS MaxCredit
 		  FROM
 			ce_activity a
 				LEFT JOIN
@@ -98,6 +100,7 @@ func Activities() ([]Activity, error) {
 			&a.UnitID,
 			&a.UnitName,
 			&a.CreditPerUnit,
+			&a.MaxCredit,
 		)
 
 		// More detail about the way the activity is credited

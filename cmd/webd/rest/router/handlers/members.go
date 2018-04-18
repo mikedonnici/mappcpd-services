@@ -96,6 +96,23 @@ func MembersEvaluation(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
+// CurrentActivityReport
+func CurrentActivityReport(w http.ResponseWriter, r *http.Request) {
+
+	p := responder.New(middleware.UserAuthToken.Token)
+	reportData, err := activity.CurrentEvaluationPeriodReport(middleware.UserAuthToken.Claims.ID)
+	if err != nil {
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Send(w)
+		return
+	}
+
+	msg := fmt.Sprintf("Data retrieved from %s", datastore.MySQL.Source)
+	p.Message = responder.Message{http.StatusOK, "success", msg}
+	p.Data = reportData
+	p.Send(w)
+}
+
 // EmailCurrentActivityReport
 func EmailCurrentActivityReport(w http.ResponseWriter, r *http.Request) {
 

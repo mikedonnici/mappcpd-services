@@ -15,7 +15,7 @@ import (
 type updateSched int
 
 const (
-	none    updateSched = iota
+	none updateSched = iota
 	daily
 	weekly
 	monthly

@@ -29,24 +29,20 @@ FROM
   LEFT JOIN
   ce_activity_type cat ON cma.ce_activity_type_id = cat.id
 
--- name: select-member-activity-summary
+
+-- name: select-member-activity-summary-by-activity-id
 SELECT
-  ca.id as ActivityID,
-  ca.name as ActivityName,
   SUM(cma.quantity) as TotalUnits,
   cma.points_per_unit as UnitCredit,
-  SUM(cma.quantity * cma.points_per_unit) as CreditObtained,
-  cma.annual_points_cap as CappedCredit
+  SUM(cma.quantity * cma.points_per_unit) as CreditObtained
 FROM
   ce_m_activity cma
-  LEFT JOIN
-  ce_activity ca ON cma.ce_activity_id = ca.id
 WHERE
   cma.active = 1
   AND cma.activity_on >= ?
   AND cma.activity_on <= ?
   AND cma.member_id = ?
+  AND cma.ce_activity_id = ?
 GROUP BY cma.ce_activity_id
-
 
 
