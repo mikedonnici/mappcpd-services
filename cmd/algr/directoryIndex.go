@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/34South/envr"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
@@ -31,18 +32,31 @@ func newDirectoryIndex(name string) directoryIndex {
 	}
 }
 
-func (di *directoryIndex) freshIndex() ([]algoliasearch.Object, error) {
-	di.fetchRawData()
+func (di *directoryIndex) indexName() string {
+	return di.Name
+}
+
+func (di *directoryIndex) partialIndex() ([]algoliasearch.Object, error) {
+	di.fetchLimitedData()
 	di.removeExcludedMembers()
 	di.createIndexObjects()
 	return di.IndexData, di.Error
 }
 
-func (di *directoryIndex) indexName() string {
-	return di.Name
+func (di *directoryIndex) fullIndex() ([]algoliasearch.Object, error) {
+	di.fetchAllData()
+	di.removeExcludedMembers()
+	di.createIndexObjects()
+	return di.IndexData, di.Error
 }
 
-func (di *directoryIndex) fetchRawData() {
+func (di *directoryIndex) fetchLimitedData() {
+	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
+	query := bson.M{"memberships.title": bson.M{"$exists": true}, "updatedAt": bson.M{"$gte": timeBack}}
+	di.RawData, di.Error = member.FetchMembers(query, 0)
+}
+
+func (di *directoryIndex) fetchAllData() {
 	query := bson.M{"memberships.title": bson.M{"$exists": true}}
 	di.RawData, di.Error = member.FetchMembers(query, 0)
 }

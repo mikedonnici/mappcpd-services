@@ -26,30 +26,72 @@ func init() {
 }
 
 type indexer interface {
-	freshIndex() ([]algoliasearch.Object, error)
+	partialIndex() ([]algoliasearch.Object, error)
+	fullIndex() ([]algoliasearch.Object, error)
 	indexName() string
 }
 
-func updateIndex(i indexer) error {
+// update updates an index according to updateSched
+func update(i indexer, ut updateType) error {
 
-	name := i.indexName()
-	objects, err := i.freshIndex()
+	switch ut {
+	case partial:
+		return partialUpdate(i)
+	case full:
+		return fullUpdate(i)
+	case atomic:
+		return atomicUpdate(i)
+	}
+
+	return errors.New("Error - update type could not be determined")
+}
+
+func partialUpdate(i indexer) error {
+
+	objects, err := i.partialIndex()
 	if err != nil {
 		return err
 	}
 
-	err = atomicUpdate(name, objects)
+	return updateIndex(i.indexName(), objects)
+}
+
+func fullUpdate(i indexer) error {
+
+	objects, err := i.fullIndex()
 	if err != nil {
 		return err
+	}
+
+	return updateIndex(i.indexName(), objects)
+}
+
+func atomicUpdate(i indexer) error {
+
+	objects, err := i.fullIndex()
+	if err != nil {
+		return err
+	}
+
+	return rebuildIndex(i.indexName(), objects)
+}
+
+// updateIndex handles both partial and full updates using the objects passed in
+func updateIndex(indexName string, objects []algoliasearch.Object) error {
+
+	index := algoliaClient.InitIndex(indexName)
+	err := populateIndex(index, objects)
+	if err != nil {
+		return errors.New("Error updating index -" + err.Error())
 	}
 
 	return nil
 }
 
-// atomicUpdate updates an index without interruption to any queries that may be in progress.
+// rebuildIndex updates an index without interruption to any queries that may be in progress.
 // It makes an empty copy of the original index with the same settings, and then populates the
 // temporary index with fresh data. Once that is done the temporary index is moved to replace the original.
-func atomicUpdate(indexName string, objects []algoliasearch.Object) error {
+func rebuildIndex(indexName string, objects []algoliasearch.Object) error {
 
 	tempIndexName := indexName + "_TEMP_COPY"
 	tempIndex, err := copyOfIndex(indexName, tempIndexName)
@@ -74,6 +116,7 @@ func atomicUpdate(indexName string, objects []algoliasearch.Object) error {
 
 	return nil
 }
+
 
 func copyOfIndex(sourceIndexName, destIndexName string) (algoliasearch.Index, error) {
 

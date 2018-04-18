@@ -8,7 +8,31 @@ import (
 
 	"github.com/34South/envr"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"time"
 )
+
+// updateSched is a date flag used to determine the updateSched for a particular index
+type updateSched int
+
+const (
+	none    updateSched = iota
+	daily
+	weekly
+	monthly
+)
+
+var updateScheds = []string{"none", "daily", "weekly", "monthly"}
+
+// updateType specifies the level of index rebuild - atomic, complete or partial
+type updateType int
+
+const (
+	partial updateType = iota
+	full
+	atomic
+)
+
+var updateTypes = []string{"partial", "full", "atomic"}
 
 var collections = flag.String("c", "", "collections to sync - 'all', 'directory', 'members', 'modules' or 'resources'")
 
@@ -16,6 +40,8 @@ var directoryIndexName string
 var memberIndexName string
 var moduleIndexName string
 var resourceIndexName string
+
+var sched = scheduledUpdateType()
 
 func init() {
 
@@ -59,60 +85,107 @@ func main() {
 
 func updateDirectoryIndex() {
 
-	fmt.Println("Updating directory index --------------------------------")
-
 	if directoryIndexName == "" {
 		log.Println("Directory index name is an empty string - skipping")
 		return
 	}
 
+	var ut updateType
+	switch sched {
+	case monthly, weekly:
+		ut = atomic
+	case daily:
+		ut = full
+	default:
+		ut = partial
+	}
+	updateLogMessage(directoryIndexName, ut)
+
 	di := newDirectoryIndex(directoryIndexName)
-	if err := updateIndex(&di); err != nil {
+	if err := update(&di, ut); err != nil {
 		log.Fatalln("Error updating member index -", err)
 	}
 }
 
 func updateMemberIndex() {
 
-	fmt.Println("Updating member index  --------------------------------")
-
 	if memberIndexName == "" {
 		log.Println("Member index name is an empty string - skipping")
 		return
 	}
 
+	var ut updateType
+	switch sched {
+	case monthly:
+		ut = atomic
+	case weekly, daily:
+		ut = full
+	default:
+		ut = partial
+	}
+	updateLogMessage(memberIndexName, ut)
+
 	mi := newMemberIndex(memberIndexName)
-	if err := updateIndex(&mi); err != nil {
+	if err := update(&mi, ut); err != nil {
 		log.Fatalln("Error updating member index -", err)
 	}
 }
 
 func updateModuleIndex() {
 
-	fmt.Println("Updating module index  --------------------------------")
-
 	if moduleIndexName == "" {
 		log.Println("Module index name is an empty string - skipping")
 		return
 	}
 
+	ut := atomic
+	updateLogMessage(moduleIndexName, ut)
+
 	mi := newModuleIndex(moduleIndexName)
-	if err := updateIndex(&mi); err != nil {
+	if err := update(&mi, ut); err != nil {
 		log.Fatalln("Error updating module index -", err)
 	}
 }
 
 func updateResourceIndex() {
 
-	fmt.Println("Updating resource index  --------------------------------")
-
 	if resourceIndexName == "" {
 		log.Println("Resource index name is an empty string - skipping")
 		return
 	}
 
+	var ut updateType
+	switch sched {
+	case monthly:
+		ut = atomic
+	default:
+		ut = partial
+	}
+	updateLogMessage(resourceIndexName, ut)
+
 	mi := newResourceIndex(resourceIndexName)
-	if err := updateIndex(&mi); err != nil {
+	if err := update(&mi, ut); err != nil {
 		log.Fatalln("Error updating resource index -", err)
 	}
+}
+
+// scheduledUpdateType returns an updateSched constant based on the date
+func scheduledUpdateType() updateSched {
+
+	// first of the month
+	if time.Now().Day() == 1 {
+		return monthly
+	}
+
+	// First day of the week
+	if time.Now().Weekday().String() == "Sunday" {
+		return weekly
+	}
+
+	// limited rebuild otherwise
+	return daily
+}
+
+func updateLogMessage(in string, ut updateType) {
+	log.Printf("Updating index: %s, sched: %s, type: %s", in, updateScheds[sched], updateTypes[ut])
 }

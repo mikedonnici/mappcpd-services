@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 	"github.com/mappcpd/web-services/internal/member"
@@ -22,17 +23,29 @@ func newMemberIndex(name string) memberIndex {
 	}
 }
 
-func (mi *memberIndex) freshIndex() ([]algoliasearch.Object, error) {
-	mi.fetchRawData()
-	mi.createIndexObjects()
-	return mi.IndexData, mi.Error
-}
-
 func (mi *memberIndex) indexName() string {
 	return mi.Name
 }
 
-func (mi *memberIndex) fetchRawData() {
+func (mi *memberIndex) partialIndex() ([]algoliasearch.Object, error) {
+	mi.fetchLimitedData()
+	mi.createIndexObjects()
+	return mi.IndexData, mi.Error
+}
+
+func (mi *memberIndex) fullIndex() ([]algoliasearch.Object, error) {
+	mi.fetchAllData()
+	mi.createIndexObjects()
+	return mi.IndexData, mi.Error
+}
+
+func (mi *memberIndex) fetchLimitedData() {
+	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
+	query := bson.M{"memberships.title": bson.M{"$exists": true}, "updatedAt": bson.M{"$gte": timeBack}}
+	mi.RawData, mi.Error = member.FetchMembers(query, 0)
+}
+
+func (mi *memberIndex) fetchAllData() {
 	query := bson.M{"memberships.title": bson.M{"$exists": true}}
 	mi.RawData, mi.Error = member.FetchMembers(query, 0)
 }

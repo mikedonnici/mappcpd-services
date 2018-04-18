@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
 	"github.com/mappcpd/web-services/internal/modules"
 	"gopkg.in/mgo.v2/bson"
@@ -20,17 +22,29 @@ func newModuleIndex(name string) moduleIndex {
 	}
 }
 
-func (mi *moduleIndex) freshIndex() ([]algoliasearch.Object, error) {
-	mi.fetchRawData()
-	mi.createIndexObjects()
-	return mi.IndexData, mi.Error
-}
-
 func (mi *moduleIndex) indexName() string {
 	return mi.Name
 }
 
-func (mi *moduleIndex) fetchRawData() {
+func (mi *moduleIndex) partialIndex() ([]algoliasearch.Object, error) {
+	mi.fetchLimitedData()
+	mi.createIndexObjects()
+	return mi.IndexData, mi.Error
+}
+
+func (mi *moduleIndex) fullIndex() ([]algoliasearch.Object, error) {
+	mi.fetchAllData()
+	mi.createIndexObjects()
+	return mi.IndexData, mi.Error
+}
+
+func (mi *moduleIndex) fetchLimitedData() {
+	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
+	query := bson.M{"current": true, "updatedAt": bson.M{"$gte": timeBack}}
+	mi.RawData, mi.Error = modules.FetchModules(query, 0)
+}
+
+func (mi *moduleIndex) fetchAllData() {
 	query := bson.M{"current": true}
 	mi.RawData, mi.Error = modules.FetchModules(query, 0)
 }

@@ -22,17 +22,29 @@ func newResourceIndex(name string) resourceIndex {
 	}
 }
 
-func (ri *resourceIndex) freshIndex() ([]algoliasearch.Object, error) {
-	ri.fetchRawData()
-	ri.createIndexObjects()
-	return ri.IndexData, ri.Error
-}
-
 func (ri *resourceIndex) indexName() string {
 	return ri.Name
 }
 
-func (ri *resourceIndex) fetchRawData() {
+func (ri *resourceIndex) partialIndex() ([]algoliasearch.Object, error) {
+	ri.fetchLimitedData()
+	ri.createIndexObjects()
+	return ri.IndexData, ri.Error
+}
+
+func (ri *resourceIndex) fullIndex() ([]algoliasearch.Object, error) {
+	ri.fetchAllData()
+	ri.createIndexObjects()
+	return ri.IndexData, ri.Error
+}
+
+func (ri *resourceIndex) fetchLimitedData() {
+	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
+	query := bson.M{"active": true, "primary": true, "updatedAt": bson.M{"$gte": timeBack}}
+	ri.RawData, ri.Error = resources.FetchResources(query, 0)
+}
+
+func (ri *resourceIndex) fetchAllData() {
 	query := bson.M{"active": true, "primary": true}
 	ri.RawData, ri.Error = resources.FetchResources(query, 0)
 }
