@@ -121,6 +121,8 @@ func (e *MemberActivityReport) generateActivitySummary() error {
 		e.Activities = append(e.Activities, ar)
 	}
 
+	e.calcTotalCredit()
+
 	return nil
 }
 
@@ -137,6 +139,7 @@ func (a *activityReport) summary(e MemberActivityReport) error {
 	if err != nil {
 		return err
 	}
+
 	a.capCreditTotal()
 
 	return nil
