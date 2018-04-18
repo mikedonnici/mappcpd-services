@@ -27,7 +27,7 @@
 
 [metadata.heroku]
   root-package = "github.com/mappcpd/web-services"
-  go-version = "1.9"
+  go-version = "1.10"
   install = [ "./cmd/..." ]
 
 [[constraint]]
