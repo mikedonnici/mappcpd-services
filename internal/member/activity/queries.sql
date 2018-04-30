@@ -5,6 +5,7 @@ SELECT
   cma.member_id                        AS 'memberId',
   cma.activity_on                      AS 'memberActivityDate',
   COALESCE(cma.description, '')        AS 'memberActivityDescription',
+  cma.evidence                         AS 'evidence',
   (cma.quantity * cma.points_per_unit) AS 'activityCredit',
   cma.quantity                         AS 'quantity',
   COALESCE(cau.name, '')               AS 'unit',
@@ -32,9 +33,9 @@ FROM
 
 -- name: select-member-activity-summary-by-activity-id
 SELECT
-  SUM(cma.quantity) as TotalUnits,
-  cma.points_per_unit as UnitCredit,
-  SUM(cma.quantity * cma.points_per_unit) as CreditObtained
+  SUM(cma.quantity)                       AS TotalUnits,
+  cma.points_per_unit                     AS UnitCredit,
+  SUM(cma.quantity * cma.points_per_unit) AS CreditObtained
 FROM
   ce_m_activity cma
 WHERE

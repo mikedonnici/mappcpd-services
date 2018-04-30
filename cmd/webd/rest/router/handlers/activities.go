@@ -190,7 +190,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 		ID:          a.ID,
 		MemberID:    a.MemberID,
 		ActivityID:  a.Activity.ID,
-		Evidence:    0,
+		Evidence:    false,
 		Date:        a.Date,
 		Quantity:    a.CreditData.Quantity,
 		UnitCredit:  a.CreditData.UnitCredit,

@@ -147,6 +147,10 @@ var activityType = graphql.NewObject(graphql.ObjectConfig{
 			Type:        graphql.String,
 			Description: "Descriptive details about the activity, supplied by the Member.",
 		},
+		"evidence": &graphql.Field{
+			Type:        graphql.Boolean,
+			Description: "A flag that indicates if the user has supporting evidence for the activity",
+		},
 
 		"attachments": activityAttachmentsQuery,
 	},

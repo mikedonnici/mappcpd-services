@@ -56,8 +56,8 @@ var activitySave = &graphql.Field{
 			// add record, ensure not a duplicate
 			dupID := activityDuplicateID(memberID, ma)
 			if dupID > 0 {
-				msg := fmt.Sprintf("Cannot add new activity as it is a duplicate of member activity id %v - "+
-					"include { id: %v } in the object argument to update instead", dupID, dupID)
+				msg := fmt.Sprintf("The activity is an exact duplicate of id %v. To copy an activity at least one " +
+					"field must be changed, eg date.", dupID)
 				return nil, errors.New(msg)
 			}
 
@@ -101,6 +101,11 @@ var activityInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 		"description": &graphql.InputObjectFieldConfig{
 			Type:        &graphql.NonNull{OfType: graphql.String},
 			Description: "The specifics of the activityQuery described by the member",
+		},
+
+		"evidence": &graphql.InputObjectFieldConfig{
+			Type:        &graphql.NonNull{OfType: graphql.Boolean},
+			Description: "A flag to indicate that the user has evidence to support this activity record",
 		},
 	},
 })

@@ -16,16 +16,15 @@ var queries = goyesql.MustParseFile("internal/member/activity/queries.sql")
 
 // MemberActivity represents an instance of an activity recorded by a member - ie a CPD diary entry
 type MemberActivity struct {
-	ID        int       `json:"id" bson:"id"`
-	MemberID  int       `json:"memberId" bson:"memberId"`
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
-	Date      string    `json:"date" bson:"date"`
-	DateISO   time.Time `json:"dateISO" bson:"dateISO"`
-	//Quantity      float64                     `json:"quantity" bson:"quantity"`
-	//CreditPerUnit float32                     `json:"creditPerUnit" bson:"creditPerUnit"`
+	ID          int                         `json:"id" bson:"id"`
+	MemberID    int                         `json:"memberId" bson:"memberId"`
+	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
+	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
+	Date        string                      `json:"date" bson:"date"`
+	DateISO     time.Time                   `json:"dateISO" bson:"dateISO"`
 	Credit      float64                     `json:"credit" bson:"credit"`
 	Description string                      `json:"description" bson:"description"`
+	Evidence    bool                        `json:"evidence" bson:"evidence"`
 	Category    activities.ActivityCategory `json:"category" bson:"category"`
 	Activity    activities.Activity         `json:"activity" bson:"activity"`
 	Type        activities.ActivityType     `json:"type" bson:"type"`
@@ -38,11 +37,11 @@ type MemberActivityInput struct {
 	MemberID    int     `json:"memberId"`
 	ActivityID  int     `json:"activityId" validate:"required,min=1"`
 	TypeID      int     `json:"typeId" validate:"required,min=1"`
-	Evidence    int     `json:"evidence"`
 	Date        string  `json:"date" validate:"required"`
 	Quantity    float64 `json:"quantity" validate:"required"`
 	UnitCredit  float64 `json:"unitCredit"`
 	Description string  `json:"description" validate:"required"`
+	Evidence    bool    `json:"evidence"`
 }
 
 // MemberActivityAttachment contains information about a file attached to a member activity
@@ -66,12 +65,16 @@ func MemberActivityByID(id int) (*MemberActivity, error) {
 
 	a := MemberActivity{}
 
+	// evidence is 0 or 1 in the database, we want a boolean
+	var evidence int
+
 	query := queries["select-member-activity"] + ` WHERE cma.id = ?`
 	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&a.ID,
 		&a.MemberID,
 		&a.Date,
 		&a.Description,
+		&evidence,
 		&a.Credit,
 		&a.CreditData.Quantity,
 		&a.CreditData.UnitName,
@@ -89,6 +92,10 @@ func MemberActivityByID(id int) (*MemberActivity, error) {
 	if err != nil {
 		fmt.Println(errors.Wrap(err, "scan error"))
 		return &a, errors.Wrap(err, "scan error")
+	}
+
+	if evidence == 1 {
+		a.Evidence = true
 	}
 
 	a.DateISO, err = time.Parse("2006-01-02", a.Date)
@@ -120,6 +127,7 @@ func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 			&a.MemberID,
 			&a.Date,
 			&a.Description,
+			&a.Evidence,
 			&a.Credit,
 			&a.CreditData.Quantity,
 			&a.CreditData.UnitName,
@@ -165,6 +173,7 @@ func MemberActivitiesQuery(sqlClause string) ([]MemberActivity, error) {
 			&a.MemberID,
 			&a.Date,
 			&a.Description,
+			&a.Evidence,
 			&a.Credit,
 			&a.CreditData.Quantity,
 			&a.CreditData.UnitName,
@@ -205,11 +214,17 @@ func AddMemberActivity(a MemberActivityInput) (int, error) {
 	}
 	a.UnitCredit = uc
 
+	// evidence is passed in as bool but in the database stored as 0/1
+	var evidence int
+	if a.Evidence == true {
+		evidence = 1
+	}
+
 	query := `INSERT INTO ce_m_activity
 	(member_id, ce_activity_id, ce_activity_type_id, evidence, created_at, updated_at,
 	activity_on, quantity, points_per_unit, description)
 	VALUES("%v", "%v", "%v", "%v", NOW(), NOW(), "%v", "%v", "%v", "%v")`
-	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
+	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
 
 	// Get result of the the query execution...
 	r, err := datastore.MySQL.Session.Exec(query)
@@ -242,10 +257,16 @@ func UpdateMemberActivity(a MemberActivityInput) error {
 	}
 	a.UnitCredit = uc
 
+	// evidence is passed in as bool but in the database stored as 0/1
+	var evidence int
+	if a.Evidence == true {
+		evidence = 1
+	}
+
 	query := `UPDATE ce_m_activity SET ce_activity_id= "%v", ce_activity_type_id= "%v", evidence= "%v",
     updated_at = NOW(), activity_on = "%v", quantity= "%v", points_per_unit= "%v", description = "%v"
     WHERE id = %v LIMIT 1`
-	query = fmt.Sprintf(query, a.ActivityID, a.TypeID, a.Evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
+	query = fmt.Sprintf(query, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
 	_, err = datastore.MySQL.Session.Exec(query)
 	if err != nil {
 		return err

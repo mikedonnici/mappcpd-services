@@ -20,6 +20,7 @@ type activityData struct {
 	CreditPerUnit float64   `json:"creditPerUnit"`
 	Credit        float64   `json:"credit"`
 	Description   string    `json:"description"`
+	Evidence      bool      `json:"evidence"`
 	ActivityID    int       `json:"activityId"`
 	Activity      string    `json:"activity"`
 	CategoryID    int       `json:"categoryId"`
@@ -44,11 +45,12 @@ type activityInputData struct {
 	Date        string  `json:"date"`
 	Quantity    float64 `json:"quantity"`
 	Description string  `json:"description"`
+	Evidence    bool    `json:"evidence"`
 	ActivityID  int     `json:"activityId"`
 	TypeID      int     `json:"typeId"`
 }
 
-// unpack an object into a value of type MemberActivity
+// unpack an object and map to activityData fields
 func (ma *activityData) unpack(obj map[string]interface{}) error {
 	if val, ok := obj["id"].(int); ok {
 		ma.ID = val
@@ -82,6 +84,9 @@ func (ma *activityData) unpack(obj map[string]interface{}) error {
 	if val, ok := obj["description"].(string); ok {
 		ma.Description = val
 	}
+	if val, ok := obj["evidence"].(bool); ok {
+		ma.Evidence = val
+	}
 
 	return nil
 }
@@ -102,6 +107,9 @@ func (mai *activityInputData) unpack(obj map[string]interface{}) error {
 	}
 	if val, ok := obj["description"].(string); ok {
 		mai.Description = val
+	}
+	if val, ok := obj["evidence"].(bool); ok {
+		mai.Evidence = val
 	}
 
 	return nil
@@ -153,6 +161,7 @@ func mapActivitiesData(memberID int, filter map[string]interface{}) ([]activityD
 			TypeID:        int(v.Type.ID.Int64), // null-able field
 			Type:          v.Type.Name,
 			Description:   v.Description,
+			Evidence:      v.Evidence,
 		}
 		xa = append(xa, a)
 	}
@@ -201,12 +210,15 @@ func mapActivityData(memberID, memberActivityID int) (activityData, error) {
 	a.TypeID = int(ma.Type.ID.Int64)
 	a.Type = ma.Type.Name
 	a.Description = ma.Description
+	a.Evidence = ma.Evidence
 
 	return a, nil
 }
 
 // addActivity adds a member activity
 func addActivity(memberID int, activityInput activityInputData) (activityData, error) {
+
+	var ad activityData
 
 	// Create the required type for the insert
 	// todo: add evidence and attachment
@@ -217,16 +229,12 @@ func addActivity(memberID int, activityInput activityInputData) (activityData, e
 		Date:        activityInput.Date,
 		Quantity:    activityInput.Quantity,
 		Description: activityInput.Description,
+		Evidence:    activityInput.Evidence,
 	}
 
-	// A return value for the new record
-	var mar activityData
-
-	// This just returns the new record id, so re-fetch the member activity record
-	// so that all the fields are populated for the response.
 	newID, err := activity.AddMemberActivity(ma)
 	if err != nil {
-		return mar, err
+		return ad, err
 	}
 
 	return mapActivityData(memberID, newID)
@@ -244,6 +252,7 @@ func updateActivity(memberID int, activityInput activityInputData) (activityData
 		Date:        activityInput.Date,
 		Quantity:    activityInput.Quantity,
 		Description: activityInput.Description,
+		Evidence:    activityInput.Evidence,
 	}
 
 	// A return value for the new record
