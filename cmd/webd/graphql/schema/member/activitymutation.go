@@ -104,8 +104,9 @@ var activityInputType = graphql.NewInputObject(graphql.InputObjectConfig{
 		},
 
 		"evidence": &graphql.InputObjectFieldConfig{
-			Type:        &graphql.NonNull{OfType: graphql.Boolean},
+			Type:        graphql.Boolean,
 			Description: "A flag to indicate that the user has evidence to support this activity record",
+			DefaultValue: false,
 		},
 	},
 })
