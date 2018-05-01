@@ -3,6 +3,8 @@ package datastore
 import (
 	"fmt"
 	"log"
+
+	"github.com/34South/envr"
 )
 
 // MySQL global provides access to the session value, *sql.DB, via the .Session field.
@@ -25,6 +27,11 @@ func Connect() {
 // connectMySQL establishes a MySQL connection
 func connectMySQL() {
 
+	envr.New("mysqlEnv", []string{
+		"MAPPCPD_MYSQL_URL",
+		"MAPPCPD_MYSQL_DESC",
+	}).Auto()
+
 	err := MySQL.Connect() // this does not really open a new connection
 	if err != nil {
 		log.Fatalln(err)
@@ -40,6 +47,12 @@ func connectMySQL() {
 
 // connectMongoDB establishes a connection to DB2
 func connectMongoDB() {
+
+	envr.New("mongoEnv", []string{
+		"MAPPCPD_MONGO_URL",
+		"MAPPCPD_MONGO_DBNAME",
+		"MAPPCPD_MONGO_DESC",
+	}).Auto()
 
 	err := MongoDB.Connect()
 	if err != nil {

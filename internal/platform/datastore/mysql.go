@@ -4,17 +4,8 @@ import (
 	"os"
 
 	"database/sql"
-
-	"github.com/34South/envr"
 	_ "github.com/go-sql-driver/mysql"
 )
-
-func init() {
-	envr.New("datastoreEnv", []string{
-		"MAPPCPD_MYSQL_URL",
-		"MAPPCPD_MYSQL_DESC",
-	}).Auto()
-}
 
 type MySQLConnection struct {
 	url     string
