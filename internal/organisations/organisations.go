@@ -1,4 +1,4 @@
-package models
+package organisations
 
 import "github.com/mappcpd/web-services/internal/platform/datastore"
 
