@@ -28,7 +28,7 @@ func AdminOrganisations(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
 	p.Data = l
 	m := make(map[string]interface{})
 	m["count"] = len(l)
@@ -66,7 +66,7 @@ func AdminOrganisationGroups(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
 	p.Data = l
 	m := make(map[string]interface{})
 	m["count"] = len(l)

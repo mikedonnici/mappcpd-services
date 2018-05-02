@@ -8,26 +8,27 @@ import (
 )
 
 type MySQLConnection struct {
-	url     string
-	Source  string
-	Session *sql.DB
+	connectionString string
+	Description      string
+	Session          *sql.DB
 }
 
-// Connects to MySQL server, returns an error if it fails
-func (m *MySQLConnection) Connect() error {
-
-	// Set properties
-	m.url = os.Getenv("MAPPCPD_MYSQL_URL")
-	m.Source = os.Getenv("MAPPCPD_MYSQL_DESC")
-
-	// Establish session
+// ConnectEnv establishes the Session using connection details stored in env vars
+func (m *MySQLConnection) ConnectEnv() error {
 	var err error
-	m.Session, err = sql.Open("mysql", m.url)
-	if err != nil {
-		return err
-	}
+	m.connectionString = os.Getenv("MAPPCPD_MYSQL_URL")
+	m.Description = os.Getenv("MAPPCPD_MYSQL_DESC")
+	m.Session, err = sql.Open("mysql", m.connectionString)
+	return err
+}
 
-	return nil
+// ConnectSource establishes the Session using the specified connection string - handy for testing.
+func (m *MySQLConnection) ConnectSource(connectionString string) error {
+	var err error
+	m.connectionString = connectionString
+	m.Description = "User specified"
+	m.Session, err = sql.Open("mysql", m.connectionString)
+	return err
 }
 
 // Close terminates the session - don't really need?

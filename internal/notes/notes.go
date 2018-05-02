@@ -57,25 +57,30 @@ func (n *Note) SetAttachments() error {
 	return nil
 }
 
-// NoteByID fetches a single Note record
-func NoteByID(id int) (*Note, error) {
+// NoteByID fetches a Note from the default datastore
+func NoteByID(id int) (Note, error) {
+	return noteByID(id, datastore.MySQL)
+}
+
+// NoteByIDStore fetches a Note from the specified datastore - used for testing
+func NoteByIDStore(id int, conn datastore.MySQLConnection) (Note, error) {
+	return noteByID(id, conn)
+}
+
+// noteByID fetches a Note record from the specified data store
+func noteByID(id int, connection datastore.MySQLConnection) (Note, error) {
 
 	// Create Note value
 	n := Note{ID: id}
 
 	// Coalesce any NULL-able fields
-	query := `SELECT
-		m.id,
-		wn.created_at,
-		wn.updated_at,
-		wn.effective_on,
-		wn.note
+	query := `SELECT m.id, wn.created_at, wn.updated_at, wn.effective_on, wn.note
 		FROM wf_note wn
 		LEFT JOIN wf_note_association wna ON wn.id = wna.wf_note_id
 		LEFT JOIN member m ON wna.member_id = m.id
 		WHERE wn.id = ?`
 
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
+	err := connection.Session.QueryRow(query, id).Scan(
 		&n.MemberID,
 		&n.DateCreated,
 		&n.DateUpdated,
@@ -83,17 +88,16 @@ func NoteByID(id int) (*Note, error) {
 		&n.Content,
 	)
 	if err != nil {
-		return &n, err
+		return n, err
 	}
 
 	// Add attachments
-	err = n.SetAttachments()
-	if err != nil {
-		return &n, err
-	}
+	//err = n.SetAttachments()
 
-	return &n, nil
+	return n, err
 }
+
+
 
 // MemberNotes fetches all the notes linked to a Member
 func MemberNotes(memberID int) (*Notes, error) {

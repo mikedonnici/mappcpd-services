@@ -232,7 +232,7 @@ func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 		p.Data = ns
 	}
 
@@ -259,7 +259,7 @@ func AdminNotes(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 		p.Data = d
 	}
 
@@ -287,7 +287,7 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 		p.Data = m
 		member.SyncMember(m)
 	}
@@ -321,7 +321,7 @@ func AdminIDList(w http.ResponseWriter, req *http.Request) {
 	case err != nil:
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = responder.Message{http.StatusOK, "success", "List of ids from table: " + t + ", db: " + datastore.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "List of ids from table: " + t + ", db: " + datastore.MySQL.Description}
 		p.Meta = map[string]int{"count": len(ii)}
 		p.Data = ii
 	}

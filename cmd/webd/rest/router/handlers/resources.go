@@ -34,7 +34,7 @@ func ResourcesID(w http.ResponseWriter, req *http.Request) {
 	case err != nil:
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 		p.Data = r
 		// Sync from MySQLConnection -> MongoDB
 		resources.SyncResource(r)

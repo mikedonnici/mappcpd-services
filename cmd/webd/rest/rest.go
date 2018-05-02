@@ -8,7 +8,7 @@ import (
 // Start fires up the REST server
 func Start(port string) {
 
-	// Connect to the databases
+	// ConnectEnv to the databases
 	datastore.Connect()
 
 	// Crank up the router

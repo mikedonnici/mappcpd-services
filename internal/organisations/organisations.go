@@ -4,11 +4,10 @@ import "github.com/mappcpd/web-services/internal/platform/datastore"
 
 // Organisation defines a business, society or similar legal entity
 type Organisation struct {
-	OID         string `json:"_id" bson:"_id"`
-	ID          int    `json:"id" bson:"id"`
-	Code        string `json:"code" bson:"code"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
+	OID  string `json:"_id" bson:"_id"`
+	ID   int    `json:"id" bson:"id"`
+	Code string `json:"code" bson:"code"`
+	Name string `json:"name" bson:"name"`
 	OrganisationContact
 }
 
@@ -62,34 +61,26 @@ type OrganisationGroup struct {
 // OrganisationGroupPosition is a position that can be held within an Organisation Groups
 // For example the 'President' (position) of the Board (group)
 type OrganisationGroupPosition struct {
-	ID          int    `json:"id" bson:"id"`
-	Code        string `json:"code" bson:"code"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
+	ID   int    `json:"id" bson:"id"`
+	Code string `json:"code" bson:"code"`
+	Name string `json:"name" bson:"name"`
 }
 
-// OrganisationByID fetches a single organisation record
+// OrganisationByID fetches an organisation record from the default datastore
 func OrganisationByID(id int) (Organisation, error) {
+	return orgByID(id, datastore.MySQL)
+}
 
+// OrganisationByIDStore fetches an organisation record from the specified datastore - used for testing
+func OrganisationByIDStore(id int, conn datastore.MySQLConnection) (Organisation, error) {
+	return orgByID(id, conn)
+}
+
+func orgByID(id int, conn datastore.MySQLConnection) (Organisation, error) {
 	var o Organisation
-
-	query := `SELECT id, short_name, name, 'no group description in model'
-		  FROM organisation
-		  WHERE 1
-		  AND id = ?
-		  AND active = 1`
-
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
-		&o.ID,
-		&o.Code,
-		&o.Name,
-		&o.Description,
-	)
-	if err != nil {
-		return o, err
-	}
-
-	return o, nil
+	query := `SELECT id, short_name, name FROM organisation WHERE active = 1 AND id = ?`
+	err := conn.Session.QueryRow(query, id).Scan(&o.ID, &o.Code, &o.Name)
+	return o, err
 }
 
 // OrganisationList fetches a list of all the 'active' Organisations
@@ -98,15 +89,8 @@ func OrganisationsList() ([]Organisation, error) {
 	var xo []Organisation
 
 	// Top-level organisations have parent_organisation_id = NULL
-	query := `SELECT
-		  id,
-		  short_name,
-		  name,
-		  'no organisation description in model'
-		  FROM organisation
-		  WHERE 1
-		  AND parent_organisation_id IS NULL
-		  AND active = 1`
+	query := `SELECT id, short_name, name FROM organisation
+		  WHERE 1 AND parent_organisation_id IS NULL AND active = 1`
 
 	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
@@ -116,7 +100,7 @@ func OrganisationsList() ([]Organisation, error) {
 
 	for rows.Next() {
 		org := Organisation{}
-		rows.Scan(&org.ID, &org.Code, &org.Name, &org.Description)
+		rows.Scan(&org.ID, &org.Code, &org.Name)
 		xo = append(xo, org)
 	}
 
@@ -132,7 +116,7 @@ func OrganisationGroupsList(id int) ([]OrganisationGroup, error) {
 
 	var gs []OrganisationGroup
 
-	query := `SELECT id, short_name, name, 'no group description in model'
+	query := `SELECT id, short_name, name
 		  FROM organisation
 		  WHERE 1
 		  AND parent_organisation_id = ?
@@ -146,7 +130,7 @@ func OrganisationGroupsList(id int) ([]OrganisationGroup, error) {
 
 	for rows.Next() {
 		g := OrganisationGroup{}
-		rows.Scan(&g.ID, &g.Code, &g.Name, &g.Description)
+		rows.Scan(&g.ID, &g.Code, &g.Name)
 
 		err := g.SetCurrentGroupPositions()
 		if err != nil {
@@ -198,7 +182,7 @@ func (og *OrganisationGroup) SetCurrentGroupPositions() error {
 
 	for rows.Next() {
 		p := OrganisationGroupPosition{}
-		rows.Scan(&p.ID, &p.Code, &p.Name, &p.Description)
+		rows.Scan(&p.ID, &p.Code, &p.Name)
 		ps = append(ps, p)
 	}
 

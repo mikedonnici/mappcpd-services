@@ -18,6 +18,7 @@ var MySQL MySQLConnection
 // to each collection in MongoDB, and these pointers (*Collection values) provide methods to manipulate data.
 var MongoDB MongoDBConnection
 
+
 func Connect() {
 
 	connectMySQL()
@@ -32,7 +33,7 @@ func connectMySQL() {
 		"MAPPCPD_MYSQL_DESC",
 	}).Auto()
 
-	err := MySQL.Connect() // this does not really open a new connection
+	err := MySQL.ConnectEnv() // this does not really open a new connection
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -42,7 +43,7 @@ func connectMySQL() {
 		log.Fatalln("Error opening MySQL connection: %s", err.Error())
 	}
 
-	fmt.Println("datastore connected to MySQL:", MySQL.Source)
+	fmt.Println("datastore connected to MySQL:", MySQL.Description)
 }
 
 // connectMongoDB establishes a connection to DB2

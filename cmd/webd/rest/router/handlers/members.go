@@ -33,7 +33,7 @@ func MembersProfile(w http.ResponseWriter, r *http.Request) {
 	case err != nil:
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+		p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 		p.Data = m
 
 		// TODO: remove this when fetching - should only be on update
@@ -63,7 +63,7 @@ func MembersActivities(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 	p.Meta = map[string]int{"count": len(a)}
 	p.Data = a
 	p.Send(w)
@@ -90,7 +90,7 @@ func MembersEvaluation(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 	p.Meta = map[string]int{"count": len(es)}
 	p.Data = es
 	p.Send(w)
@@ -107,7 +107,7 @@ func CurrentActivityReport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg := fmt.Sprintf("Data retrieved from %s", datastore.MySQL.Source)
+	msg := fmt.Sprintf("Data retrieved from %s", datastore.MySQL.Description)
 	p.Message = responder.Message{http.StatusOK, "success", msg}
 	p.Data = reportData
 	p.Send(w)
@@ -159,7 +159,7 @@ func EmailCurrentActivityReport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	msg := fmt.Sprintf("Report has been created an emailed to %s. Data was retrieved from %s", e.ToEmail, datastore.MySQL.Source)
+	msg := fmt.Sprintf("Report has been created an emailed to %s. Data was retrieved from %s", e.ToEmail, datastore.MySQL.Description)
 	p.Message = responder.Message{http.StatusOK, "success", msg}
 	p.Data = reportData
 	p.Send(w)

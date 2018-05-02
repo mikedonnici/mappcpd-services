@@ -83,7 +83,7 @@ var activityTypesQueryField = &graphql.Field{
 	Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 
 		// get the activity id from the parent (activity) object
-		// note .Source is interface{} which can assert to activity
+		// note .Description is interface{} which can assert to activity
 		activityID := p.Source.(activities.Activity).ID
 		types, err := activityTypesData(activityID)
 		if err != nil {

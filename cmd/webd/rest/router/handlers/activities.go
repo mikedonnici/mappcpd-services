@@ -37,7 +37,7 @@ func Activities(w http.ResponseWriter, _ *http.Request) {
 	}
 
 	// All good
-	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 	p.Data = al
 	m := make(map[string]interface{})
 	m["count"] = len(al)
@@ -66,7 +66,7 @@ func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 	p.Data = a
 	m := make(map[string]interface{})
 	m["description"] = "The typeId must included when creating new Activity records"
@@ -107,7 +107,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Source}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 	p.Data = a
 	p.Send(w)
 }

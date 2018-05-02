@@ -30,7 +30,7 @@ func ReportsModulesByDate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
 	p.Data = report
 	m := make(map[string]interface{})
 	m["count"] = len(report)
@@ -54,7 +54,7 @@ func ReportsPointsByRecordDate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
 	p.Data = report
 	m := make(map[string]interface{})
 	m["count"] = len(report)
@@ -77,7 +77,7 @@ func ReportsPointsByActivityDate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
 	p.Data = report
 	m := make(map[string]interface{})
 	m["count"] = len(report)

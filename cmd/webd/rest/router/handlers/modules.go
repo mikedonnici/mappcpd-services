@@ -34,7 +34,7 @@ func ModulesID(w http.ResponseWriter, req *http.Request) {
 	case err != nil:
 		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Source}
+		p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
 		p.Data = m
 		m_.SyncModule(m)
 	}

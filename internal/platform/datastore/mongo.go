@@ -38,7 +38,7 @@ func (mq MongoQuery) Do(c *mgo.Collection, r *[]interface{}) error {
 	return q.All(r)
 }
 
-// Connect to to MongoDB, returns an error if it fails
+// ConnectEnv to to MongoDB, returns an error if it fails
 func (m *MongoDBConnection) Connect() error {
 
 	m.url = os.Getenv("MAPPCPD_MONGO_URL")
