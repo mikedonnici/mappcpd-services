@@ -12,6 +12,7 @@ import (
 var db = testdata.NewTestDB()
 var helper = testdata.NewHelper()
 
+// todo does not exit on first failed test?
 func TestMain(m *testing.M) {
 	err := db.Setup()
 	if err != nil {
@@ -34,15 +35,15 @@ func TestOrganisationByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
-	helper.PrintResult(t, "Allied Health Council", org.Name)
+	helper.Result(t, "ABC Organisation", org.Name)
 }
 
 func TestOrganisationDeepEqual(t *testing.T) {
 
 	exp := organisations.Organisation{
 		ID:   1,
-		Name: "Allied Health Council",
-		Code: "CL_AH",
+		Name: "ABC Organisation",
+		Code: "ABC",
 	}
 
 	org, err := organisations.OrganisationByIDStore(1, db.MySQL)
@@ -51,5 +52,23 @@ func TestOrganisationDeepEqual(t *testing.T) {
 	}
 
 	res := reflect.DeepEqual(exp, org)
-	helper.PrintResult(t, true, res)
+	helper.Result(t, true, res)
+}
+
+// Test data has 2 parent organisations
+func TestOrganisationListCount(t *testing.T) {
+	l, err := organisations.OrganisationsListStore(db.MySQL)
+	if err != nil {
+		t.Fatalf("Database error: %s", err)
+	}
+	helper.Result(t, 2, len(l))
+}
+
+// Test data has 3 child organisations belonging to parent id 1
+func TestChildOrganisationsListCount(t *testing.T) {
+	l, err := organisations.ChildOrganisationsStore(1, db.MySQL)
+	if err != nil {
+		t.Fatalf("Database error: %s", err)
+	}
+	helper.Result(t, 3, len(l))
 }
