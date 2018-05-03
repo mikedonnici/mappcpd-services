@@ -26,108 +26,23 @@ INSERT INTO `%s`.`a_name_prefix` VALUES
   (12, 1, '2013-06-03 17:29:52', NOW(), 'Sir'),
   (13, 1, '2013-06-03 17:29:52', NOW(), 'Sister');
 
--- name: insert-data-acl_admin_resource
-INSERT INTO `%s`.`acl_admin_resource` VALUES
-  (1, 0, 1, NOW(), NOW(), 'page', 'Home', 'Home page'),
-  (2, 0, 1, NOW(), NOW(), 'page', 'Member', 'Manage Member Records'),
-  (3, 0, 1, NOW(), NOW(), 'page', 'Workflow', 'Manage administration workflows'),
-  (4, 0, 1, NOW(), NOW(), 'page', 'Finance', 'Finance Module'),
-  (5, 0, 1, NOW(), NOW(), 'page', 'Events', 'Manage events'),
-  (6, 0, 1, NOW(), NOW(), 'page', 'Learning', 'Learning Module'),
-  (7, 0, 1, NOW(), NOW(), 'page', 'Communication', 'Communication Module'),
-  (8, 0, 1, NOW(), NOW(), 'page', 'Macro', 'Manage Macros'),
-  (9, 0, 1, NOW(), NOW(), 'page', 'Report', 'Report Module'),
-  (10, 0, 1, NOW(), NOW(), 'page', 'Setup', 'Setup system details'),
-  (11, 10, 1, NOW(), NOW(), 'page', 'Setup Admin User', 'Setup Admin User'),
-  (12, 10, 1, NOW(), NOW(), 'page', 'Setup ACL', 'Setup ACL'),
-  (10000, 0, 1, NOW(), NOW(), 'function', 'Log', 'Log system activities'),
-  (10001, 10000, 1, NOW(), NOW(), 'function', 'Log Data Changes',
-   'Log changes made to only tables defined in \'log_data_table\' db table'),
-  (10002, 6, 1, NOW(), NOW(), 'function', 'Learning CPD',
-   'Assign CPD point on completing a learning module');
+-- insert-data-acl_admin_resource
 
--- name: insert-data-acl_admin_role
-INSERT INTO `%s`.`acl_admin_role` VALUES
-  (1, 1, 0, '2013-10-02 16:08:09', '2013-10-02 16:08:09', 'Super User', 'System administrator account'),
-  (2, 1, 1, '2013-10-02 16:08:09', '2013-10-02 16:08:09', 'Admin', 'General account for admin level users'),
-  (3, 1, 0, '2014-09-21 17:43:12', '2014-09-21 17:43:12', 'Limited', 'Limited access to Member search feature.');
+-- insert-data-acl_admin_role
 
--- name: insert-data-acl_admin_role_resource
-INSERT INTO `%s`.`acl_admin_role_resource` VALUES
-  (9, 2, 1, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (10, 2, 2, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (11, 2, 3, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (12, 2, 4, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (13, 2, 5, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (14, 2, 6, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (15, 2, 7, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (16, 2, 8, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (17, 2, 9, 1, '2013-10-02 16:35:47', '2013-10-02 16:35:47', NULL),
-  (19, 2, 10, 1, '2013-11-21 16:11:59', '2013-11-21 16:11:59', NULL),
-  (20, 3, 2, 1, '2014-09-21 17:47:04', '2014-09-21 17:47:04', NULL),
-  (21, 3, 1, 1, '2014-09-21 17:53:44', '2014-09-21 17:53:44', NULL);
+-- insert-data-acl_admin_role_resource
 
--- name: insert-data-acl_member_resource
-INSERT INTO `%s`.`acl_member_resource` VALUES
-  (1, 0, 0, NOW(), NOW(), 'page', 'Home', 'Home Page'),
-  (2, 0, 1, NOW(), NOW(), 'page', 'Learning', 'Learning Module'),
-  (3, 0, 1, NOW(), NOW(), 'page', 'CPD', 'CPD Module'),
-  (4, 0, 1, NOW(), NOW(), 'page', 'Journals', 'Journals Page'),
-  (5, 0, 0, NOW(), NOW(), 'page', 'Curriculum', 'Curriculum Page'),
-  (6, 0, 0, NOW(), NOW(), 'page', 'FAQ', 'FAQ page'),
-  (7, 0, 1, NOW(), NOW(), 'page', 'MyBilling', 'My Billing Page'),
-  (8, 10003, 1, '2013-11-14 19:06:33', '2013-11-14 19:06:33', 'page', 'Resource Library', 'Resource library page'),
-  (9, 3, 1, '2013-11-21 15:58:04', '2013-11-21 15:58:04', 'page', 'CPD Evaluation Period', 'Defined CPD Evaluation Periods for reporting and auditing'),
-  (10000, 2, 1, NOW(), NOW(), 'function', 'Learning CPD', 'Allocate CPD points on completing learning module'),
-  (10001, 0, 1, NOW(), NOW(), 'function', 'Log', 'Log system activities'),
-  (10002, 10001, 1, NOW(), NOW(), 'function', 'Log Data',
-   'Changes made to only tables defined in \'log_data_table\' db table will be logged'),
-  (10003, 0, 1, NOW(), NOW(), 'function', 'Library', 'Resource library');
+-- insert-data-acl_member_resource
 
--- name: insert-data-acl_member_role
-INSERT INTO `%s`.`acl_member_role` VALUES
-  (1, 1, 1, '2013-09-26 20:40:25', '2013-09-26 20:40:25', 'Full Access',
-   'Member account has full access to all application areas.'),
-  (2, 1, 0, '2013-10-14 14:19:17', '2013-10-14 14:24:24', 'Restricted Access',
-   'At this stage member access is limited to <a href=\"/member/index/summary\">Profile</a>  and <a href=\"/finance/invoice\">myBilling</a>.');
+-- insert-data-acl_member_role
 
--- name: insert-data-acl_member_role_resource
-INSERT INTO `%s`.`acl_member_role_resource` VALUES
-  (9, 1, 1, 1, '2013-09-26 20:40:43', '2013-09-26 20:40:43', NULL),
-  (10, 1, 2, 1, '2013-09-26 20:40:43', '2013-09-26 20:40:43', NULL),
-  (11, 1, 3, 1, '2013-09-26 20:40:43', '2013-09-26 20:40:43', NULL),
-  (13, 1, 5, 1, '2013-09-26 20:40:43', '2013-09-26 20:40:43', NULL),
-  (14, 1, 6, 1, '2013-09-26 20:40:43', '2013-09-26 20:40:43', NULL),
-  (15, 1, 7, 1, '2013-09-26 20:40:43', '2013-09-26 20:40:43', NULL),
-  (17, 2, 7, 1, '2013-10-14 14:19:36', '2013-10-14 14:19:36', NULL),
-  (19, 1, 4, 1, '2013-11-24 14:35:03', '2013-11-24 14:35:03', NULL),
-  (20, 1, 8, 1, '2013-12-04 11:35:31', '2013-12-04 11:35:31', NULL),
-  (21, 1, 9, 1, '2014-03-06 17:14:49', '2014-03-06 17:14:49', NULL);
+-- insert-data-acl_member_role_resource
 
--- name: insert-data-ad_macro
-INSERT INTO `%s`.`ad_macro` VALUES
-  (1, 1, 1, '2015-09-01 06:43:22', '2015-09-01 06:43:22', 'Application', NULL),
-  (2, 1, 1, '2015-09-01 06:45:34', '2015-09-01 06:45:34', 'Application', NULL),
-  (66, 1, 1, '2016-04-04 03:21:29', '2016-04-04 03:21:29', 'Application', 'All good!'),
-  (67, 1, 1, '2016-04-04 03:29:17', '2016-04-04 03:29:17', 'Application', NULL);
+-- insert-data-ad_macro
 
--- name: insert-data-ad_macro_transaction
-INSERT INTO `%s`.`ad_macro_transaction` VALUES
-  (1, 1, 482, 1, 1, '2015-09-01 06:43:23', '2015-09-01 06:43:23',
-   'Application ID 2\nSet Title to Associate\nSet Date of Election to 01 Sep 2015\nSet Membership Subscription to Associate Membership\nSet Access Level to Full Access'),
-  (2, 1, 488, 1, 1, '2015-09-01 06:43:23', '2015-09-01 06:43:23',
-   'Application ID 3\nSet Title to Associate\nSet Date of Election to 01 Sep 2015\nSet Membership Subscription to Associate Membership\nSet Access Level to Full Access'),
-  (3, 2, 499, 1, 1, '2015-09-01 06:45:34', '2015-09-01 06:45:34',
-   'Application ID 4\nSet Title to Fellow\nSet Date of Election to 01 Sep 2015\nSet Membership Subscription to Fellowship\nSet Access Level to Full Access'),
-  (4, 2, 485, 1, 1, '2015-09-01 06:45:34', '2015-09-01 06:45:34',
-   'Application ID 5\nSet Title to Fellow\nSet Date of Election to 01 Sep 2015\nSet Membership Subscription to Fellowship\nSet Access Level to Full Access'),
-  (373, 66, 7822, 1, 1, '2016-04-04 03:21:29', '2016-04-04 03:21:29',
-   'Application ID 6536\nResult of following meeting(s) set to Accepted: Sub - 11 April 2016\nSet Title to Associate\nSet Date of Election to 04 Apr 2016\nSet Membership Subscription to Associate Membership\nSet Access Level to Full Access'),
-  (374, 67, 7824, 1, 1, '2016-04-04 03:29:18', '2016-04-04 03:29:18',
-   'Application ID 6538\nResult of following meeting(s) set to Accepted: Sub - 11 April 2016\nSet Title to Fellow\nSet Date of Election to 04 Apr 2016\nSet Membership Subscription to Fellowship\nSet Access Level to Full Access');
+-- insert-data-ad_macro_transaction
 
 -- insert-data-ad_permission
-
 
 -- name: insert-data-ad_user
 INSERT INTO `%s`.`ad_user` VALUES
