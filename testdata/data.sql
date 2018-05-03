@@ -290,8 +290,7 @@ INSERT INTO `%s`.`country` VALUES
 
 -- name: insert-data-fn_inventory
 INSERT INTO `%s`.`fn_inventory` VALUES
-  (1, 1, '2015-08-30 17:10:20', '2015-08-30 17:10:20', 'Subs - Associate', 'Associate Membership Fee', 300.00, 'year',
-   1),
+  (1, 1, '2015-08-30 17:10:20', '2015-08-30 17:10:20', 'Subs - Associate', 'Associate Membership Fee', 300.00, 'year', 1),
   (2, 1, '2015-08-30 17:10:20', '2015-08-30 17:10:20', 'Subs - Ordinary', 'Ordinary Membership Fee', 600.00, 'year', 1),
   (3, 1, '2015-08-30 17:10:21', '2015-08-30 17:10:21', 'Subs - Fellow', 'Fellow Membership Fee', 900.00, 'year', 1),
   (4, 1, '2015-08-30 17:10:21', '2015-08-30 17:10:21', 'Misc', 'Miscellaneous item', 1.00, 'item', 1);
@@ -563,8 +562,8 @@ INSERT INTO `%s`.`ms_status` VALUES
   (10008, 1, 0, NOW(), '2013-06-18 15:12:11', 0, 0, 0, 0, 0, 'Deceased', '');
 
 -- name: insert-data-ms_title
-INSERT INTO `%s`.`ms_title`
-VALUES (1, 0, 1, '2013-01-17 23:17:04', '2013-07-08 19:44:45', 0, 0, 0, 0, 0, 'Applicant', ''),
+INSERT INTO `%s`.`ms_title` VALUES
+  (1, 0, 1, '2013-01-17 23:17:04', '2013-07-08 19:44:45', 0, 0, 0, 0, 0, 'Applicant', ''),
   (2, 0, 1, '2013-01-17 23:17:05', '2013-10-02 16:37:57', 1, 1, 1, 1, 1, 'Associate', ''),
   (3, 0, 1, '2013-01-29 11:40:21', '2013-01-29 11:40:21', 1, 1, 1, 1, 1, 'Ordinary', ''),
   (4, 0, 1, '2013-01-29 11:39:01', '2013-10-02 16:38:09', 1, 1, 1, 1, 1, 'Fellow', '');
@@ -649,8 +648,8 @@ INSERT INTO `%s`.`organisation` VALUES
 
 
 -- name: insert-data-organisation_type
-INSERT INTO `%s`.`organisation_type`
-VALUES (1, 1, '2013-06-11 20:45:11', '2013-06-11 20:45:31', 'CSANZ Council', 'Group / type for CSANZ councils'),
+INSERT INTO `%s`.`organisation_type` VALUES
+  (1, 1, '2013-06-11 20:45:11', '2013-06-11 20:45:31', 'CSANZ Council', 'Group / type for CSANZ councils'),
   (2, 1, NOW(), NOW(), 'CSANZ Working Group', 'CSANZ Working Group'),
   (3, 1, NOW(), NOW(), 'Committee', 'Committee'),
   (4, 1, NOW(), NOW(), 'Sub-committee', 'Sub-committee'),
@@ -734,15 +733,15 @@ INSERT INTO `%s`.`wf_note` VALUES
   (10, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.');
 
 -- name: insert-data-wf_note_association
-INSERT INTO `%s`.`wf_note_association`
-VALUES (1, 1, 1, 1, 1, '2015-09-01 04:32:49', '2015-09-01 04:32:49', 'application'),
+INSERT INTO `%s`.`wf_note_association`VALUES
+  (1, 1, 1, 1, 1, '2015-09-01 04:32:49', '2015-09-01 04:32:49', 'application'),
   (2, 2, 1, 1, 1, '2015-09-01 06:13:27', '2015-09-01 06:13:27', 'issue'),
   (3, 3, 1, 2, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', 'issue'),
   (4, 4, 2, 3, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', 'issue');
 
 -- name: insert-data-wf_note_type
-INSERT INTO `%s`.`wf_note_type`
-VALUES (1, 1, 1, '2013-11-07 11:53:15', '2013-11-07 11:53:15', 'System', 'Note added by system housekeeping'),
+INSERT INTO `%s`.`wf_note_type` VALUES
+  (1, 1, 1, '2013-11-07 11:53:15', '2013-11-07 11:53:15', 'System', 'Note added by system housekeeping'),
   (10001, 1, 0, '2013-05-06 06:18:02', '2013-06-26 16:43:21', 'General', ''),
   (10002, 1, 0, '2013-05-06 06:18:02', '2013-06-26 16:43:21', 'Account', ''),
   (10003, 1, 0, '2013-06-26 16:43:33', '2013-06-26 16:43:33', 'Contact', ''),
