@@ -11,7 +11,8 @@ func NewHelper() *Helper {
 	return &Helper{}
 }
 
-func (h Helper) PrintResult(t *testing.T, expect, result interface{}) {
+func (h Helper) Result(t *testing.T, expect, result interface{}) {
+
 	if result != expect {
 		t.Fatalf("\n\t%s expected: '%v', result: '%v'", failure, expect, result)
 	}

@@ -641,26 +641,12 @@ INSERT INTO `%s`.`ol_resource` VALUES
 
 -- name: insert-data-organisation
 INSERT INTO `%s`.`organisation` VALUES
-  (1, NULL, 1, 0, 1, '2013-06-11 20:46:39', '2013-06-25 18:50:40', 'CL_AH', 'Allied Health Council', '', '', '', '', '',
-   '', '', '', '', ''),
-  (2, NULL, 1, 0, 1, '2013-06-11 20:46:57', '2013-06-24 14:11:17', 'CL_IMAGING', 'Cardiac Imaging Council', '', '', '',
-   '', '', '', '', '', '', ''),
-  (3, NULL, 1, 0, 1, '2013-06-11 20:47:22', '2013-06-24 14:09:15', 'CL_SURGERY', 'Cardiovascular Surgery Council', '',
-      '', '', '', '', '', '', '', '', ''),
-  (4, NULL, 1, 0, 1, '2013-06-11 20:47:55', '2013-06-24 14:13:32', 'CL_CGD', 'Cardiovascular Genetic Diseases Council',
-      '', '', '', '', '', '', '', '', '', ''),
-  (5, NULL, 1, 0, 1, '2013-06-11 20:48:16', '2013-06-24 14:12:28', 'CL_CN', 'Cardiovascular Nurses Council', '', '', '',
-   '', '', '', '', '', '', ''),
-  (6, NULL, 1, 0, 1, '2013-06-11 20:48:58', '2013-06-24 14:12:17', 'CL_CLINTRL', 'Clinical Trials Council', '', '', '',
-   '', '', '', '', '', '', ''),
-  (7, NULL, 1, 0, 1, '2013-06-11 20:49:14', '2013-06-24 14:12:04', 'CL_EP', 'Electrophysiology & Pacing Council', '',
-      '', '', '', '', '', '', '', '', ''),
-  (8, NULL, 1, 0, 1, '2013-06-11 20:49:56', '2013-06-24 14:11:52', 'CL_GENCARD', 'General Cardiology Council', '', '',
-   '', '', '', '', '', '', '', ''),
-  (9, NULL, 1, 0, 1, '2013-06-11 20:50:27', '2013-06-24 14:32:19', 'CL_AHFCG', 'Heart Failure Council', '', '', '', '',
-   '', '', '', '', '', ''),
-  (10, NULL, 1, 0, 1, '2013-06-11 20:50:49', '2013-06-24 14:11:43', 'CL_HYPERTN', 'Hypertension Council', '', '', '',
-   '', '', '', '', '', '', '');
+  (1, NULL, 1, 1, 1, NOW(), NOW(), 'ABC', 'ABC Organisation', '', '', '', '', '', '', '', '', '', ''),
+  (2, NULL, 1, 1, 1, NOW(), NOW(), 'DEF', 'DEF Organisation', '', '', '', '', '', '', '', '', '', ''),
+  (3, 1, 1, 1, 1, NOW(), NOW(), 'ABC-1', 'ABC Sub1', '', '', '', '', '', '', '', '', '', ''),
+  (4, 1, 1, 1, 1, NOW(), NOW(), 'ABC-2', 'ABC Sub2', '', '', '', '', '', '', '', '', '', ''),
+  (5, 1, 1, 1, 1, NOW(), NOW(), 'ABC-3', 'ABC Sub3', '', '', '', '', '', '', '', '', '', '');
+
 
 -- name: insert-data-organisation_type
 INSERT INTO `%s`.`organisation_type`

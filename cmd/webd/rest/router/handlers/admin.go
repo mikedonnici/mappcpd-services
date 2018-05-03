@@ -321,7 +321,7 @@ func AdminIDList(w http.ResponseWriter, req *http.Request) {
 	case err != nil:
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
-		p.Message = responder.Message{http.StatusOK, "success", "List of ids from table: " + t + ", db: " + datastore.MySQL.Description}
+		p.Message = responder.Message{http.StatusOK, "success", "All of ids from table: " + t + ", db: " + datastore.MySQL.Description}
 		p.Meta = map[string]int{"count": len(ii)}
 		p.Data = ii
 	}

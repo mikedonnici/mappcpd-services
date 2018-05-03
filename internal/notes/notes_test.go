@@ -36,5 +36,5 @@ func TestNoteByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
-	helper.PrintResult(t, "Issue raised.", res.Content)
+	helper.Result(t, "Issue raised.", res.Content)
 }

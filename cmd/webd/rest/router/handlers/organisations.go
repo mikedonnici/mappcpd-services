@@ -8,69 +8,56 @@ import (
 
 	"github.com/gorilla/mux"
 
-	_json "github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
-	_mw "github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
-	o_ "github.com/mappcpd/web-services/internal/organisations"
-	ds_ "github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
+	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
+	"github.com/mappcpd/web-services/internal/organisation"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-// AdminOrganisations handles requests for Organisation records
-// Todo there is only one organisation as such so this is retrieving groups.
-func AdminOrganisations(w http.ResponseWriter, r *http.Request) {
+// AllOrganisations handles requests for Organisation records
+func AllOrganisations(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.New(_mw.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
-	l, err := o_.OrganisationsList()
+	l, err := organisation.All()
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return
 	}
 
 	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
 	p.Data = l
 	m := make(map[string]interface{})
 	m["count"] = len(l)
-	m["description"] = "List of organisations..."
+	m["description"] = "All active organisations"
 	p.Meta = m
 	p.Send(w)
 }
 
-// AdminOrganisationGroups handles requests for Organisation records
-func AdminOrganisationGroups(w http.ResponseWriter, r *http.Request) {
+// OrganisationByID handles requests for a single Organisation record
+func OrganisationByID(w http.ResponseWriter, r *http.Request) {
 
-	p := _json.New(_mw.UserAuthToken.Token)
+	p := responder.New(middleware.UserAuthToken.Token)
 
-	// Request - convert Organisation id from string to int type
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {
-		p.Message = _json.Message{http.StatusBadRequest, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
-	// Get groups... todo - we should do this via GetOrganisationByID
-	l, err := o_.OrganisationGroupsList(id)
+	o, err := organisation.ByID(id)
 	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
+		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	// Grab the organisation name for our message
-	o, err := o_.OrganisationByID(id)
-	if err != nil {
-		p.Message = _json.Message{http.StatusInternalServerError, "failed", err.Error()}
-		p.Send(w)
-		return
-	}
-
-	// All good
-	p.Message = _json.Message{http.StatusOK, "success", "Data retrieved from " + ds_.MySQL.Description}
-	p.Data = l
+	p.Message = responder.Message{http.StatusOK, "success", "Data retrieved from " + datastore.MySQL.Description}
+	p.Data = o
 	m := make(map[string]interface{})
-	m["count"] = len(l)
-	m["description"] = fmt.Sprintf("Retrieved groups for Organisation id %v - %s ", id, o.Name)
+	m["description"] = fmt.Sprintf("Retrieved Organisation id %v - %s ", id, o.Name)
 	p.Meta = m
 	p.Send(w)
 }
