@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`ad_user_permission` (
   `ad_permission_id` INT NOT NULL COMMENT 'The id of the permission that has been granted',
   `active` TINYINT(1) NOT NULL DEFAULT '1' COMMENT 'Soft delete.',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
-  `updated_at` TIMESTAMP NULL COMMENT 'Record last updated',
+  `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
   PRIMARY KEY (`id`))
   ENGINE = InnoDB
   COMMENT = 'Association between admin user and a permission, that is, stores the granting of permissions to specific admin users.';
@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`member` (
   `login` TINYINT NOT NULL DEFAULT 1 COMMENT 'A flag to allow user to login. User also requires a membership title and status that allow login.',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `last_login_at` TIMESTAMP NULL COMMENT 'The last login for the member.',
+  `last_login_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'The last login for the member.',
   `date_of_birth` DATE NULL COMMENT 'Date of birth of the member',
   `date_of_entry` DATE NULL DEFAULT NULL COMMENT 'Date of entry of the member into the organisations - this field is a bit of a legacy field for data migration - strictly speaking the membership title history should cover this.',
   `gender` ENUM('M', 'F') NULL,
@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`ce_m_activity` (
   `evidence` TINYINT NULL COMMENT 'A flag to indicate if the member has evidence available to support the claim of this activity - e.g. Document. NULL is unknown, 0 is NO and 1 is YES.',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `activity_on` DATE NOT NULL COMMENT 'The date that the activity was performed. This could be a start or end date for a multi-day activity. This date is used to capture activity within  defined evaluation period.',
+  `activity_on` DATE NULL DEFAULT NULL COMMENT 'The date that the activity was performed. This could be a start or end date for a multi-day activity. This date is used to capture activity within  defined evaluation period.',
   `quantity` DECIMAL(5,2) NOT NULL COMMENT 'The number of units of the activity that were completed. e.g. 4 x hours.',
   `points_per_unit` DECIMAL(5,2) NOT NULL COMMENT 'Points for each unit is copied from the ce_activity definition table at the time the activity is recorded. This is in case the value for the activity is changed at some stage in the future.\n\nWe copy the current value from the ce_activity table each time a new activity is entered, or each time the evaluation period report is generated for an OPEN EP.\n\nFor a closed EP we will NOT reset this value so the historical values are maintained. \n\nThis means that the value for an activity MAY change over time for the user. This is part of the rules and the final value will be the current value at the time the EP is closed.',
   `annual_points_cap` SMALLINT NOT NULL COMMENT 'Standardised (per year) points cap for the activity. As for points_per_unit we copy the current value from the ce_activity table each time a new activity is entered, or each time the evaluation period report is generated for an OPEN EP.\n\nFor a closed EP we will NOT reset this value so the historical values are maintained. \n\nIn both cases we can use ANY value for the same activity type (they should all be the same anyway) for the applications of caps. Yes, this is very redundant data BUT we decide was better to do it this way as it saved us managing a separate table for the same purpose.',
@@ -137,7 +137,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`ms_m_title` (
   `current` TINYINT NOT NULL DEFAULT 0 COMMENT 'Defines the current (i.e. latest) title and is used to make table joins easier when creating lists of members.',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `granted_on` DATE NOT NULL COMMENT 'The date the member received this level of membership. Would generally coincide with a board meeting date.',
+  `granted_on` DATE NULL DEFAULT NULL COMMENT 'The date the member received this level of membership. Would generally coincide with a board meeting date.',
   `comment` TEXT NULL COMMENT 'Optional comment',
   PRIMARY KEY (`id`))
   ENGINE = InnoDB
@@ -214,8 +214,8 @@ CREATE TABLE IF NOT EXISTS `%s`.`ce_m_evaluation` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
   `cpd_points_required` INT(5) NOT NULL COMMENT 'The number of CPD points that are required to satisfy this evaluation period.',
-  `start_on` DATE NOT NULL COMMENT 'The start date for this evaluation period.',
-  `end_on` DATE NOT NULL COMMENT 'The end date for this evaluation period.',
+  `start_on` DATE NULL DEFAULT NULL COMMENT 'The start date for this evaluation period.',
+  `end_on` DATE NULL DEFAULT NULL COMMENT 'The end date for this evaluation period.',
   `comment` TEXT NOT NULL COMMENT 'A comment about this instanc of the evluation period type. Eg if it gets modified.',
   PRIMARY KEY (`id`))
   ENGINE = InnoDB
@@ -303,7 +303,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`wf_issue` (
   `member_visible` TINYINT NOT NULL DEFAULT 0 COMMENT 'Flag to indicate if this issue type is visible to the member. Inherits value from the wf_issue_type parent record but may be overridden in this instance. The rules for changing this value are implemented in the application. ',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `live_on` DATE NOT NULL COMMENT 'The date the issue gets raised and becomes live.',
+  `live_on` DATE NULL DEFAULT NULL COMMENT 'The date the issue gets raised and becomes live.',
   `description` TEXT NOT NULL COMMENT 'The description of the issue, pre-filled from wf_issue_type.description and can then be edited for each instance of the issue.',
   `required_action` TEXT NOT NULL COMMENT 'The required action by either admin or member, pre-filled from wf_issue_type.required_action and can then be edited for each instance of the issue.',
   PRIMARY KEY (`id`))
@@ -318,7 +318,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`ce_audit` (
   `active` TINYINT NOT NULL DEFAULT 1 COMMENT 'Soft delete.',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `completed_on` DATE NOT NULL COMMENT 'Date the audit was finalised',
+  `completed_on` DATE NULL DEFAULT NULL COMMENT 'Date the audit was finalised',
   `result` TINYINT NOT NULL COMMENT 'The pass / fail status of the audit. All audits will start as 0 (pending) the be either passed or failed. May change to enum (\'PENDING\', \'PASS\', \'FAILED\')\n',
   `audited_by` VARCHAR(45) NOT NULL COMMENT 'The name of the person who did the audit. Note this is NOT a link to an admin user as audits may be carried out by people other than admin users.',
   `comment` TEXT NULL COMMENT 'An optional comment about the audit.',
@@ -368,12 +368,12 @@ CREATE TABLE IF NOT EXISTS `%s`.`fn_m_invoice` (
   `system_send` TINYINT NOT NULL DEFAULT 1 COMMENT 'A flag to trigger sending of the invoice by the housekeeping script. Defaults to 1 but can be overridden by the admin set when they set up a new invoice.',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `completed_at` TIMESTAMP NOT NULL COMMENT 'Time stamp that signals when the invoice has been marked as complete and will be visible to the member.',
-  `last_sent_at` TIMESTAMP NULL COMMENT 'The date and time that the invoice was last sent to the member as an email and attached invoice.',
-  `invoiced_on` DATE NOT NULL COMMENT 'The invoice date.',
-  `due_on` DATE NOT NULL COMMENT 'Invoice due date',
-  `start_on` DATE NULL COMMENT 'Defines the start date for the billing or subscription period of this invoice, when applicable.',
-  `end_on` DATE NULL COMMENT 'Defines the end date for the billing or subscription period of this invoice, when applicable.',
+  `completed_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Time stamp that signals when the invoice has been marked as complete and will be visible to the member.',
+  `last_sent_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'The date and time that the invoice was last sent to the member as an email and attached invoice.',
+  `invoiced_on` DATE NULL DEFAULT NULL COMMENT 'The invoice date.',
+  `due_on` DATE NULL DEFAULT NULL COMMENT 'Invoice due date',
+  `start_on` DATE NULL DEFAULT NULL COMMENT 'Defines the start date for the billing or subscription period of this invoice, when applicable.',
+  `end_on` DATE NULL DEFAULT NULL COMMENT 'Defines the end date for the billing or subscription period of this invoice, when applicable.',
   `invoice_total` DECIMAL(10,2) NOT NULL DEFAULT 0 COMMENT 'The total of the invoice (calculated for convenience wrt on screen reporting)	',
   `comment` TEXT NULL COMMENT 'An invoice comment if required.',
   PRIMARY KEY (`id`))
@@ -409,7 +409,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`fn_m_subscription` (
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated.',
   `pro_rata_bill_on` DATE NULL COMMENT 'Option pro-rata date. Ideally this should be NULL if it is ',
-  `renew_on` DATE NOT NULL COMMENT 'The next date for full period renewal of the subscription and generation of the invoice.',
+  `renew_on` DATE NULL DEFAULT NULL COMMENT 'The next date for full period renewal of the subscription and generation of the invoice.',
   `comment` TEXT NULL COMMENT 'General comment.',
   PRIMARY KEY (`id`),
   INDEX `fk_member_subscription_subscription1_idx` (`fn_subscription_id` ASC))
@@ -426,7 +426,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`fn_payment` (
   `active` TINYINT(1) NOT NULL DEFAULT '1' COMMENT 'Soft delete',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `payment_on` DATE NOT NULL COMMENT 'Payment received on date.',
+  `payment_on` DATE NULL DEFAULT NULL COMMENT 'Payment received on date.',
   `amount_received` DECIMAL(10,2) NOT NULL COMMENT 'The total amount received.',
   `comment` TEXT NULL COMMENT 'An optional comment about the payment.',
   `field1_data` VARCHAR(45) NULL COMMENT 'The descriptive data for general field specified in fn_payment_type table.',
@@ -447,7 +447,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`wf_note` (
   `active` TINYINT NOT NULL DEFAULT 1 COMMENT 'Soft delete',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `effective_on` DATE NOT NULL COMMENT 'The relevant date of the event or item referred to by the note. Allows for user to specify the date of something even if the note is added (created_at_ much later.',
+  `effective_on` DATE NULL DEFAULT NULL COMMENT 'The relevant date of the event or item referred to by the note. Allows for user to specify the date of something even if the note is added (created_at_ much later.',
   `note` TEXT NOT NULL,
   PRIMARY KEY (`id`))
   ENGINE = InnoDB
@@ -612,7 +612,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`ms_m_application` (
   `active` TINYINT(1) NOT NULL DEFAULT 1 COMMENT 'Soft delete',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `applied_on` DATE NOT NULL COMMENT 'Date the application was received / acknowledged / processed.',
+  `applied_on` DATE NULL DEFAULT NULL COMMENT 'Date the application was received / acknowledged / processed.',
   `result` TINYINT NOT NULL DEFAULT -1 COMMENT 'The outcome of the application -  value of -1 is the default case in which the outcome of the application is unknown or PENDING. An explicit 0 is REJECTED and an explicit 1 is ACCEPTED. We can add other explicit values later if needed.\n\nEach of the ms_m_application_meeting records relating to an application also have this flag. Thus we can create a boolean workflow where if all meeting records show a 1 we can infer that the application should also be a 1. This also enables us to introduce other types of events in the workflow.',
   `comment` TEXT NULL,
   PRIMARY KEY (`id`))
@@ -627,7 +627,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`a_meeting` (
   `active` TINYINT(4) NOT NULL DEFAULT '1' COMMENT 'Soft delete.',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `meeting_on` DATE NOT NULL COMMENT 'Date of meeting',
+  `meeting_on` DATE NULL DEFAULT NULL COMMENT 'Date of meeting',
   `location` VARCHAR(100) NULL COMMENT 'Location of meeting',
   `name` VARCHAR(255) NOT NULL COMMENT 'Name or descriptive title of the meeting.',
   `comment` TEXT NULL COMMENT 'General comments about the meeting.',
@@ -855,8 +855,8 @@ CREATE TABLE IF NOT EXISTS `%s`.`ce_event` (
   `active` TINYINT NOT NULL DEFAULT 1 COMMENT 'Soft delete',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Record created',
   `updated_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'Record last updated',
-  `start_on` DATE NOT NULL COMMENT 'The date the event was held or the start date for a multi-day event.',
-  `end_on` DATE NULL COMMENT 'The date the event ends, optional for a single day event.',
+  `start_on` DATE NULL DEFAULT NULL COMMENT 'The date the event was held or the start date for a multi-day event.',
+  `end_on` DATE NULL DEFAULT NULL COMMENT 'The date the event ends, optional for a single day event.',
   `location` VARCHAR(255) NOT NULL COMMENT 'The location of the event.',
   `name` VARCHAR(255) NOT NULL COMMENT 'The name of the event.',
   `description` TEXT NOT NULL COMMENT 'A description of the event.',
@@ -923,7 +923,7 @@ CREATE TABLE IF NOT EXISTS `%s`.`cm_m_email` (
   `system_message` VARCHAR(255) NOT NULL COMMENT 'A message from the system to expand on the result of the scripts mail command. For example - Could not send because the user has no email address.',
   `sent_to` VARCHAR(255) NOT NULL COMMENT 'Store the recipients email for the sake of data clarity e.g. if email changes.',
   `parameters` TEXT NULL COMMENT 'Serialised values for personalisation variables in the email template.',
-  `mx_at` TIMESTAMP NULL COMMENT 'The date and time that the current status was reported from the mail exchanger, via cm_email_log table data.',
+  `mx_at` TIMESTAMP NULL DEFAULT NULL COMMENT 'The date and time that the current status was reported from the mail exchanger, via cm_email_log table data.',
   `mx_status` VARCHAR(100) NULL COMMENT 'The latest status of the email as reported from the mail exchanger, via cm_email_log table data.',
   `mx_description` TEXT NULL COMMENT 'A description of the latest email status reported from the mail exchanger, via cm_email_log table data.',
   PRIMARY KEY (`id`))
