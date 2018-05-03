@@ -40,7 +40,7 @@ func connectMySQL() {
 
 	err = MySQL.Session.Ping() // This DOES open a connection if necessary. This makes sure the db is accessible
 	if err != nil {
-		log.Fatalln("Error opening MySQL connection: %s", err.Error())
+		log.Fatalf("Error opening MySQL connection: %s\n", err.Error())
 	}
 
 	fmt.Println("datastore connected to MySQL:", MySQL.Description)
@@ -63,7 +63,7 @@ func connectMongoDB() {
 	// Set global pointer to session for convenience
 	err = MongoDB.session.Ping()
 	if err != nil {
-		log.Fatalln("Error opening MongoDB connection: %s", err.Error())
+		log.Fatalf("Error opening MongoDB connection: %s\n", err.Error())
 	}
 
 	fmt.Println("datastore connected to MongoDB:", MongoDB.Source)
