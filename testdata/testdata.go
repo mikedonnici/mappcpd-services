@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-const DSN = "dev:password@tcp(localhost:3306)/"
-//const DSN = "root:password@tcp(localhost:3306)/"
+//const DSN = "dev:password@tcp(localhost:3306)/"
+const DSN = "root:password@tcp(localhost:3306)/"
 
 var schemaQueries = goyesql.MustParseFile("../../testdata/schema.sql")
 var tableQueries = goyesql.MustParseFile("../../testdata/tables.sql")
