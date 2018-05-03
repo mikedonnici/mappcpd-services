@@ -2,7 +2,6 @@ package testdata
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/nleof/goyesql"
