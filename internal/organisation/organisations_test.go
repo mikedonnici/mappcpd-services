@@ -1,11 +1,11 @@
-package organisations_test
+package organisation_test
 
 import (
 	"reflect"
 	"testing"
 	"log"
 
-	"github.com/mappcpd/web-services/internal/organisations"
+	"github.com/mappcpd/web-services/internal/organisation"
 	"github.com/mappcpd/web-services/testdata"
 )
 
@@ -31,7 +31,7 @@ func TestPingDatabase(t *testing.T) {
 }
 
 func TestOrganisationByID(t *testing.T) {
-	org, err := organisations.OrganisationByIDStore(1, db.MySQL)
+	org, err := organisation.ByIDStore(1, db.MySQL)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -40,35 +40,40 @@ func TestOrganisationByID(t *testing.T) {
 
 func TestOrganisationDeepEqual(t *testing.T) {
 
-	exp := organisations.Organisation{
+	exp := organisation.Organisation{
 		ID:   1,
-		Name: "ABC Organisation",
 		Code: "ABC",
+		Name: "ABC Organisation",
+		Groups: []organisation.Organisation{
+			{ID: 3, Code: "ABC-1", Name: "ABC Sub1"},
+			{ID: 4, Code: "ABC-2", Name: "ABC Sub2"},
+			{ID: 5, Code: "ABC-3", Name: "ABC Sub3"},
+		},
 	}
 
-	org, err := organisations.OrganisationByIDStore(1, db.MySQL)
+	o, err := organisation.ByIDStore(1, db.MySQL)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 
-	res := reflect.DeepEqual(exp, org)
+	res := reflect.DeepEqual(exp, o)
 	helper.Result(t, true, res)
 }
 
 // Test data has 2 parent organisations
-func TestOrganisationListCount(t *testing.T) {
-	l, err := organisations.OrganisationsListStore(db.MySQL)
+func TestOrganisationCount(t *testing.T) {
+	xo, err := organisation.AllStore(db.MySQL)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
-	helper.Result(t, 2, len(l))
+	helper.Result(t, 2, len(xo))
 }
 
 // Test data has 3 child organisations belonging to parent id 1
-func TestChildOrganisationsListCount(t *testing.T) {
-	l, err := organisations.ChildOrganisationsStore(1, db.MySQL)
+func TestChildOrganisationCount(t *testing.T) {
+	o, err := organisation.ByIDStore(1, db.MySQL)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
-	helper.Result(t, 3, len(l))
+	helper.Result(t, 3, len(o.Groups))
 }
