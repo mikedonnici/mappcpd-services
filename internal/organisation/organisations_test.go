@@ -1,9 +1,9 @@
 package organisation_test
 
 import (
+	"log"
 	"reflect"
 	"testing"
-	"log"
 
 	"github.com/mappcpd/web-services/internal/organisation"
 	"github.com/mappcpd/web-services/testdata"

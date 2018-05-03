@@ -2,14 +2,13 @@ package testdata
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/nleof/goyesql"
 	"github.com/pkg/errors"
+	"github.com/hashicorp/go-uuid"
 )
 
-//const DSN = "dev:password@tcp(localhost:3306)/"
 const DSN = "root:password@tcp(localhost:3306)/"
 
 var schemaQueries = goyesql.MustParseFile("../../testdata/schema.sql")
@@ -23,8 +22,8 @@ type TestDB struct {
 
 // NewTestDB returns a pointer to a TestDB
 func NewTestDB() *TestDB {
-	t := TestDB{Name: fmt.Sprintf("%v_test", time.Now().Unix())}
-	//t := TestDB{Name: "test"}
+	s, _ := uuid.GenerateUUID()
+	t := TestDB{Name: fmt.Sprintf("%v_test", s[0:7])}
 	return &t
 }
 

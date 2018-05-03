@@ -97,8 +97,6 @@ func noteByID(id int, connection datastore.MySQLConnection) (Note, error) {
 	return n, err
 }
 
-
-
 // MemberNotes fetches all the notes linked to a Member
 func MemberNotes(memberID int) (*Notes, error) {
 

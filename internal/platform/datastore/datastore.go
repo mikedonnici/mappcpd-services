@@ -18,7 +18,6 @@ var MySQL MySQLConnection
 // to each collection in MongoDB, and these pointers (*Collection values) provide methods to manipulate data.
 var MongoDB MongoDBConnection
 
-
 func Connect() {
 
 	connectMySQL()

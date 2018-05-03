@@ -1,14 +1,14 @@
 /*
 	Package notes_test provides integration test for notes
- */
+*/
 package notes_test
 
 import (
-	"testing"
 	"log"
+	"testing"
 
-	"github.com/mappcpd/web-services/testdata"
 	"github.com/mappcpd/web-services/internal/notes"
+	"github.com/mappcpd/web-services/testdata"
 )
 
 var db = testdata.NewTestDB()

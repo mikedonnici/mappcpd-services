@@ -6,14 +6,14 @@ import (
 
 // Organisation defines a business, society or similar legal entity
 type Organisation struct {
-	OID   string `json:"_id,omitempty" bson:"_id,omitempty"`
-	ID    int    `json:"id" bson:"id"`
-	Code  string `json:"code,omitempty" bson:"code,omitempty"`
-	Name  string `json:"name" bson:"name"`
-	Phone string `json:"phone,omitempty" bson:"phone,omitempty"`
-	Fax   string `json:"fax,omitempty" bson:"fax,omitempty"`
-	Email string `json:"email,omitempty" bson:"email,omitempty"`
-	URL   string `json:"url,omitempty" bson:"url,omitempty"`
+	OID    string         `json:"_id,omitempty" bson:"_id,omitempty"`
+	ID     int            `json:"id" bson:"id"`
+	Code   string         `json:"code,omitempty" bson:"code,omitempty"`
+	Name   string         `json:"name" bson:"name"`
+	Phone  string         `json:"phone,omitempty" bson:"phone,omitempty"`
+	Fax    string         `json:"fax,omitempty" bson:"fax,omitempty"`
+	Email  string         `json:"email,omitempty" bson:"email,omitempty"`
+	URL    string         `json:"url,omitempty" bson:"url,omitempty"`
 	Groups []Organisation `json:"groups,omitempty" bson:"groups,omitempty"`
 }
 
