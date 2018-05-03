@@ -12,38 +12,38 @@ INSERT INTO `%s`.`a_meeting_type` VALUES
 
 -- name: insert-data-a_name_prefix
 INSERT INTO `%s`.`a_name_prefix` VALUES
-  (1, 1, '2013-06-03 17:29:45', '0000-00-00 00:00:00', 'A/Prof'),
-  (2, 1, '2013-06-03 17:29:46', '0000-00-00 00:00:00', 'A/Prof Dame'),
-  (3, 1, '2013-06-03 17:29:47', '0000-00-00 00:00:00', 'Brig'),
-  (4, 1, '2013-06-03 17:29:47', '0000-00-00 00:00:00', 'Dame'),
-  (5, 1, '2013-06-03 17:29:48', '0000-00-00 00:00:00', 'Dr'),
-  (6, 1, '2013-06-03 17:29:48', '0000-00-00 00:00:00', 'Miss'),
-  (7, 1, '2013-06-03 17:29:49', '0000-00-00 00:00:00', 'Mr'),
-  (8, 1, '2013-06-03 17:29:49', '0000-00-00 00:00:00', 'Mrs'),
-  (9, 1, '2013-06-03 17:29:50', '0000-00-00 00:00:00', 'Ms'),
-  (10, 1, '2013-06-03 17:29:51', '0000-00-00 00:00:00', 'Professor'),
-  (11, 1, '2013-06-03 17:29:51', '0000-00-00 00:00:00', 'Professor Sir'),
-  (12, 1, '2013-06-03 17:29:52', '0000-00-00 00:00:00', 'Sir'),
-  (13, 1, '2013-06-03 17:29:52', '0000-00-00 00:00:00', 'Sister');
+  (1, 1, '2013-06-03 17:29:45', NOW(), 'A/Prof'),
+  (2, 1, '2013-06-03 17:29:46', NOW(), 'A/Prof Dame'),
+  (3, 1, '2013-06-03 17:29:47', NOW(), 'Brig'),
+  (4, 1, '2013-06-03 17:29:47', NOW(), 'Dame'),
+  (5, 1, '2013-06-03 17:29:48', NOW(), 'Dr'),
+  (6, 1, '2013-06-03 17:29:48', NOW(), 'Miss'),
+  (7, 1, '2013-06-03 17:29:49', NOW(), 'Mr'),
+  (8, 1, '2013-06-03 17:29:49', NOW(), 'Mrs'),
+  (9, 1, '2013-06-03 17:29:50', NOW(), 'Ms'),
+  (10, 1, '2013-06-03 17:29:51', NOW(), 'Professor'),
+  (11, 1, '2013-06-03 17:29:51', NOW(), 'Professor Sir'),
+  (12, 1, '2013-06-03 17:29:52', NOW(), 'Sir'),
+  (13, 1, '2013-06-03 17:29:52', NOW(), 'Sister');
 
 -- name: insert-data-acl_admin_resource
 INSERT INTO `%s`.`acl_admin_resource` VALUES
-  (1, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Home', 'Home page'),
-  (2, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Member', 'Manage Member Records'),
-  (3, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Workflow', 'Manage administration workflows'),
-  (4, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Finance', 'Finance Module'),
-  (5, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Events', 'Manage events'),
-  (6, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Learning', 'Learning Module'),
-  (7, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Communication', 'Communication Module'),
-  (8, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Macro', 'Manage Macros'),
-  (9, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Report', 'Report Module'),
-  (10, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Setup', 'Setup system details'),
-  (11, 10, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Setup Admin User', 'Setup Admin User'),
-  (12, 10, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Setup ACL', 'Setup ACL'),
-  (10000, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'function', 'Log', 'Log system activities'),
-  (10001, 10000, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'function', 'Log Data Changes',
+  (1, 0, 1, NOW(), NOW(), 'page', 'Home', 'Home page'),
+  (2, 0, 1, NOW(), NOW(), 'page', 'Member', 'Manage Member Records'),
+  (3, 0, 1, NOW(), NOW(), 'page', 'Workflow', 'Manage administration workflows'),
+  (4, 0, 1, NOW(), NOW(), 'page', 'Finance', 'Finance Module'),
+  (5, 0, 1, NOW(), NOW(), 'page', 'Events', 'Manage events'),
+  (6, 0, 1, NOW(), NOW(), 'page', 'Learning', 'Learning Module'),
+  (7, 0, 1, NOW(), NOW(), 'page', 'Communication', 'Communication Module'),
+  (8, 0, 1, NOW(), NOW(), 'page', 'Macro', 'Manage Macros'),
+  (9, 0, 1, NOW(), NOW(), 'page', 'Report', 'Report Module'),
+  (10, 0, 1, NOW(), NOW(), 'page', 'Setup', 'Setup system details'),
+  (11, 10, 1, NOW(), NOW(), 'page', 'Setup Admin User', 'Setup Admin User'),
+  (12, 10, 1, NOW(), NOW(), 'page', 'Setup ACL', 'Setup ACL'),
+  (10000, 0, 1, NOW(), NOW(), 'function', 'Log', 'Log system activities'),
+  (10001, 10000, 1, NOW(), NOW(), 'function', 'Log Data Changes',
    'Log changes made to only tables defined in \'log_data_table\' db table'),
-  (10002, 6, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'function', 'Learning CPD',
+  (10002, 6, 1, NOW(), NOW(), 'function', 'Learning CPD',
    'Assign CPD point on completing a learning module');
 
 -- name: insert-data-acl_admin_role
@@ -69,20 +69,20 @@ INSERT INTO `%s`.`acl_admin_role_resource` VALUES
 
 -- name: insert-data-acl_member_resource
 INSERT INTO `%s`.`acl_member_resource` VALUES
-  (1, 0, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Home', 'Home Page'),
-  (2, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Learning', 'Learning Module'),
-  (3, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'CPD', 'CPD Module'),
-  (4, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Journals', 'Journals Page'),
-  (5, 0, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'Curriculum', 'Curriculum Page'),
-  (6, 0, 0, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'FAQ', 'FAQ page'),
-  (7, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'page', 'MyBilling', 'My Billing Page'),
+  (1, 0, 0, NOW(), NOW(), 'page', 'Home', 'Home Page'),
+  (2, 0, 1, NOW(), NOW(), 'page', 'Learning', 'Learning Module'),
+  (3, 0, 1, NOW(), NOW(), 'page', 'CPD', 'CPD Module'),
+  (4, 0, 1, NOW(), NOW(), 'page', 'Journals', 'Journals Page'),
+  (5, 0, 0, NOW(), NOW(), 'page', 'Curriculum', 'Curriculum Page'),
+  (6, 0, 0, NOW(), NOW(), 'page', 'FAQ', 'FAQ page'),
+  (7, 0, 1, NOW(), NOW(), 'page', 'MyBilling', 'My Billing Page'),
   (8, 10003, 1, '2013-11-14 19:06:33', '2013-11-14 19:06:33', 'page', 'Resource Library', 'Resource library page'),
   (9, 3, 1, '2013-11-21 15:58:04', '2013-11-21 15:58:04', 'page', 'CPD Evaluation Period', 'Defined CPD Evaluation Periods for reporting and auditing'),
-  (10000, 2, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'function', 'Learning CPD', 'Allocate CPD points on completing learning module'),
-  (10001, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'function', 'Log', 'Log system activities'),
-  (10002, 10001, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'function', 'Log Data',
+  (10000, 2, 1, NOW(), NOW(), 'function', 'Learning CPD', 'Allocate CPD points on completing learning module'),
+  (10001, 0, 1, NOW(), NOW(), 'function', 'Log', 'Log system activities'),
+  (10002, 10001, 1, NOW(), NOW(), 'function', 'Log Data',
    'Changes made to only tables defined in \'log_data_table\' db table will be logged'),
-  (10003, 0, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'function', 'Library', 'Resource library');
+  (10003, 0, 1, NOW(), NOW(), 'function', 'Library', 'Resource library');
 
 -- name: insert-data-acl_member_role
 INSERT INTO `%s`.`acl_member_role` VALUES
@@ -205,9 +205,9 @@ INSERT INTO `%s`.`ce_activity_type` VALUES
   (36, 24, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Other learning activities');
 
 -- name: insert-data-ce_activity_unit
-INSERT INTO `%s`.`ce_activity_unit` VALUES (1, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 1, 'hours', NULL),
-  (2, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 0, 'item', 'Item, instance, single event.'),
-  (3, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 0, 'module', 'Online learning module.');
+INSERT INTO `%s`.`ce_activity_unit` VALUES (1, 1, NOW(), NOW(), 1, 'hours', NULL),
+  (2, 1, NOW(), NOW(), 0, 'item', 'Item, instance, single event.'),
+  (3, 1, NOW(), NOW(), 0, 'module', 'Online learning module.');
 
 -- insert-data-ce_audit
 
@@ -283,10 +283,10 @@ INSERT INTO `%s`.`cm_email_variable` VALUES
 
 -- name: insert-data-country
 INSERT INTO `%s`.`country` VALUES
-  (14, 1, 1, 1000, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'AU', 'AUSTRALIA'),
-  (159, 1, 1, 900, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'NZ', 'NEW ZEALAND'),
-  (235, 1, 0, 500, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'GB', 'UNITED KINGDOM'),
-  (236, 1, 0, 400, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'US', 'UNITED STATES');
+  (14, 1, 1, 1000, NOW(), NOW(), 'AU', 'AUSTRALIA'),
+  (159, 1, 1, 900, NOW(), NOW(), 'NZ', 'NEW ZEALAND'),
+  (235, 1, 0, 500, NOW(), NOW(), 'GB', 'UNITED KINGDOM'),
+  (236, 1, 0, 400, NOW(), NOW(), 'US', 'UNITED STATES');
 
 -- name: insert-data-fn_inventory
 INSERT INTO `%s`.`fn_inventory` VALUES
@@ -385,8 +385,8 @@ INSERT INTO `%s`.`fn_subscription_type` VALUES
 
 -- name: insert-data-fn_tax
 INSERT INTO `%s`.`fn_tax` VALUES
-  (1, 14, 1, '2013-05-16 14:39:39', '0000-00-00 00:00:00', 'GST', 'Goods & Services Tax (AU)', 10.00),
-  (2, 159, 1, '2013-05-16 14:39:39', '0000-00-00 00:00:00', 'GST', 'Goods & Services Tax (NZ)', 15.00);
+  (1, 14, 1, '2013-05-16 14:39:39', NOW(), 'GST', 'Goods & Services Tax (AU)', 10.00),
+  (2, 159, 1, '2013-05-16 14:39:39', NOW(), 'GST', 'Goods & Services Tax (NZ)', 15.00);
 
 -- insert-data-fs_set
 
@@ -400,17 +400,17 @@ INSERT INTO `%s`.`fn_tax` VALUES
 
 -- name: insert-data-member
 INSERT INTO `%s`.`member` VALUES
-  (1, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', '0000-00-00 00:00:00', NULL, '1970-06-17', NULL, NULL, 'Dolan',
+  (1, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1970-06-17', NULL, NULL, 'Dolan',
                                                                                 '', 'Webster', NULL, NULL, NULL,
    'ac@malesuadaut.net', NULL, '', NULL, NULL, NULL),
-  (2, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', '0000-00-00 00:00:00', NULL, '1978-05-12', NULL, NULL, 'Velma',
+  (2, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1978-05-12', NULL, NULL, 'Velma',
                                                                                 '', 'Whitley', NULL, NULL, NULL,
    'sapien.cursus@gravidamauris.ca', NULL, '', NULL, NULL, NULL),
-  (3, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', '0000-00-00 00:00:00', NULL, '1965-10-07', NULL, NULL,
+  (3, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1965-10-07', NULL, NULL,
                                                                                 'Jakeem', '', 'Sellers', NULL, NULL,
                                                                                 NULL, 'Vivamus@semperetlacinia.edu',
    NULL, '', NULL, NULL, NULL),
-  (4, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', '0000-00-00 00:00:00', NULL, '1954-10-22', NULL, NULL,
+  (4, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1954-10-22', NULL, NULL,
                                                                                 'Nicole', '', 'Colon', NULL, NULL, NULL,
    'risus.Nunc.ac@magnaLoremipsum.com', NULL, '', NULL, NULL, NULL);
 
@@ -421,14 +421,14 @@ INSERT INTO `%s`.`mp_accreditation` VALUES
 
 -- name: insert-data-mp_contact_type
 INSERT INTO `%s`.`mp_contact_type` VALUES
-  (1, 1, 1, 1, 100, '2013-05-16 14:43:12', '0000-00-00 00:00:00', 10, 'Mail',
+  (1, 1, 1, 1, 100, '2013-05-16 14:43:12', NOW(), 10, 'Mail',
    'Primary contact information for membership and billing.'),
-  (2, 1, 1, 1, 50, '2013-05-16 14:43:12', '0000-00-00 00:00:00', 20, 'Directory',
+  (2, 1, 1, 1, 50, '2013-05-16 14:43:12', NOW(), 20, 'Directory',
    'The contact details that will show in the Member directory.'),
-  (3, 1, 0, 1, 0, '2013-05-16 14:43:13', '0000-00-00 00:00:00', 30, 'Work', 'A place of work.'),
-  (4, 1, 0, 1, 0, '2013-05-16 14:43:14', '0000-00-00 00:00:00', 40, 'Courier', 'Address details for courier.'),
-  (5, 1, 0, 1, 0, '2013-05-16 14:43:15', '0000-00-00 00:00:00', 50, 'Home', 'Home contact information.'),
-  (6, 1, 0, 1, 0, '2013-06-04 20:12:29', '0000-00-00 00:00:00', 100, 'Other', 'Any other contact type'),
+  (3, 1, 0, 1, 0, '2013-05-16 14:43:13', NOW(), 30, 'Work', 'A place of work.'),
+  (4, 1, 0, 1, 0, '2013-05-16 14:43:14', NOW(), 40, 'Courier', 'Address details for courier.'),
+  (5, 1, 0, 1, 0, '2013-05-16 14:43:15', NOW(), 50, 'Home', 'Home contact information.'),
+  (6, 1, 0, 1, 0, '2013-06-04 20:12:29', NOW(), 100, 'Other', 'Any other contact type'),
   (7, 1, 0, 1, 10, '2014-07-15 14:56:38', '2014-07-15 14:56:44', 15, 'Journal',
    'Postal address for hard-copy Journal.');
 
@@ -507,9 +507,9 @@ INSERT INTO `%s`.`mp_speciality` VALUES
 
 -- name: insert-data-mp_tag
 INSERT INTO `%s`.`mp_tag` VALUES
-  (1, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'Allied Health', ''),
-  (2, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'Nurse', ''),
-  (3, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'Surgeon', ''),
+  (1, 1, NOW(), NOW(), 'Allied Health', ''),
+  (2, 1, NOW(), NOW(), 'Nurse', ''),
+  (3, 1, NOW(), NOW(), 'Surgeon', ''),
   (4, 1, '2013-06-12 16:27:22', '2013-06-12 16:27:22', 'Advanced Trainee', ''),
   (5, 1, '2013-07-15 14:19:37', '2013-07-15 14:19:37', 'Retired / Comp', 'Complimentary subscription');
 
@@ -528,25 +528,25 @@ INSERT INTO `%s`.`ms_m_application_meeting` VALUES
 -- insert-data-ms_m_permission
 
 -- name: insert-data-ms_m_status
-INSERT INTO `%s`.`ms_m_status` VALUES (1, 1, 1, 0, 1, 0, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (2, 2, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (3, 3, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (4, 4, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (5, 5, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (6, 6, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (7, 7, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (8, 8, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL),
-  (9, 9, 1, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', NULL);
+INSERT INTO `%s`.`ms_m_status` VALUES (1, 1, 1, 0, 1, 0, '2015-08-30 17:10:57', NOW(), NULL),
+  (2, 2, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
+  (3, 3, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
+  (4, 4, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
+  (5, 5, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
+  (6, 6, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
+  (7, 7, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
+  (8, 8, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
+  (9, 9, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL);
 
 -- name: insert-data-ms_m_title
 INSERT INTO `%s`.`ms_m_title` VALUES
-  (1, 1, 2, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', '2015-08-31',
+  (1, 1, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
    'Test data does will not show historic titles'),
-  (2, 2, 2, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', '2015-08-31',
+  (2, 2, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
    'Test data does will not show historic titles'),
-  (3, 3, 2, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', '2015-08-31',
+  (3, 3, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
    'Test data does will not show historic titles'),
-  (4, 4, 2, NULL, 1, 1, '2015-08-30 17:10:57', '0000-00-00 00:00:00', '2015-08-31',
+  (4, 4, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
    'Test data does will not show historic titles');
 
 -- insert-data-ms_permission
@@ -560,7 +560,7 @@ INSERT INTO `%s`.`ms_status` VALUES
   (10005, 1, 0, '2013-01-29 11:41:53', '2013-06-18 15:11:50', 0, 0, 0, 0, 0, 'Suspended', ''),
   (10006, 1, 0, '2013-01-29 11:42:12', '2013-06-18 15:11:57', 0, 0, 0, 0, 0, 'Inactive', ''),
   (10007, 1, 0, '2013-05-15 20:12:00', '2013-06-18 15:12:04', 0, 0, 0, 0, 0, 'Resigned', ''),
-  (10008, 1, 0, '0000-00-00 00:00:00', '2013-06-18 15:12:11', 0, 0, 0, 0, 0, 'Deceased', '');
+  (10008, 1, 0, NOW(), '2013-06-18 15:12:11', 0, 0, 0, 0, 0, 'Deceased', '');
 
 -- name: insert-data-ms_title
 INSERT INTO `%s`.`ms_title`
@@ -651,11 +651,11 @@ INSERT INTO `%s`.`organisation` VALUES
 -- name: insert-data-organisation_type
 INSERT INTO `%s`.`organisation_type`
 VALUES (1, 1, '2013-06-11 20:45:11', '2013-06-11 20:45:31', 'CSANZ Council', 'Group / type for CSANZ councils'),
-  (2, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'CSANZ Working Group', 'CSANZ Working Group'),
-  (3, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'Committee', 'Committee'),
-  (4, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'Sub-committee', 'Sub-committee'),
-  (5, 1, '0000-00-00 00:00:00', '2013-08-19 15:57:34', 'CSANZ Board', 'Group / type for CSANZ Board'),
-  (6, 1, '0000-00-00 00:00:00', '0000-00-00 00:00:00', 'Other', 'Other'),
+  (2, 1, NOW(), NOW(), 'CSANZ Working Group', 'CSANZ Working Group'),
+  (3, 1, NOW(), NOW(), 'Committee', 'Committee'),
+  (4, 1, NOW(), NOW(), 'Sub-committee', 'Sub-committee'),
+  (5, 1, NOW(), '2013-08-19 15:57:34', 'CSANZ Board', 'Group / type for CSANZ Board'),
+  (6, 1, NOW(), NOW(), 'Other', 'Other'),
   (7, 1, '2013-07-14 15:37:02', '2013-07-14 15:37:13', 'Institute / Hospital', ''),
   (8, 1, '2013-07-14 17:32:31', '2013-07-14 17:32:31', 'University / Education', ''),
   (9, 1, '2014-07-23 12:00:14', '2014-07-23 12:00:14', 'Heart Foundation', 'Heart Foundation of Australia'),
