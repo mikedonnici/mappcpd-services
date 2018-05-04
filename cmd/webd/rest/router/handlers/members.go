@@ -11,7 +11,7 @@ import (
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
 	"github.com/mappcpd/web-services/internal/member"
-	"github.com/mappcpd/web-services/internal/member/activity"
+	"github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/platform/email"
 )
@@ -48,7 +48,7 @@ func MembersActivities(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	a, err := activity.MemberActivitiesByMemberID(middleware.UserAuthToken.Claims.ID)
+	a, err := cpd.MemberActivitiesByMemberID(middleware.UserAuthToken.Claims.ID)
 
 	// Response
 	switch {
@@ -76,7 +76,7 @@ func MembersEvaluation(w http.ResponseWriter, r *http.Request) {
 	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Collect the evaluation periods
-	es, err := activity.MemberActivityReports(middleware.UserAuthToken.Claims.ID)
+	es, err := cpd.MemberActivityReports(middleware.UserAuthToken.Claims.ID)
 	// Response
 	switch {
 	case err == sql.ErrNoRows:
@@ -100,7 +100,7 @@ func MembersEvaluation(w http.ResponseWriter, r *http.Request) {
 func CurrentActivityReport(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
-	reportData, err := activity.CurrentEvaluationPeriodReport(middleware.UserAuthToken.Claims.ID)
+	reportData, err := cpd.CurrentEvaluationPeriodReport(middleware.UserAuthToken.Claims.ID)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -117,7 +117,7 @@ func CurrentActivityReport(w http.ResponseWriter, r *http.Request) {
 func EmailCurrentActivityReport(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
-	reportData, err := activity.CurrentEvaluationPeriodReport(middleware.UserAuthToken.Claims.ID)
+	reportData, err := cpd.CurrentEvaluationPeriodReport(middleware.UserAuthToken.Claims.ID)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -129,7 +129,7 @@ func EmailCurrentActivityReport(w http.ResponseWriter, r *http.Request) {
 	pr, pw := io.Pipe()
 	go func() {
 		defer pw.Close()
-		activity.PDFReport(reportData, pw)
+		cpd.PDFReport(reportData, pw)
 	}()
 	xb, err := ioutil.ReadAll(pr)
 	if err != nil {

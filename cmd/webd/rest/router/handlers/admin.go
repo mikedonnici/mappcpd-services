@@ -16,7 +16,7 @@ import (
 	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/generic"
 	"github.com/mappcpd/web-services/internal/member"
-	"github.com/mappcpd/web-services/internal/notes"
+	"github.com/mappcpd/web-services/internal/note"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/platform/s3"
 	"github.com/mappcpd/web-services/internal/resources"
@@ -225,7 +225,7 @@ func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Response
-	ns, err := notes.MemberNotes(id)
+	ns, err := note.ByMemberID(id)
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -252,7 +252,7 @@ func AdminNotes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Response
-	d, err := notes.NoteByID(id)
+	d, err := note.ByID(id)
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -420,7 +420,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 	}
 
-	_, err = notes.NoteByID(id)
+	_, err = note.ByID(id)
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No note found with id %d -", id) + err.Error()
@@ -479,7 +479,7 @@ func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 		msg := "Error getting id from url path - " + err.Error()
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 	}
-	_, err = notes.NoteByID(id)
+	_, err = note.ByID(id)
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No note found with id %d -", id) + err.Error()

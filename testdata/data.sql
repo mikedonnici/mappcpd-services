@@ -53,23 +53,21 @@ INSERT INTO `%s`.`ad_user` VALUES
 
 -- name: insert-data-ce_activity
 INSERT INTO `%s`.`ce_activity` VALUES
-  (1, 1, 1, 0, 0, '2015-08-30 17:10:11', '2015-08-30 17:10:11', 'CE1', 'Conference session / workshop / course', '',
-      1.00, 50),
-  (2, 1, 1, 0, 0, '2015-08-30 17:10:11', '2015-08-30 17:10:11', 'CE2', 'Reading, research, literature review', '', 1.00, 25),
-  (3, 1, 1, 0, 0, '2015-08-30 17:10:11', '2016-09-16 14:11:19', 'CE3', 'Teaching - preperation and delivery', '', 1.00, 25),
-  (4, 1, 1, 0, 0, '2015-08-30 17:10:11', '2015-08-30 17:10:11', 'CE4', 'Presentation', '', 1.00, 25),
-  (5, 1, 1, 0, 0, '2015-08-30 17:10:11', '2015-08-30 17:10:11', 'CE5', 'Online content - other', '', 1.00, 25),
-  (6, 3, 1, 0, 1, '2015-08-30 17:10:12', '2015-08-31 03:42:22', 'CE6', 'MappCPD online module', '', 1.00, 50),
-  (7, 1, 2, 0, 0, '2015-08-30 17:10:12', '2015-08-30 17:10:12', 'PR1', 'Formal performance review or audit', '', 1.00, 20),
-  (8, 1, 2, 0, 0, '2015-08-30 17:10:12', '2015-08-30 17:10:12', 'PR2', 'Informal peer review / meeting', '', 1.00, 20),
-  (9, 1, 3, 0, 0, '2015-08-30 17:10:12', '2015-08-30 17:10:12', 'PQ1', 'Personal / professional / management course', '', 1.00, 20),
-  (10, 1, 3, 0, 0, '2015-08-30 17:10:12', '2015-08-30 17:10:12', 'PQ2', 'Self-directed learning (professional qualities)', '', 1.00, 20),
-  (20, 1, 10, 1, 0, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'RACP1', 'Practice Review & Improvement', '', 3.00, 50),
-  (21, 1, 10, 1, 0, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'RACP2', 'Assessed Learning', '', 2.00, 50),
-  (22, 1, 10, 1, 0, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'RACP3',
-       'Educational Development, Teaching & Research', '', 1.00, 50),
-  (23, 1, 10, 1, 0, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'RACP4', 'Group Learning', '', 1.00, 50),
-  (24, 1, 10, 1, 0, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'RACP5', 'Other Learning Activities', '', 1.00, 50);
+  (1, 1, 1, 0, 0, NOW(), NOW(), 'CE1', 'Conference session / workshop / course', '', 1.00, 50),
+  (2, 1, 1, 0, 0, NOW(), NOW(), 'CE2', 'Reading, research, literature review', '', 1.00, 25),
+  (3, 1, 1, 0, 0, NOW(), NOW(), 'CE3', 'Teaching - preperation and delivery', '', 1.00, 25),
+  (4, 1, 1, 0, 0, NOW(), NOW(), 'CE4', 'Presentation', '', 1.00, 25),
+  (5, 1, 1, 0, 0, NOW(), NOW(), 'CE5', 'Online content - other', '', 1.00, 25),
+  (6, 3, 1, 0, 1, NOW(), NOW(), 'CE6', 'MappCPD online module', '', 1.00, 50),
+  (7, 1, 2, 0, 0, NOW(), NOW(), 'PR1', 'Formal performance review or audit', '', 1.00, 20),
+  (8, 1, 2, 0, 0, NOW(), NOW(), 'PR2', 'Informal peer review / meeting', '', 1.00, 20),
+  (9, 1, 3, 0, 0, NOW(), NOW(), 'PQ1', 'Personal / professional / management course', '', 1.00, 20),
+  (10, 1, 3, 0, 0, NOW(), NOW(), 'PQ2', 'Self-directed learning (professional qualities)', '', 1.00, 20),
+  (20, 1, 10, 1, 0, NOW(), NOW(), 'RACP1', 'Practice Review & Improvement', '', 3.00, 50),
+  (21, 1, 10, 1, 0, NOW(), NOW(), 'RACP2', 'Assessed Learning', '', 2.00, 50),
+  (22, 1, 10, 1, 0, NOW(), NOW(), 'RACP3', 'Educational Development, Teaching & Research', '', 1.00, 50),
+  (23, 1, 10, 1, 0, NOW(), NOW(), 'RACP4', 'Group Learning', '', 1.00, 50),
+  (24, 1, 10, 1, 0, NOW(), NOW(), 'RACP5', 'Other Learning Activities', '', 1.00, 50);
 
 -- name: insert-data-ce_activity_category
 INSERT INTO `%s`.`ce_activity_category` VALUES
@@ -82,42 +80,42 @@ INSERT INTO `%s`.`ce_activity_category` VALUES
 
 -- name: insert-data-ce_activity_type
 INSERT INTO `%s`.`ce_activity_type` VALUES
-  (1, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Practice audits/Clinical audits'),
-  (2, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Peer review'),
-  (3, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Patient satisfaction studies'),
-  (4, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Institution audits, e.g. hospital accreditation'),
-  (5, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Incident reporting/monitoring, e.g. morbidity & mortality meetings'),
-  (6, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Practice Review, e.g. Regular Practice Review'),
-  (7, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Multi Source Feedback (MSF)'),
-  (8, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Participation in the RACP Supervisor Professional Development Program (SPDP)'),
-  (9, 20, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Other practice review & improvement activities'),
-  (10, 21, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'PhD studies'),
-  (11, 21, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Formal postgraduate studies'),
-  (12, 21, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Self-assessment programs'),
-  (13, 21, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Courses to learn new techniques, e.g. Advanced Life Support (ALS)'),
-  (14, 21, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Learner initiated and planned projects'),
-  (15, 21, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Other assessed learning activities'),
-  (16, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Teaching, e.g. supervision, mentoring'),
-  (17, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Involvement in standards development'),
-  (18, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Reviewer'),
-  (19, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Writing examination questions'),
-  (20, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Examining'),
-  (21, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Publication (including preparation)'),
-  (22, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Presentation (including preparation)'),
-  (23, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Committee/working group/council involvement'),
-  (24, 22, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Other educational development, teaching & research activities'),
-  (25, 23, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Seminars'),
-  (26, 23, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Conferences'),
-  (27, 23, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Workshops'),
-  (28, 23, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Grand rounds'),
-  (29, 23, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Journal clubs'),
-  (30, 23, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Hospital and other medical meetings'),
-  (31, 23, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Other group learning activities'),
-  (32, 24, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Reading journals and texts'),
-  (33, 24, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Information searches, e.g. Medline'),
-  (34, 24, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Audio/videotapes'),
-  (35, 24, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Web-based learning'),
-  (36, 24, 1, '2018-02-04 03:03:07', '2018-02-04 03:03:07', 'Other learning activities');
+  (1, 20, 1, NOW(), NOW(), 'Practice audits/Clinical audits'),
+  (2, 20, 1, NOW(), NOW(), 'Peer review'),
+  (3, 20, 1, NOW(), NOW(), 'Patient satisfaction studies'),
+  (4, 20, 1, NOW(), NOW(), 'Institution audits, e.g. hospital accreditation'),
+  (5, 20, 1, NOW(), NOW(), 'Incident reporting/monitoring, e.g. morbidity & mortality meetings'),
+  (6, 20, 1, NOW(), NOW(), 'Practice Review, e.g. Regular Practice Review'),
+  (7, 20, 1, NOW(), NOW(), 'Multi Source Feedback (MSF)'),
+  (8, 20, 1, NOW(), NOW(), 'Participation in the RACP Supervisor Professional Development Program (SPDP)'),
+  (9, 20, 1, NOW(), NOW(), 'Other practice review & improvement activities'),
+  (10, 21, 1, NOW(), NOW(), 'PhD studies'),
+  (11, 21, 1, NOW(), NOW(), 'Formal postgraduate studies'),
+  (12, 21, 1, NOW(), NOW(), 'Self-assessment programs'),
+  (13, 21, 1, NOW(), NOW(), 'Courses to learn new techniques, e.g. Advanced Life Support (ALS)'),
+  (14, 21, 1, NOW(), NOW(), 'Learner initiated and planned projects'),
+  (15, 21, 1, NOW(), NOW(), 'Other assessed learning activities'),
+  (16, 22, 1, NOW(), NOW(), 'Teaching, e.g. supervision, mentoring'),
+  (17, 22, 1, NOW(), NOW(), 'Involvement in standards development'),
+  (18, 22, 1, NOW(), NOW(), 'Reviewer'),
+  (19, 22, 1, NOW(), NOW(), 'Writing examination questions'),
+  (20, 22, 1, NOW(), NOW(), 'Examining'),
+  (21, 22, 1, NOW(), NOW(), 'Publication (including preparation)'),
+  (22, 22, 1, NOW(), NOW(), 'Presentation (including preparation)'),
+  (23, 22, 1, NOW(), NOW(), 'Committee/working group/council involvement'),
+  (24, 22, 1, NOW(), NOW(), 'Other educational development, teaching & research activities'),
+  (25, 23, 1, NOW(), NOW(), 'Seminars'),
+  (26, 23, 1, NOW(), NOW(), 'Conferences'),
+  (27, 23, 1, NOW(), NOW(), 'Workshops'),
+  (28, 23, 1, NOW(), NOW(), 'Grand rounds'),
+  (29, 23, 1, NOW(), NOW(), 'Journal clubs'),
+  (30, 23, 1, NOW(), NOW(), 'Hospital and other medical meetings'),
+  (31, 23, 1, NOW(), NOW(), 'Other group learning activities'),
+  (32, 24, 1, NOW(), NOW(), 'Reading journals and texts'),
+  (33, 24, 1, NOW(), NOW(), 'Information searches, e.g. Medline'),
+  (34, 24, 1, NOW(), NOW(), 'Audio/videotapes'),
+  (35, 24, 1, NOW(), NOW(), 'Web-based learning'),
+  (36, 24, 1, NOW(), NOW(), 'Other learning activities');
 
 -- name: insert-data-ce_activity_unit
 INSERT INTO `%s`.`ce_activity_unit` VALUES (1, 1, NOW(), NOW(), 1, 'hours', NULL),
@@ -205,7 +203,8 @@ INSERT INTO `%s`.`country` VALUES
 
 -- name: insert-data-fn_inventory
 INSERT INTO `%s`.`fn_inventory` VALUES
-  (1, 1, '2015-08-30 17:10:20', '2015-08-30 17:10:20', 'Subs - Associate', 'Associate Membership Fee', 300.00, 'year', 1),
+  (1, 1, '2015-08-30 17:10:20', '2015-08-30 17:10:20', 'Subs - Associate', 'Associate Membership Fee', 300.00, 'year',
+   1),
   (2, 1, '2015-08-30 17:10:20', '2015-08-30 17:10:20', 'Subs - Ordinary', 'Ordinary Membership Fee', 600.00, 'year', 1),
   (3, 1, '2015-08-30 17:10:21', '2015-08-30 17:10:21', 'Subs - Fellow', 'Fellow Membership Fee', 900.00, 'year', 1),
   (4, 1, '2015-08-30 17:10:21', '2015-08-30 17:10:21', 'Misc', 'Miscellaneous item', 1.00, 'item', 1);
@@ -302,9 +301,19 @@ INSERT INTO `%s`.`fn_tax` VALUES
   (1, 14, 1, '2013-05-16 14:39:39', NOW(), 'GST', 'Goods & Services Tax (AU)', 10.00),
   (2, 159, 1, '2013-05-16 14:39:39', NOW(), 'GST', 'Goods & Services Tax (NZ)', 15.00);
 
--- insert-data-fs_set
+-- name: insert-data-fs_set
+INSERT INTO `%s`.`fs_set` VALUES
+  (1, 1, 1, NOW(), NOW(), 'AWS-S3', '{"key": 1234}', 'test-volume', '/note/', 'wf_attachment'),
+  (2, 1, 1, NOW(), NOW(), 'AWS-S3', '{"key": 1234}', 'test-volume', '/resource/', 'ol_resource_file'),
+  (3, 1, 1, NOW(), NOW(), 'AWS-S3', '{"key": 1234}', 'test-volume', '/xml/', 'xml'),
+  (4, 1, 1, NOW(), NOW(), 'AWS-S3', '{"key": 1234}', 'test-volume', '/cpd/', 'ce_m_activity_attachment');
 
--- insert-data-fs_url
+-- name: insert-data-fs_url
+INSERT INTO `%s`.`fs_url` VALUES
+  (1, 1, 1, NOW(), NOW(), 10, 'https://cdn.test.com'),
+  (2, 1, 1, NOW(), NOW(), 10, 'https://cdn.test.com'),
+  (3, 1, 1, NOW(), NOW(), 10, 'https://cdn.test.com'),
+  (4, 1, 1, NOW(), NOW(), 10, 'https://cdn.test.com');
 
 -- insert-data-log_data_action
 
@@ -315,17 +324,17 @@ INSERT INTO `%s`.`fn_tax` VALUES
 -- name: insert-data-member
 INSERT INTO `%s`.`member` VALUES
   (1, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1970-06-17', NULL, NULL, 'Dolan',
-                                                                                '', 'Webster', NULL, NULL, NULL,
+                                                                '', 'Webster', NULL, NULL, NULL,
    'ac@malesuadaut.net', NULL, '', NULL, NULL, NULL),
   (2, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1978-05-12', NULL, NULL, 'Velma',
-                                                                                '', 'Whitley', NULL, NULL, NULL,
+                                                                '', 'Whitley', NULL, NULL, NULL,
    'sapien.cursus@gravidamauris.ca', NULL, '', NULL, NULL, NULL),
   (3, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1965-10-07', NULL, NULL,
-                                                                                'Jakeem', '', 'Sellers', NULL, NULL,
-                                                                                NULL, 'Vivamus@semperetlacinia.edu',
+                                                                'Jakeem', '', 'Sellers', NULL, NULL,
+                                                                NULL, 'Vivamus@semperetlacinia.edu',
    NULL, '', NULL, NULL, NULL),
   (4, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1954-10-22', NULL, NULL,
-                                                                                'Nicole', '', 'Colon', NULL, NULL, NULL,
+                                                                'Nicole', '', 'Colon', NULL, NULL, NULL,
    'risus.Nunc.ac@magnaLoremipsum.com', NULL, '', NULL, NULL, NULL);
 
 -- name: insert-data-mp_accreditation
@@ -561,7 +570,6 @@ INSERT INTO `%s`.`organisation` VALUES
   (4, 1, 1, 1, 1, NOW(), NOW(), 'ABC-2', 'ABC Sub2', '', '', '', '', '', '', '', '', '', ''),
   (5, 1, 1, 1, 1, NOW(), NOW(), 'ABC-3', 'ABC Sub3', '', '', '', '', '', '', '', '', '', '');
 
-
 -- name: insert-data-organisation_type
 INSERT INTO `%s`.`organisation_type` VALUES
   (1, 1, '2013-06-11 20:45:11', '2013-06-11 20:45:31', 'CSANZ Council', 'Group / type for CSANZ councils'),
@@ -575,7 +583,9 @@ INSERT INTO `%s`.`organisation_type` VALUES
   (9, 1, '2014-07-23 12:00:14', '2014-07-23 12:00:14', 'Heart Foundation', 'Heart Foundation of Australia'),
   (10, 1, '2014-08-04 19:21:08', '2014-08-04 19:21:08', 'Government', '');
 
--- insert-data-wf_attachment
+-- name: insert-data-wf_attachment
+INSERT INTO `%s`.`wf_attachment` VALUES
+  (1, 1, 1, 1, 1, NOW(), NOW(), 'filename.ext');
 
 -- name: insert-data-wf_issue
 INSERT INTO `%s`.`wf_issue` VALUES
@@ -636,29 +646,19 @@ INSERT INTO `%s`.`wf_issue_type` VALUES
 
 -- name: insert-data-wf_note
 INSERT INTO `%s`.`wf_note` VALUES
-  (1, 10001, 1, 1, 1, '2015-09-01 04:32:49', '2015-09-01 04:32:49', '2015-09-01', 'Application scanned and attached.'),
-  (2, 1, NULL, NULL, 1, '2015-09-01 06:13:27', '2015-09-01 06:13:27', '2015-09-01', 'Issue raised.'),
-  (3, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.'),
-  (4, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.'),
-  (5, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.'),
-  (6, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.'),
-  (7, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.'),
-  (8, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.'),
-  (9, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.'),
-  (10, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised.');
+  (1, 10001, 1, 1, 1, '2015-09-01 04:32:49', '2015-09-01 04:32:49', '2015-09-01', 'Application note'),
+  (2, 1, NULL, NULL, 1, '2015-09-01 06:13:27', '2015-09-01 06:13:27', '2015-09-01', 'Issue raised'),
+  (3, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised'),
+  (4, 1, NULL, NULL, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', '2015-09-01', 'Issue raised');
 
 -- name: insert-data-wf_note_association
-INSERT INTO `%s`.`wf_note_association`VALUES
-  (1, 1, 1, 1, 1, '2015-09-01 04:32:49', '2015-09-01 04:32:49', 'application'),
-  (2, 2, 1, 1, 1, '2015-09-01 06:13:27', '2015-09-01 06:13:27', 'issue'),
-  (3, 3, 1, 2, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', 'issue'),
-  (4, 4, 2, 3, 1, '2015-09-01 06:35:15', '2015-09-01 06:35:15', 'issue');
+INSERT INTO `%s`.`wf_note_association` VALUES
+  (1, 1, 1, 1, 1, NOW(), NOW(), 'application'),
+  (2, 2, 1, 1, 1, NOW(), NOW(), 'issue'),
+  (3, 3, 1, 2, 1, NOW(), NOW(), 'issue'),
+  (4, 4, 2, 3, 1, NOW(), NOW(), 'issue');
 
 -- name: insert-data-wf_note_type
 INSERT INTO `%s`.`wf_note_type` VALUES
-  (1, 1, 1, '2013-11-07 11:53:15', '2013-11-07 11:53:15', 'System', 'Note added by system housekeeping'),
-  (10001, 1, 0, '2013-05-06 06:18:02', '2013-06-26 16:43:21', 'General', ''),
-  (10002, 1, 0, '2013-05-06 06:18:02', '2013-06-26 16:43:21', 'Account', ''),
-  (10003, 1, 0, '2013-06-26 16:43:33', '2013-06-26 16:43:33', 'Contact', ''),
-  (10004, 1, 0, '2013-06-26 20:22:04', '2013-06-26 20:22:04', 'Prize / Award', '');
-
+  (1, 1, 1, NOW(), NOW(), 'System', 'Note added by system housekeeping'),
+  (10001, 1, 0, NOW(), NOW(), 'General', '');

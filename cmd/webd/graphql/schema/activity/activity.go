@@ -2,7 +2,7 @@ package activity
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/mappcpd/web-services/internal/activities"
+	"github.com/mappcpd/web-services/internal/activity"
 )
 
 // activityType is a local version of activities.ActivityType, to remove to the sql.NullInt64
@@ -12,13 +12,13 @@ type activityType struct {
 }
 
 // activitiesData returns a list of activity types
-func activitiesData() ([]activities.Activity, error) {
-	return activities.Activities()
+func activitiesData() ([]activity.Activity, error) {
+	return activity.All()
 }
 
 // activityTypesData returns sub types for an activity
-func activityTypesData(activityID int) ([]activities.ActivityType, error) {
-	return activities.ActivityTypesByActivity(activityID)
+func activityTypesData(activityID int) ([]activity.ActivityType, error) {
+	return activity.Types(activityID)
 }
 
 // ActivitiesQueryField resolves queries for activities (activity types)
@@ -84,7 +84,7 @@ var activityTypesQueryField = &graphql.Field{
 
 		// get the activity id from the parent (activity) object
 		// note .Description is interface{} which can assert to activity
-		activityID := p.Source.(activities.Activity).ID
+		activityID := p.Source.(activity.Activity).ID
 		types, err := activityTypesData(activityID)
 		if err != nil {
 			return nil, nil

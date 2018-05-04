@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/go-uuid"
 )
 
+// Hard coded for local dev and Travis CI
 const DSN = "root:password@tcp(localhost:3306)/"
 
 var schemaQueries = goyesql.MustParseFile("../../testdata/schema.sql")
@@ -43,6 +44,7 @@ func (t *TestDB) Setup() error {
 
 	err = t.MySQL.ConnectSource(DSN + t.Name)
 	if err != nil {
+		t.TearDown()
 		return errors.Wrap(err, "Error connecting to the test database")
 	}
 
@@ -50,6 +52,7 @@ func (t *TestDB) Setup() error {
 		query = fmt.Sprintf(q, t.Name)
 		_, err = t.MySQL.Session.Exec(query)
 		if err != nil {
+			t.TearDown()
 			return errors.Wrap(err, "Error creating tables")
 		}
 	}
@@ -58,7 +61,8 @@ func (t *TestDB) Setup() error {
 		query = fmt.Sprintf(q, t.Name)
 		_, err = t.MySQL.Session.Exec(query)
 		if err != nil {
-			return errors.Wrap(err, "Error inserting data")
+			t.TearDown()
+			return errors.Wrap(err, "Error inserting data - " + query)
 		}
 	}
 

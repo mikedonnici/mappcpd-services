@@ -16,20 +16,20 @@ import (
 
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/handlers/responder"
 	"github.com/mappcpd/web-services/cmd/webd/rest/router/middleware"
-	"github.com/mappcpd/web-services/internal/activities"
+	"github.com/mappcpd/web-services/internal/activity"
 	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/fileset"
-	"github.com/mappcpd/web-services/internal/member/activity"
+	_ma "github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/platform/s3"
 )
 
-// Activities fetches list of activity types
+// All fetches list of activity types
 func Activities(w http.ResponseWriter, _ *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	al, err := activities.Activities()
+	al, err := activity.All()
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -58,7 +58,7 @@ func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 		p.Message = responder.Message{http.StatusBadRequest, "failed", err.Error()}
 	}
 
-	a, err := activities.ActivityByID(id)
+	a, err := activity.ByID(id)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -87,7 +87,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Response
-	a, err := activity.MemberActivityByID(int(id))
+	a, err := _ma.MemberActivityByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -118,7 +118,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Decode JSON body into ActivityAttachment value
-	a := activity.MemberActivityInput{}
+	a :=_ma.MemberActivityInput{}
 	a.MemberID = middleware.UserAuthToken.Claims.ID
 	err := json.NewDecoder(r.Body).Decode(&a)
 	if err != nil {
@@ -128,7 +128,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aid, err := activity.AddMemberActivity(a)
+	aid, err := _ma.AddMemberActivity(a)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -136,7 +136,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the new record for return
-	ar, err := activity.MemberActivityByID(int(aid))
+	ar, err :=_ma.MemberActivityByID(int(aid))
 	if err != nil {
 		msg := "Could not fetch the new record"
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", msg + " " + err.Error()}
@@ -166,7 +166,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the original activity record
-	a, err := activity.MemberActivityByID(int(id))
+	a, err :=_ma.MemberActivityByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -186,7 +186,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Original activity - from above we have a MemberActivity but need a subset of this - ie MemberActivityInput
-	oa := activity.MemberActivityInput{
+	oa :=_ma.MemberActivityInput{
 		ID:          a.ID,
 		MemberID:    a.MemberID,
 		ActivityID:  a.Activity.ID,
@@ -198,7 +198,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// new activity - ie, updated version posted in JSON body
-	na := activity.MemberActivityInput{}
+	na :=_ma.MemberActivityInput{}
 	err = json.NewDecoder(r.Body).Decode(&na)
 	if err != nil {
 		msg := "Error decoding JSON: " + err.Error() + ". Check the format of request body."
@@ -220,7 +220,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("New:", na)
 
 	// Update the activity record
-	err = activity.UpdateMemberActivity(na)
+	err = _ma.UpdateMemberActivity(na)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -228,7 +228,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// updated record - fetch for response
-	ur, err := activity.MemberActivityByID(int(id))
+	ur, err :=_ma.MemberActivityByID(int(id))
 	if err != nil {
 		msg := "Could not fetch the updated record"
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", msg + " " + err.Error()}
@@ -247,7 +247,7 @@ func MembersActivitiesRecurring(w http.ResponseWriter, _ *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	ra, err := activity.MemberRecurring(middleware.UserAuthToken.Claims.ID)
+	ra, err :=_ma.MemberRecurring(middleware.UserAuthToken.Claims.ID)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failed", "Failed to initialise a value of type MemberRecurring -" + err.Error()}
 		p.Send(w)
@@ -270,7 +270,7 @@ func MembersActivitiesRecurringAdd(w http.ResponseWriter, r *http.Request) {
 	id := middleware.UserAuthToken.Claims.ID
 
 	// Fetch the recurring activity doc for this user first
-	ra, err := activity.MemberRecurring(id)
+	ra, err :=_ma.MemberRecurring(id)
 	if err != nil {
 		msg := "MembersActivitiesRecurringAdd() Failed to initialise a value of type Recurring -" + err.Error()
 		fmt.Println(msg)
@@ -281,7 +281,7 @@ func MembersActivitiesRecurringAdd(w http.ResponseWriter, r *http.Request) {
 	ra.UpdatedAt = time.Now()
 
 	// Decode the new activity from POST body...
-	b := activity.RecurringActivity{}
+	b := _ma.RecurringActivity{}
 	err = json.NewDecoder(r.Body).Decode(&b)
 	if err != nil {
 		msg := "MembersActivitiesRecurringAdd() failed to decode body -" + err.Error()
@@ -321,7 +321,7 @@ func MembersActivitiesRecurringRemove(w http.ResponseWriter, r *http.Request) {
 	id := middleware.UserAuthToken.Claims.ID
 
 	// Fetch the recurring activity doc for this user first
-	ra, err := activity.MemberRecurring(id)
+	ra, err :=_ma.MemberRecurring(id)
 	if err != nil {
 		msg := "MembersActivitiesRecurringAdd() Failed to initialise a value of type Recurring -" + err.Error()
 		fmt.Println(msg)
@@ -361,7 +361,7 @@ func MembersActivitiesRecurringRecorder(w http.ResponseWriter, r *http.Request) 
 	// as we can select the document based on the recurring activity id. However, this ensures that the recurring
 	// activity belongs to the member - however slim the chances of guessing an ObjectID!
 	id := middleware.UserAuthToken.Claims.ID
-	ra, err := activity.MemberRecurring(id)
+	ra, err :=_ma.MemberRecurring(id)
 	if err != nil {
 		msg := "MembersActivitiesRecurringAdd() Failed to initialise a value of type Recurring -" + err.Error()
 		fmt.Println(msg)
@@ -427,7 +427,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 	}
 
-	a, err := activity.MemberActivityByID(int(id))
+	a, err :=_ma.MemberActivityByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()
@@ -497,7 +497,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 		p.Send(w)
 		return
 	}
-	activity, err := activity.MemberActivityByID(int(id))
+	activity, err :=_ma.MemberActivityByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()
@@ -513,7 +513,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	// CHECK OWNER!!
-	if middleware.UserAuthToken.Claims.ID != activity.MemberID {
+	if middleware.UserAuthToken.Claims.ID !=activity.MemberID {
 		p.Message = responder.Message{http.StatusUnauthorized, "failed", "Token does not belong to the owner of this resource"}
 		p.Data = a
 		p.Send(w)

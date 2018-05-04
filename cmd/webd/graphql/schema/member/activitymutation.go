@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/graphql-go/graphql"
-	"github.com/mappcpd/web-services/internal/member/activity"
+	"github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
@@ -133,7 +133,7 @@ var activityDelete = &graphql.Field{
 
 		activityID, ok := p.Args["id"].(int)
 		if ok {
-			return "Record deleted", activity.DeleteMemberActivity(memberID, activityID)
+			return "Record deleted", cpd.DeleteMemberActivity(memberID, activityID)
 		}
 		return nil, nil
 	},

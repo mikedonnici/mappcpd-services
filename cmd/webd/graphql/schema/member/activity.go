@@ -6,9 +6,9 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/mappcpd/web-services/internal/activities"
+	"github.com/mappcpd/web-services/internal/activity"
 	"github.com/mappcpd/web-services/internal/date"
-	"github.com/mappcpd/web-services/internal/member/activity"
+	"github.com/mappcpd/web-services/internal/cpd"
 )
 
 // activityData is a leaner representation of members.activityData
@@ -121,7 +121,7 @@ func mapActivitiesData(memberID int, filter map[string]interface{}) ([]activityD
 	var xa []activityData
 
 	// This returns a nested struct which is simplified below.
-	xma, err := activity.MemberActivitiesByMemberID(memberID)
+	xma, err := cpd.MemberActivitiesByMemberID(memberID)
 
 	// Set up date filters
 	from, okFrom := filter["from"].(time.Time)
@@ -170,7 +170,7 @@ func mapActivitiesData(memberID int, filter map[string]interface{}) ([]activityD
 	// the date filters.
 	last, ok := filter["last"].(int)
 	if ok {
-		// Activities are returned in reverse order so returning the 'last' n items, ie the most *recent*, means
+		// All are returned in reverse order so returning the 'last' n items, ie the most *recent*, means
 		// slicing from the index 0. If n is greater than the total, just return the total.
 		if last < len(xma) {
 			xa = xa[:last]
@@ -186,7 +186,7 @@ func mapActivityData(memberID, memberActivityID int) (activityData, error) {
 	var a activityData
 
 	// This returns a nested struct which we can simplify
-	ma, err := activity.MemberActivityByID(memberActivityID)
+	ma, err := cpd.MemberActivityByID(memberActivityID)
 	if err != nil {
 		return a, err
 	}
@@ -222,7 +222,7 @@ func addActivity(memberID int, activityInput activityInputData) (activityData, e
 
 	// Create the required type for the insert
 	// todo: add evidence and attachment
-	ma := activity.MemberActivityInput{
+	ma := cpd.MemberActivityInput{
 		MemberID:    memberID,
 		ActivityID:  activityInput.ActivityID,
 		TypeID:      activityInput.TypeID,
@@ -232,7 +232,7 @@ func addActivity(memberID int, activityInput activityInputData) (activityData, e
 		Evidence:    activityInput.Evidence,
 	}
 
-	newID, err := activity.AddMemberActivity(ma)
+	newID, err := cpd.AddMemberActivity(ma)
 	if err != nil {
 		return ad, err
 	}
@@ -244,7 +244,7 @@ func addActivity(memberID int, activityInput activityInputData) (activityData, e
 func updateActivity(memberID int, activityInput activityInputData) (activityData, error) {
 
 	// Create the required value
-	ma := activity.MemberActivityInput{
+	ma := cpd.MemberActivityInput{
 		ID:          activityInput.ID,
 		MemberID:    memberID,
 		ActivityID:  activityInput.ActivityID,
@@ -260,7 +260,7 @@ func updateActivity(memberID int, activityInput activityInputData) (activityData
 
 	// This just returns an error so re-fetch the member activity record
 	// so that all the fields are populated for the response.
-	err := activity.UpdateMemberActivity(ma)
+	err := cpd.UpdateMemberActivity(ma)
 	if err != nil {
 		return mar, err
 	}
@@ -272,7 +272,7 @@ func updateActivity(memberID int, activityInput activityInputData) (activityData
 func activityDuplicateID(memberID int, activityInput activityInputData) int {
 
 	// Create the required value
-	ma := activity.MemberActivityInput{
+	ma := cpd.MemberActivityInput{
 		ID:          activityInput.ID,
 		MemberID:    memberID,
 		ActivityID:  activityInput.ActivityID,
@@ -282,11 +282,11 @@ func activityDuplicateID(memberID int, activityInput activityInputData) int {
 		Description: activityInput.Description,
 	}
 
-	return activity.DuplicateMemberActivity(ma)
+	return cpd.DuplicateMemberActivity(ma)
 }
 
 // activityIDByTypeID returns the activity id for an activity type id
 func activityIDByTypeID(activityTypeID int) (int, error) {
-	a, err := activities.ActivityByActivityTypeID(activityTypeID)
+	a, err := activity.ActivityByActivityTypeID(activityTypeID)
 	return a.ID, err
 }

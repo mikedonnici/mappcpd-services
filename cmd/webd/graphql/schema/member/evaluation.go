@@ -1,7 +1,7 @@
 package member
 
 import (
-	"github.com/mappcpd/web-services/internal/member/activity"
+	"github.com/mappcpd/web-services/internal/cpd"
 )
 
 // evaluationData representations the member evaluation data
@@ -20,7 +20,7 @@ func evaluations(memberID int) ([]evaluationData, error) {
 
 	var xed []evaluationData
 
-	xar, err := activity.MemberActivityReports(memberID)
+	xar, err := cpd.MemberActivityReports(memberID)
 	for _, ar := range xar {
 		e := mapEvaluationData(ar)
 		xed = append(xed, e)
@@ -34,7 +34,7 @@ func currentEvaluation(memberID int) (evaluationData, error) {
 
 	var ed evaluationData
 
-	ce, err := activity.CurrentEvaluationPeriodReport(memberID)
+	ce, err := cpd.CurrentEvaluationPeriodReport(memberID)
 	if err != nil {
 		return ed, err
 	}
@@ -44,7 +44,7 @@ func currentEvaluation(memberID int) (evaluationData, error) {
 }
 
 // mapEvaluationData maps am activity.MemberActivityReport to a local evaluationData value
-func mapEvaluationData(ar activity.MemberActivityReport) evaluationData {
+func mapEvaluationData(ar cpd.MemberActivityReport) evaluationData {
 
 	var ed evaluationData
 
