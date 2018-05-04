@@ -12,7 +12,6 @@ import (
 var db = testdata.NewTestDB()
 var helper = testdata.NewHelper()
 
-// todo does not exit on first failed test?
 func TestMain(m *testing.M) {
 	err := db.Setup()
 	if err != nil {

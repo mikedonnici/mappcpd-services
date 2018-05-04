@@ -13,7 +13,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/mappcpd/web-services/internal/member/activity"
-	"github.com/mappcpd/web-services/internal/notes"
+	"github.com/mappcpd/web-services/internal/note"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
 )
@@ -542,7 +542,7 @@ func (m *Member) SetSpecialities() error {
 // a particular entity 'e'. An 'entity' is a value in the db that
 // describes the table (entity) to which the note is linked. For example,
 // a note relating to a membership title would have the value mp_title
-func (m *Member) GetNotes(entityName string, entityID string) []notes.Note {
+func (m *Member) GetNotes(entityName string, entityID string) []note.Note {
 
 	query := `SELECT
 		wn.effective_on,
@@ -571,7 +571,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []notes.Note {
 	fmt.Println(query)
 
 	// Get the notes relating to this title
-	n1 := notes.Note{
+	n1 := note.Note{
 		ID:            123,
 		DateCreated:   "2016-01-01",
 		DateUpdated:   "2016-02-02",
@@ -579,7 +579,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []notes.Note {
 		Content:       "This is the actual note...",
 	}
 
-	n2 := notes.Note{
+	n2 := note.Note{
 		ID:            123,
 		DateCreated:   "2016-04-01",
 		DateUpdated:   "2016-05-02",
@@ -587,7 +587,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []notes.Note {
 		Content:       "This is the second note...",
 	}
 
-	return []notes.Note{n2, n1}
+	return []note.Note{n2, n1}
 }
 
 // MemberByID fetches a member record by id, populates a Member value
