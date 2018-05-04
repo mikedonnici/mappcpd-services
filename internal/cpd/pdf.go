@@ -1,4 +1,4 @@
-package activity
+package cpd
 
 import (
 	"fmt"
@@ -130,7 +130,7 @@ func pageDisplayWidth(pdf *gofpdf.Fpdf) float64 {
 	return pageDisplayWidth
 }
 
-func addActivityDetailRows(pdf *gofpdf.Fpdf, colWidths []float64, records []activity) {
+func addActivityDetailRows(pdf *gofpdf.Fpdf, colWidths []float64, records []activityRecord) {
 
 	pdf.SetFont("Arial", "", text10)
 

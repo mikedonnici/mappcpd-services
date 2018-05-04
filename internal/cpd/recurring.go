@@ -1,4 +1,4 @@
-package activity
+package cpd
 
 import (
 	"errors"
@@ -83,7 +83,7 @@ func (r *Recurring) Save() error {
 	return nil
 }
 
-// RemoveActivity removes one of the recurring activities from the Recurring.Activities and saves the resulting doc
+// RemoveActivity removes one of the recurring activities from the Recurring.All and saves the resulting doc
 func (r *Recurring) RemoveActivity(_id string) error {
 
 	// The activities are stored in a doc, as sub docs in an activity array.
@@ -187,7 +187,7 @@ func (r *Recurring) Skip(_id string) error {
 	return nil
 }
 
-// UpdateActivity updates one RecurringActivity in the Recurring.Activities slice and saves it to the database
+// UpdateActivity updates one RecurringActivity in the Recurring.All slice and saves it to the database
 func (r *Recurring) UpdateActivity(a RecurringActivity) {
 
 	// Replace the activity with a matching id

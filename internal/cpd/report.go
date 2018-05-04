@@ -1,9 +1,9 @@
-package activity
+package cpd
 
 import (
 	"fmt"
 
-	"github.com/mappcpd/web-services/internal/activities"
+	"github.com/mappcpd/web-services/internal/activity"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
@@ -24,17 +24,17 @@ type MemberActivityReport struct {
 // activityReport represents a summary of a specific activity type
 // that was recorded within an evaluation period
 type activityReport struct {
-	ActivityID    int        `json:"activityId" bson:"activityId"`
-	ActivityName  string     `json:"activityName" bson:"activityName"`
-	ActivityUnits float64    `json:"activityUnits" bson:"activityUnits"`
-	CreditPerUnit float64    `json:"creditPerUnit" bson:"creditPerUnit"`
-	CreditTotal   float64    `json:"creditTotal" bson:"creditTotal"`
-	MaxCredit     float64    `json:"maxCredit" bson:"maxCredit"`
-	CreditAwarded float64    `json:"creditAwarded" bson:"creditAwarded"`
-	Records       []activity `json:"records" bson:"records"`
+	ActivityID    int              `json:"activityId" bson:"activityId"`
+	ActivityName  string           `json:"activityName" bson:"activityName"`
+	ActivityUnits float64          `json:"activityUnits" bson:"activityUnits"`
+	CreditPerUnit float64          `json:"creditPerUnit" bson:"creditPerUnit"`
+	CreditTotal   float64          `json:"creditTotal" bson:"creditTotal"`
+	MaxCredit     float64          `json:"maxCredit" bson:"maxCredit"`
+	CreditAwarded float64          `json:"creditAwarded" bson:"creditAwarded"`
+	Records       []activityRecord `json:"records" bson:"records"`
 }
 
-type activity struct {
+type activityRecord struct {
 	Date        string
 	Quantity    float64
 	Description string
@@ -105,7 +105,7 @@ func CurrentEvaluationPeriodReport(memberID int) (MemberActivityReport, error) {
 func (e *MemberActivityReport) generateActivitySummary() error {
 
 	// Need empty activities on the report, could not sort with JOIN in a single query as empty activities were omitted
-	xa, err := activities.Activities()
+	xa, err := activity.All()
 	if err != nil {
 		return err
 	}
@@ -166,8 +166,8 @@ func (a *activityReport) capCreditTotal() {
 	}
 }
 
-func mapMemberActivity(r MemberActivity) activity {
-	nr := activity{
+func mapMemberActivity(r MemberActivity) activityRecord {
+	nr := activityRecord{
 		Date:        r.Date,
 		Type:        r.Type.Name,
 		Description: r.Description,

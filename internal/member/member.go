@@ -12,7 +12,7 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mappcpd/web-services/internal/member/activity"
+	"github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/note"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
@@ -52,7 +52,7 @@ type Member struct {
 	Specialities   []Speciality    `json:"specialities" bson:"specialities"`
 
 	// omitempty to exclude this from sync
-	RecurringActivities []activity.RecurringActivity `json:"recurringActivities,omitempty" bson:"recurringActivities,omitempty"`
+	RecurringActivities []cpd.RecurringActivity `json:"recurringActivities,omitempty" bson:"recurringActivities,omitempty"`
 }
 
 type Members []Member

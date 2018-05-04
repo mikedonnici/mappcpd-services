@@ -2,8 +2,8 @@
 package note
 
 import (
-	"github.com/nleof/goyesql"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/nleof/goyesql"
 )
 
 var queries = goyesql.MustParseFile("queries.sql")

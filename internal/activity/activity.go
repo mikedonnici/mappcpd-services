@@ -1,15 +1,15 @@
-package activities
+package activity
 
 import (
 	"fmt"
+	"runtime"
 
 	"database/sql"
 
-	"github.com/pkg/errors"
-
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
-	"runtime"
+	"github.com/nleof/goyesql"
+	"github.com/pkg/errors"
 )
 
 // ActivityCategory is the broadest grouping of activity and is purely descriptive
@@ -51,148 +51,41 @@ type ActivityCredit struct {
 // descriptive attribute, ActivityType is the most specific. However, it is also purely descriptive as the numbers all
 // occur in the Activity entity.
 type ActivityType struct {
-	ID       sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
-	Name     string        `json:"name" bson:"name"`
-	Activity Activity      `json:"activity" bson:"activity"`
+	ID   sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
+	Name string        `json:"name" bson:"name"`
+	//Activity Activity      `json:"activity" bson:"activity"`
 }
 
-// Activities fetches active activity records
-func Activities() ([]Activity, error) {
+var queries = goyesql.MustParseFile("queries.sql")
 
-	var xa []Activity
-
-	q := `SELECT
-			a.id AS ActivityID,
-			a.code AS ActivityCode,
-			a.name AS ActivityName,
-			a.description AS ActivityDescription,
-			a.ce_activity_category_id AS ActivityCategoryID,
-			c.name AS ActivityCategoryName,
-			a.ce_activity_unit_id AS ActivityUnitID,
-    		u.name AS ActivityUnitName,
-    		a.points_per_unit AS CreditPerUnit,
-    		a.annual_points_cap AS MaxCredit
-		  FROM
-			ce_activity a
-				LEFT JOIN
-			ce_activity_category c ON a.ce_activity_category_id = c.id
-				LEFT JOIN
-			ce_activity_unit u ON a.ce_activity_unit_id = u.id
-		  WHERE
-			a.active = 1`
-
-	rows, err := datastore.MySQL.Session.Query(q)
-	if err != nil {
-		return xa, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		a := Activity{}
-
-		rows.Scan(
-			&a.ID,
-			&a.Code,
-			&a.Name,
-			&a.Description,
-			&a.CategoryID,
-			&a.CategoryName,
-			&a.UnitID,
-			&a.UnitName,
-			&a.CreditPerUnit,
-			&a.MaxCredit,
-		)
-
-		// More detail about the way the activity is credited
-		//// is stored in the Credit field...
-		//a.Credit, err = ActivityCreditData(a.UnitID)
-		//if err != nil {
-		//	return xa, err
-		//}
-
-		xa = append(xa, a)
-	}
-
-	return xa, nil
+// All fetches active Activity records
+func All() ([]Activity, error) {
+	return activityList(datastore.MySQL)
 }
 
-// ActivityTypes fetches activity types
-func ActivityTypes() ([]ActivityType, error) {
-
-	var xat []ActivityType
-
-	query := "SELECT id, name FROM ce_activity_type WHERE active = 1"
-
-	rows, err := datastore.MySQL.Session.Query(query)
-	if err != nil {
-		return xat, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		at := ActivityType{}
-		err := rows.Scan(&at.ID, &at.Name)
-		if err != nil {
-			fmt.Println(err)
-		}
-		xat = append(xat, at)
-	}
-
-	return xat, nil
+// AllStore fetches active Activity records from the specified datastore - used for testing
+func AllStore(conn datastore.MySQLConnection) ([]Activity, error) {
+	return activityList(conn)
 }
 
-// ActivityTypesByActivity fetches activity sub-types for the activity designated by activityID
-func ActivityTypesByActivity(activityID int) ([]ActivityType, error) {
-
-	var xat []ActivityType
-
-	query := "SELECT id, name FROM ce_activity_type WHERE active = 1 AND ce_activity_id = ?"
-
-	rows, err := datastore.MySQL.Session.Query(query, activityID)
-	if err != nil {
-		return xat, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		at := ActivityType{}
-		err := rows.Scan(&at.ID, &at.Name)
-		if err != nil {
-			fmt.Println(err)
-		}
-		xat = append(xat, at)
-	}
-
-	return xat, nil
+// Types fetches the activity types
+func Types(activityID int) ([]ActivityType, error) {
+	return activityTypes(activityID, datastore.MySQL)
 }
 
-// ActivityByID fetches a single activity by id
-func ActivityByID(id int) (Activity, error) {
+// Types fetches the activity types from the specified datastore - used for testing
+func TypesStore(activityID int, conn datastore.MySQLConnection) ([]ActivityType, error) {
+	return activityTypes(activityID, conn)
+}
 
-	var a Activity
+// ByID fetches an activity
+func ByID(id int) (Activity, error) {
+	return activityByID(id, datastore.MySQL)
+}
 
-	// map ce_activity.ce_activity_unit_id
-	var ceActivityUnitID int
-
-	query := "SELECT id, ce_activity_unit_id, code, name, description FROM ce_activity WHERE active = 1 AND id = ?"
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
-		&a.ID,
-		&ceActivityUnitID,
-		&a.Code,
-		&a.Name,
-		&a.Description,
-	)
-	if err != nil {
-		return a, err
-	}
-
-	// Add credit info
-	//a.Credit, err = ActivityCreditData(ceActivityUnitID)
-	//if err != nil {
-	//	return a, err
-	//}
-
-	return a, nil
+// ByIDStore fetches an activity from the specified datastore - used for testing
+func ByIDStore(id int, conn datastore.MySQLConnection) (Activity, error) {
+	return activityByID(id, conn)
 }
 
 // ActivityByActivityTypeID fetches a single activity by activity type id
@@ -210,7 +103,7 @@ func ActivityByActivityTypeID(activityTypeID int) (Activity, error) {
 		return a, errors.Wrap(err, msg)
 	}
 
-	return ActivityByID(id)
+	return ByID(id)
 }
 
 // ActivityUnitCredit gets the credit value, per unit (eg hour, item) for a particular
@@ -273,4 +166,88 @@ func ActivityCreditData(activityUnitID int) (ActivityCredit, error) {
 func (a Activity) Save() error {
 	//query :=
 	return nil
+}
+
+func activityList(conn datastore.MySQLConnection) ([]Activity, error) {
+
+	var xa []Activity
+
+	q := queries["select-activities"] + " WHERE a.active = 1"
+	rows, err := conn.Session.Query(q)
+	if err != nil {
+		return xa, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		a, err := scanActivity(rows)
+		if err != nil {
+			return xa, err
+		}
+		xa = append(xa, a)
+	}
+
+	return xa, nil
+}
+
+func activityByID(id int, conn datastore.MySQLConnection) (Activity, error) {
+
+	var a Activity
+
+	// map ce_activity.ce_activity_unit_id
+	//var ceActivityUnitID int
+
+	// Not using .QueryRow even though is only one row - so can share the scanActivity func
+	q := queries["select-activities"] + ` WHERE a.id = ? LIMIT 1`
+	rows, err := conn.Session.Query(q, id)
+	if err != nil {
+		return a, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		return scanActivity(rows)
+	}
+
+	return a, nil
+}
+
+func activityTypes(activityID int, conn datastore.MySQLConnection) ([]ActivityType, error) {
+
+	var xat []ActivityType
+
+	query := "SELECT id, name FROM ce_activity_type WHERE active = 1 AND ce_activity_id = ?"
+	rows, err := conn.Session.Query(query, activityID)
+	if err != nil {
+		return xat, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		at := ActivityType{}
+		err := rows.Scan(&at.ID, &at.Name)
+		if err != nil {
+			fmt.Println(err)
+		}
+		xat = append(xat, at)
+	}
+
+	return xat, nil
+}
+
+func scanActivity(rows *sql.Rows) (Activity, error) {
+	a := Activity{}
+	err := rows.Scan(
+		&a.ID,
+		&a.Code,
+		&a.Name,
+		&a.Description,
+		&a.CategoryID,
+		&a.CategoryName,
+		&a.UnitID,
+		&a.UnitName,
+		&a.CreditPerUnit,
+		&a.MaxCredit,
+	)
+	return a, err
 }

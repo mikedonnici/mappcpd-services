@@ -1,34 +1,34 @@
-package activity
+package cpd
 
 import (
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/mappcpd/web-services/internal/activities"
+	"github.com/mappcpd/web-services/internal/activity"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/nleof/goyesql"
 	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
 )
 
-var queries = goyesql.MustParseFile("internal/member/activity/queries.sql")
+var queries = goyesql.MustParseFile("queries.sql")
 
 // MemberActivity represents an instance of an activity recorded by a member - ie a CPD diary entry
 type MemberActivity struct {
-	ID          int                         `json:"id" bson:"id"`
-	MemberID    int                         `json:"memberId" bson:"memberId"`
-	CreatedAt   time.Time                   `json:"createdAt" bson:"createdAt"`
-	UpdatedAt   time.Time                   `json:"updatedAt" bson:"updatedAt"`
-	Date        string                      `json:"date" bson:"date"`
-	DateISO     time.Time                   `json:"dateISO" bson:"dateISO"`
-	Credit      float64                     `json:"credit" bson:"credit"`
-	Description string                      `json:"description" bson:"description"`
-	Evidence    bool                        `json:"evidence" bson:"evidence"`
-	Category    activities.ActivityCategory `json:"category" bson:"category"`
-	Activity    activities.Activity         `json:"activity" bson:"activity"`
-	Type        activities.ActivityType     `json:"type" bson:"type"`
-	CreditData  activities.ActivityCredit   `json:"creditData" bson:"creditData"`
+	ID          int                       `json:"id" bson:"id"`
+	MemberID    int                       `json:"memberId" bson:"memberId"`
+	CreatedAt   time.Time                 `json:"createdAt" bson:"createdAt"`
+	UpdatedAt   time.Time                 `json:"updatedAt" bson:"updatedAt"`
+	Date        string                    `json:"date" bson:"date"`
+	DateISO     time.Time                 `json:"dateISO" bson:"dateISO"`
+	Credit      float64                   `json:"credit" bson:"credit"`
+	Description string                    `json:"description" bson:"description"`
+	Evidence    bool                      `json:"evidence" bson:"evidence"`
+	Category    activity.ActivityCategory `json:"category" bson:"category"`
+	Activity    activity.Activity         `json:"activity" bson:"activity"`
+	Type        activity.ActivityType     `json:"type" bson:"type"`
+	CreditData  activity.ActivityCredit   `json:"creditData" bson:"creditData"`
 }
 
 // MemberActivityInput contains fields required to add / update a Member Activity.
@@ -208,7 +208,7 @@ func AddMemberActivity(a MemberActivityInput) (int, error) {
 	}
 
 	// Look up the credit-per-unit for this type of activity...
-	uc, err := activities.ActivityUnitCredit(a.ActivityID)
+	uc, err := activity.ActivityUnitCredit(a.ActivityID)
 	if err != nil {
 		return 0, err
 	}
@@ -251,7 +251,7 @@ func UpdateMemberActivity(a MemberActivityInput) error {
 	}
 
 	// Look up the value of this type of activity
-	uc, err := activities.ActivityUnitCredit(a.ActivityID)
+	uc, err := activity.ActivityUnitCredit(a.ActivityID)
 	if err != nil {
 		return err
 	}

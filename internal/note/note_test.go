@@ -30,10 +30,10 @@ func TestPingDatabase(t *testing.T) {
 
 func TestNoteContent(t *testing.T) {
 
-	cases := [] struct {
-		ID int
+	cases := []struct {
+		ID     int
 		Expect string
-	} {
+	}{
 		{1, "Application note"},
 		{2, "Issue raised"},
 	}
@@ -49,10 +49,10 @@ func TestNoteContent(t *testing.T) {
 
 func TestNoteType(t *testing.T) {
 
-	cases := [] struct {
-		ID int
+	cases := []struct {
+		ID     int
 		Expect string
-	} {
+	}{
 		{1, "General"},
 		{2, "System"},
 	}
@@ -77,10 +77,10 @@ func TestMemberNote(t *testing.T) {
 
 func TestNoteFirstAttachmentUrl(t *testing.T) {
 
-	cases := [] struct {
-		ID int
+	cases := []struct {
+		ID     int
 		Expect string
-	} {
+	}{
 		{1, "https://cdn.test.com/note/1/1-filename.ext"},
 	}
 
