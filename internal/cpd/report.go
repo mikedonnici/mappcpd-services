@@ -129,7 +129,7 @@ func (e *MemberActivityReport) generateActivitySummary() error {
 // summary fills in the details for one activity in a report
 func (a *activityReport) summary(e MemberActivityReport) error {
 
-	query := queries["select-member-activity-summary-by-activity-id"]
+	query := Queries["select-cpd-summary-by-activity-id"]
 	rows := datastore.MySQL.Session.QueryRow(query, e.StartDate, e.EndDate, e.MemberID, a.ActivityID)
 	err := rows.Scan(
 		&a.ActivityUnits,

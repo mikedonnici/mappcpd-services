@@ -3,10 +3,8 @@ package note
 
 import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/nleof/goyesql"
 )
 
-var queries = goyesql.MustParseFile("queries.sql")
 
 // Note represents a record of a comment, document or anything else. A Note can be linked to a member and
 // other entities such as an application, or an issue
@@ -53,7 +51,7 @@ func noteByID(id int, conn datastore.MySQLConnection) (Note, error) {
 
 	n := Note{ID: id}
 
-	query := queries["select-note"] + " WHERE wn.id = ?"
+	query := Queries["select-note"] + " WHERE wn.id = ?"
 	err := conn.Session.QueryRow(query, id).Scan(
 		&n.ID,
 		&n.Type,
@@ -76,7 +74,7 @@ func notesByMemberID(memberID int, conn datastore.MySQLConnection) ([]Note, erro
 
 	var xn []Note
 
-	query := queries["select-note"] + " WHERE m.id = ? ORDER BY wn.effective_on DESC"
+	query := Queries["select-note"] + " WHERE m.id = ? ORDER BY wn.effective_on DESC"
 	rows, err := conn.Session.Query(query, memberID)
 	if err != nil {
 		return xn, err
@@ -111,7 +109,7 @@ func attachments(noteID int, conn datastore.MySQLConnection) ([]Attachment, erro
 
 	var xa []Attachment
 
-	query := queries["select-attachments"] + " WHERE wa.wf_note_id = ?"
+	query := Queries["select-attachments"] + " WHERE wa.wf_note_id = ?"
 	rows, err := conn.Session.Query(query, noteID)
 	if err != nil {
 		return xa, err

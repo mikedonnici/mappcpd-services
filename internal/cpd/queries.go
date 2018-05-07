@@ -1,6 +1,11 @@
--- name: select-member-activity
--- NOTE: Omit semicolon so where clauses can be appended
-SELECT
+package cpd
+
+var Queries = map[string]string {
+  "select-member-activity": selectMemberActivity,
+  "select-cpd-summary-by-activity-id": selectCPDSummaryByActivityID,
+}
+
+const selectMemberActivity = `SELECT
   cma.id                               AS 'memberActivityId',
   cma.member_id                        AS 'memberId',
   cma.activity_on                      AS 'memberActivityDate',
@@ -28,11 +33,9 @@ FROM
   LEFT JOIN
   ce_activity_category cac ON ca.ce_activity_category_id = cac.id
   LEFT JOIN
-  ce_activity_type cat ON cma.ce_activity_type_id = cat.id
+  ce_activity_type cat ON cma.ce_activity_type_id = cat.id`
 
-
--- name: select-member-activity-summary-by-activity-id
-SELECT
+const selectCPDSummaryByActivityID = `SELECT
   SUM(cma.quantity)                       AS TotalUnits,
   cma.points_per_unit                     AS UnitCredit,
   SUM(cma.quantity * cma.points_per_unit) AS CreditObtained
@@ -44,6 +47,6 @@ WHERE
   AND cma.activity_on <= ?
   AND cma.member_id = ?
   AND cma.ce_activity_id = ?
-GROUP BY cma.ce_activity_id
+GROUP BY cma.ce_activity_id`
 
 

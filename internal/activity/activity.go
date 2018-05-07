@@ -1,14 +1,12 @@
 package activity
 
 import (
+	"database/sql"
 	"fmt"
 	"runtime"
 
-	"database/sql"
-
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
-	"github.com/nleof/goyesql"
 	"github.com/pkg/errors"
 )
 
@@ -55,8 +53,6 @@ type ActivityType struct {
 	Name string        `json:"name" bson:"name"`
 	//Activity Activity      `json:"activity" bson:"activity"`
 }
-
-var queries = goyesql.MustParseFile("queries.sql")
 
 // All fetches active Activity records
 func All() ([]Activity, error) {
@@ -172,7 +168,7 @@ func activityList(conn datastore.MySQLConnection) ([]Activity, error) {
 
 	var xa []Activity
 
-	q := queries["select-activities"] + " WHERE a.active = 1"
+	q := Queries["select-activities"] + " WHERE a.active = 1"
 	rows, err := conn.Session.Query(q)
 	if err != nil {
 		return xa, err
@@ -198,7 +194,7 @@ func activityByID(id int, conn datastore.MySQLConnection) (Activity, error) {
 	//var ceActivityUnitID int
 
 	// Not using .QueryRow even though is only one row - so can share the scanActivity func
-	q := queries["select-activities"] + ` WHERE a.id = ? LIMIT 1`
+	q := Queries["select-activities"] + ` WHERE a.id = ? LIMIT 1`
 	rows, err := conn.Session.Query(q, id)
 	if err != nil {
 		return a, err

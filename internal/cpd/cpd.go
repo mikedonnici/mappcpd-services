@@ -7,12 +7,10 @@ import (
 
 	"github.com/mappcpd/web-services/internal/activity"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/nleof/goyesql"
 	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
 )
 
-var queries = goyesql.MustParseFile("queries.sql")
 
 // MemberActivity represents an instance of an activity recorded by a member - ie a CPD diary entry
 type MemberActivity struct {
@@ -68,7 +66,7 @@ func MemberActivityByID(id int) (*MemberActivity, error) {
 	// evidence is 0 or 1 in the database, we want a boolean
 	var evidence int
 
-	query := queries["select-member-activity"] + ` WHERE cma.id = ?`
+	query := Queries["select-member-activity"] + ` WHERE cma.id = ?`
 	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
 		&a.ID,
 		&a.MemberID,
@@ -111,7 +109,7 @@ func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
 
 	memberActivities := MemberActivities{}
 
-	query := queries["select-member-activity"] + ` WHERE member_id = ? ORDER BY activity_on DESC`
+	query := Queries["select-member-activity"] + ` WHERE member_id = ? ORDER BY activity_on DESC`
 	rows, err := datastore.MySQL.Session.Query(query, memberID)
 	if err != nil {
 		return memberActivities, err
@@ -157,7 +155,7 @@ func MemberActivitiesQuery(sqlClause string) ([]MemberActivity, error) {
 
 	memberActivities := MemberActivities{}
 
-	query := queries["select-member-activity"] + ` ` + sqlClause
+	query := Queries["select-member-activity"] + ` ` + sqlClause
 	rows, err := datastore.MySQL.Session.Query(query)
 	if err != nil {
 		return memberActivities, err
