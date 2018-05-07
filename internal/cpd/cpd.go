@@ -5,32 +5,32 @@ import (
 	"log"
 	"time"
 
-	"github.com/mappcpd/web-services/internal/activity"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
+
+	"github.com/mappcpd/web-services/internal/activity"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-
-// MemberActivity represents an instance of an activity recorded by a member - ie a CPD diary entry
-type MemberActivity struct {
+// CPD represents an instance of a cpd activity recorded by a member - ie a CPD diary entry
+type CPD struct {
 	ID          int                       `json:"id" bson:"id"`
 	MemberID    int                       `json:"memberId" bson:"memberId"`
-	CreatedAt   time.Time                 `json:"createdAt" bson:"createdAt"`
-	UpdatedAt   time.Time                 `json:"updatedAt" bson:"updatedAt"`
-	Date        string                    `json:"date" bson:"date"`
-	DateISO     time.Time                 `json:"dateISO" bson:"dateISO"`
-	Credit      float64                   `json:"credit" bson:"credit"`
-	Description string                    `json:"description" bson:"description"`
-	Evidence    bool                      `json:"evidence" bson:"evidence"`
-	Category    activity.ActivityCategory `json:"category" bson:"category"`
-	Activity    activity.Activity         `json:"activity" bson:"activity"`
-	Type        activity.ActivityType     `json:"type" bson:"type"`
-	CreditData  activity.ActivityCredit   `json:"creditData" bson:"creditData"`
+	CreatedAt   time.Time               `json:"createdAt" bson:"createdAt"`
+	UpdatedAt   time.Time         `json:"updatedAt" bson:"updatedAt"`
+	Date        string            `json:"date" bson:"date"`
+	DateISO     time.Time         `json:"dateISO" bson:"dateISO"`
+	Credit      float64           `json:"credit" bson:"credit"`
+	Description string            `json:"description" bson:"description"`
+	Evidence    bool              `json:"evidence" bson:"evidence"`
+	Category    activity.Category `json:"category" bson:"category"`
+	Activity    activity.Activity `json:"activity" bson:"activity"`
+	Type        activity.Type     `json:"type" bson:"type"`
+	CreditData  activity.Credit   `json:"creditData" bson:"creditData"`
 }
 
-// MemberActivityInput contains fields required to add / update a Member Activity.
-type MemberActivityInput struct {
+// Input contains fields required to add or update a Member Activity
+type Input struct {
 	ID          int     `json:"ID"`
 	MemberID    int     `json:"memberId"`
 	ActivityID  int     `json:"activityId" validate:"required,min=1"`
@@ -43,238 +43,60 @@ type MemberActivityInput struct {
 }
 
 // MemberActivityAttachment contains information about a file attached to a member activity
-//type MemberActivityInput struct {
-//	ID          int     `json:"ID"`
-//	MemberID    int     `json:"memberId"`
-//	ActivityID  int     `json:"activityId" validate:"required,min=1"`
-//	TypeID      int     `json:"typeId" validate:"required,min=1"`
-//	Evidence    int     `json:"evidence"`
-//	Date        string  `json:"date" validate:"required"`
-//	Quantity    float64 `json:"quantity" validate:"required"`
-//	UnitCredit  float64 `json:"unitCredit"`
-//	Description string  `json:"description" validate:"required"`
-//}
 
-// MemberActivities is a collection of MemberActivity values
-type MemberActivities []MemberActivity
 
-// MemberActivityByID fetches a member activity record by id
-func MemberActivityByID(id int) (*MemberActivity, error) {
-
-	a := MemberActivity{}
-
-	// evidence is 0 or 1 in the database, we want a boolean
-	var evidence int
-
-	query := Queries["select-member-activity"] + ` WHERE cma.id = ?`
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
-		&a.ID,
-		&a.MemberID,
-		&a.Date,
-		&a.Description,
-		&evidence,
-		&a.Credit,
-		&a.CreditData.Quantity,
-		&a.CreditData.UnitName,
-		&a.CreditData.UnitCredit,
-		&a.Category.ID,
-		&a.Category.Name,
-		&a.Category.Description,
-		&a.Activity.ID,
-		&a.Activity.Code,
-		&a.Activity.Name,
-		&a.Activity.Description,
-		&a.Type.ID,
-		&a.Type.Name,
-	)
-	if err != nil {
-		fmt.Println(errors.Wrap(err, "scan error"))
-		return &a, errors.Wrap(err, "scan error")
-	}
-
-	if evidence == 1 {
-		a.Evidence = true
-	}
-
-	a.DateISO, err = time.Parse("2006-01-02", a.Date)
-	if err != nil {
-		log.Printf("Error creating ISODate: %s", err.Error())
-	}
-
-	return &a, nil
+// ByID fetches a CPD record by id
+func ByID(id int) (CPD, error) {
+	return cpdByID(id, datastore.MySQL)
 }
 
-// MemberActivitiesByMemberID fetches activities for a particular member
-func MemberActivitiesByMemberID(memberID int) ([]MemberActivity, error) {
-
-	memberActivities := MemberActivities{}
-
-	query := Queries["select-member-activity"] + ` WHERE member_id = ? ORDER BY activity_on DESC`
-	rows, err := datastore.MySQL.Session.Query(query, memberID)
-	if err != nil {
-		return memberActivities, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-
-		a := MemberActivity{}
-
-		err := rows.Scan(
-			&a.ID,
-			&a.MemberID,
-			&a.Date,
-			&a.Description,
-			&a.Evidence,
-			&a.Credit,
-			&a.CreditData.Quantity,
-			&a.CreditData.UnitName,
-			&a.CreditData.UnitCredit,
-			&a.Category.ID,
-			&a.Category.Name,
-			&a.Category.Description,
-			&a.Activity.ID,
-			&a.Activity.Code,
-			&a.Activity.Name,
-			&a.Activity.Description,
-			&a.Type.ID,
-			&a.Type.Name,
-		)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		memberActivities = append(memberActivities, a)
-	}
-
-	return memberActivities, nil
+// ByIDStore fetches a CPD record by id from the specified store - used for testing
+func ByIDStore(id int, conn datastore.MySQLConnection) (CPD, error) {
+	return cpdByID(id, conn)
 }
 
-// MemberActivitiesQuery allows for any filter clause
-func MemberActivitiesQuery(sqlClause string) ([]MemberActivity, error) {
-
-	memberActivities := MemberActivities{}
-
-	query := Queries["select-member-activity"] + ` ` + sqlClause
-	rows, err := datastore.MySQL.Session.Query(query)
-	if err != nil {
-		return memberActivities, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-
-		a := MemberActivity{}
-
-		err := rows.Scan(
-			&a.ID,
-			&a.MemberID,
-			&a.Date,
-			&a.Description,
-			&a.Evidence,
-			&a.Credit,
-			&a.CreditData.Quantity,
-			&a.CreditData.UnitName,
-			&a.CreditData.UnitCredit,
-			&a.Category.ID,
-			&a.Category.Name,
-			&a.Category.Description,
-			&a.Activity.ID,
-			&a.Activity.Code,
-			&a.Activity.Name,
-			&a.Activity.Description,
-			&a.Type.ID,
-			&a.Type.Name,
-		)
-		if err != nil {
-			fmt.Println(err)
-		}
-
-		memberActivities = append(memberActivities, a)
-	}
-
-	return memberActivities, nil
+// ByMemberID fetches all cpd belonging to a member
+func ByMemberID(memberID int) ([]CPD, error) {
+	return cpdByMemberID(memberID, datastore.MySQL)
 }
 
-// AddMemberActivity inserts a new member activity in the MySQL db and returns the new id on success.
-func AddMemberActivity(a MemberActivityInput) (int, error) {
-
-	validate := validator.New()
-	err := validate.Struct(a)
-	if err != nil {
-		return 0, err
-	}
-
-	// Look up the credit-per-unit for this type of activity...
-	uc, err := activity.ActivityUnitCredit(a.ActivityID)
-	if err != nil {
-		return 0, err
-	}
-	a.UnitCredit = uc
-
-	// evidence is passed in as bool but in the database stored as 0/1
-	var evidence int
-	if a.Evidence == true {
-		evidence = 1
-	}
-
-	query := `INSERT INTO ce_m_activity
-	(member_id, ce_activity_id, ce_activity_type_id, evidence, created_at, updated_at,
-	activity_on, quantity, points_per_unit, description)
-	VALUES("%v", "%v", "%v", "%v", NOW(), NOW(), "%v", "%v", "%v", "%v")`
-	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
-
-	// Get result of the the query execution...
-	r, err := datastore.MySQL.Session.Exec(query)
-	if err != nil {
-		return 0, err
-	}
-
-	// Get the new id...
-	id, err := r.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	return int(id), nil
+// ByMemberIDStore fetches all cpd belonging to a member from the specified store - used for testing
+func ByMemberIDStore(memberID int, conn datastore.MySQLConnection) ([]CPD, error) {
+	return cpdByMemberID(memberID, conn)
 }
 
-// UpdateMemberActivity updates an existing member activity record in the MySQL db
-func UpdateMemberActivity(a MemberActivityInput) error {
+// Query runs the base cpd query with any filter clause
+func Query(sqlClause string) ([]CPD, error) {
+	return cpdQuery(sqlClause, datastore.MySQL)
+}
 
-	validate := validator.New()
-	err := validate.Struct(a)
-	if err != nil {
-		return err
-	}
+// Query runs the base cpd query with any filter clause
+func QueryStore(sqlClause string, conn datastore.MySQLConnection) ([]CPD, error) {
+	return cpdQuery(sqlClause, conn)
+}
 
-	// Look up the value of this type of activity
-	uc, err := activity.ActivityUnitCredit(a.ActivityID)
-	if err != nil {
-		return err
-	}
-	a.UnitCredit = uc
+// Add inserts a new cpd record and returns the new id
+func Add(a Input) (int, error) {
+	return add(a, datastore.MySQL)
+}
 
-	// evidence is passed in as bool but in the database stored as 0/1
-	var evidence int
-	if a.Evidence == true {
-		evidence = 1
-	}
+// AddStore inserts a new cpd record into the specified datastore, and returns the new id - used for testing
+func AddStore(a Input, conn datastore.MySQLConnection) (int, error) {
+	return add(a, conn)
+}
 
-	query := `UPDATE ce_m_activity SET ce_activity_id= "%v", ce_activity_type_id= "%v", evidence= "%v",
-    updated_at = NOW(), activity_on = "%v", quantity= "%v", points_per_unit= "%v", description = "%v"
-    WHERE id = %v LIMIT 1`
-	query = fmt.Sprintf(query, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
-	_, err = datastore.MySQL.Session.Exec(query)
-	if err != nil {
-		return err
-	}
+// Update updates a cpd record
+func Update(a Input) error {
+	return update(a, datastore.MySQL)
+}
 
-	return nil
+// Update updates a cpd record in the specified store - used for testing
+func UpdateStore(a Input, conn datastore.MySQLConnection) error {
+	return update(a, conn)
 }
 
 // DuplicateMemberActivity returns the id of a duplicate member activity, or 0 if not found
-func DuplicateMemberActivity(a MemberActivityInput) int {
+func DuplicateMemberActivity(a Input) int {
 
 	var dupId int
 
@@ -312,3 +134,210 @@ func DeleteMemberActivity(memberID, activityID int) error {
 //
 //	return nil
 //}
+
+
+func cpdByID(id int, conn datastore.MySQLConnection) (CPD, error) {
+
+	a := CPD{}
+	var evidence int // stored as 0/1 in db - translate to bool
+
+	query := Queries["select-member-activity"] + ` WHERE cma.id = ?`
+	err := conn.Session.QueryRow(query, id).Scan(
+		&a.ID,
+		&a.MemberID,
+		&a.Date,
+		&a.Description,
+		&evidence,
+		&a.Credit,
+		&a.CreditData.Quantity,
+		&a.CreditData.UnitName,
+		&a.CreditData.UnitCredit,
+		&a.Category.ID,
+		&a.Category.Name,
+		&a.Category.Description,
+		&a.Activity.ID,
+		&a.Activity.Code,
+		&a.Activity.Name,
+		&a.Activity.Description,
+		&a.Type.ID,
+		&a.Type.Name,
+	)
+	if err != nil {
+		fmt.Println(errors.Wrap(err, "scan error"))
+		return a, errors.Wrap(err, "scan error")
+	}
+
+	if evidence == 1 {
+		a.Evidence = true
+	}
+
+	a.DateISO, err = time.Parse("2006-01-02", a.Date)
+	if err != nil {
+		log.Printf("Error creating ISODate: %s", err.Error())
+	}
+
+	return a, nil
+}
+
+func cpdByMemberID(id int, conn datastore.MySQLConnection) ([]CPD, error) {
+
+	var xc []CPD
+
+	query := Queries["select-member-activity"] + ` WHERE member_id = ? ORDER BY activity_on DESC`
+	rows, err := conn.Session.Query(query, id)
+	if err != nil {
+		return xc, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+
+		c := CPD{}
+
+		err := rows.Scan(
+			&c.ID,
+			&c.MemberID,
+			&c.Date,
+			&c.Description,
+			&c.Evidence,
+			&c.Credit,
+			&c.CreditData.Quantity,
+			&c.CreditData.UnitName,
+			&c.CreditData.UnitCredit,
+			&c.Category.ID,
+			&c.Category.Name,
+			&c.Category.Description,
+			&c.Activity.ID,
+			&c.Activity.Code,
+			&c.Activity.Name,
+			&c.Activity.Description,
+			&c.Type.ID,
+			&c.Type.Name,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		xc = append(xc, c)
+	}
+
+	return xc, nil
+}
+
+func cpdQuery(clause string, conn datastore.MySQLConnection) ([]CPD, error) {
+
+	var xc []CPD
+
+	query := Queries["select-member-activity"] + ` ` + clause
+	rows, err := conn.Session.Query(query)
+	if err != nil {
+		return xc, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+
+		c := CPD{}
+
+		err := rows.Scan(
+			&c.ID,
+			&c.MemberID,
+			&c.Date,
+			&c.Description,
+			&c.Evidence,
+			&c.Credit,
+			&c.CreditData.Quantity,
+			&c.CreditData.UnitName,
+			&c.CreditData.UnitCredit,
+			&c.Category.ID,
+			&c.Category.Name,
+			&c.Category.Description,
+			&c.Activity.ID,
+			&c.Activity.Code,
+			&c.Activity.Name,
+			&c.Activity.Description,
+			&c.Type.ID,
+			&c.Type.Name,
+		)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		xc = append(xc, c)
+	}
+
+	return xc, nil
+}
+
+func add(a Input, conn datastore.MySQLConnection) (int, error) {
+
+	validate := validator.New()
+	err := validate.Struct(a)
+	if err != nil {
+		return 0, err
+	}
+
+	// Look up the credit-per-unit for this type of activity...
+	uc, err := activity.CreditPerUnitStore(a.ActivityID, conn)
+	if err != nil {
+		return 0, err
+	}
+	a.UnitCredit = uc
+
+	// evidence is passed in as bool but in the database stored as 0/1
+	var evidence int
+	if a.Evidence == true {
+		evidence = 1
+	}
+
+	query := `INSERT INTO ce_m_activity
+	(member_id, ce_activity_id, ce_activity_type_id, evidence, created_at, updated_at,
+	activity_on, quantity, points_per_unit, description)
+	VALUES("%v", "%v", "%v", "%v", NOW(), NOW(), "%v", "%v", "%v", "%v")`
+	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
+
+	r, err := conn.Session.Exec(query)
+	if err != nil {
+		return 0, err
+	}
+
+	// Get the new id...
+	id, err := r.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	return int(id), nil
+}
+
+func update(a Input, conn datastore.MySQLConnection) error {
+
+	validate := validator.New()
+	err := validate.Struct(a)
+	if err != nil {
+		return err
+	}
+
+	uc, err := activity.CreditPerUnitStore(a.ActivityID, conn)
+	if err != nil {
+		return err
+	}
+	a.UnitCredit = uc
+
+	// evidence is passed in as bool but in the database stored as 0/1
+	var evidence int
+	if a.Evidence == true {
+		evidence = 1
+	}
+
+	query := `UPDATE ce_m_activity SET ce_activity_id= "%v", ce_activity_type_id= "%v", evidence= "%v",
+    updated_at = NOW(), activity_on = "%v", quantity= "%v", points_per_unit= "%v", description = "%v"
+    WHERE id = %v LIMIT 1`
+	query = fmt.Sprintf(query, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
+	_, err = conn.Session.Exec(query)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

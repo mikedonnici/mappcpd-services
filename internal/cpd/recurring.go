@@ -8,7 +8,6 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mappcpd/web-services/internal/constants"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
@@ -133,7 +132,7 @@ func (r *Recurring) GetActivity(_id string) (RecurringActivity, error) {
 	return RecurringActivity{}, errors.New("No activity with id " + _id)
 }
 
-// Record writes a member activity record and sets the Next scheduled time for the recurring activity
+// CPD writes a member activity record and sets the Next scheduled time for the recurring activity
 func (r *Recurring) Record(_id string) error {
 
 	a, err := r.GetActivity(_id)
@@ -143,18 +142,18 @@ func (r *Recurring) Record(_id string) error {
 
 	// Make idempotent by not allowing to skip if date is in the future
 	if a.Next.After(time.Now()) {
-		return errors.New(".Record() cannot record a recurring activity if .Next is in the future")
+		return errors.New(".CPD() cannot record a recurring activity if .Next is in the future")
 	}
 
-	ar := MemberActivityInput{}
+	ar := Input{}
 	ar.MemberID = r.MemberID
 	ar.ActivityID = a.ActivityID
-	ar.Date = a.Next.Format(constants.MySQLDateFormat)
+	ar.Date = a.Next.Format("2006-01-02")
 	ar.Quantity = a.Quantity
 	ar.Description = a.Description
 
 	// Add activity to database
-	_, err = AddMemberActivity(ar)
+	_, err = Add(ar)
 	if err != nil {
 		fmt.Println(err)
 		return err

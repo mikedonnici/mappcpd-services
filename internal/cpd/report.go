@@ -148,7 +148,7 @@ func (a *activityReport) summary(e MemberActivityReport) error {
 func (a *activityReport) fetchActivityRecords(memberID int, startDate, endDate string) {
 	clause := `WHERE member_id = %d AND cma.activity_on >= "%s" AND cma.activity_on <= "%s" ORDER BY cma.activity_on DESC`
 	clause = fmt.Sprintf(clause, memberID, startDate, endDate)
-	ma, err := MemberActivitiesQuery(clause)
+	ma, err := Query(clause)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -166,7 +166,7 @@ func (a *activityReport) capCreditTotal() {
 	}
 }
 
-func mapMemberActivity(r MemberActivity) activityRecord {
+func mapMemberActivity(r CPD) activityRecord {
 	nr := activityRecord{
 		Date:        r.Date,
 		Type:        r.Type.Name,

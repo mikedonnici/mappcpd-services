@@ -1,8 +1,8 @@
 package cpd
 
-var Queries = map[string]string {
-  "select-member-activity": selectMemberActivity,
-  "select-cpd-summary-by-activity-id": selectCPDSummaryByActivityID,
+var Queries = map[string]string{
+	"select-member-activity":            selectMemberActivity,
+	"select-cpd-summary-by-activity-id": selectCPDSummaryByActivityID,
 }
 
 const selectMemberActivity = `SELECT
@@ -48,5 +48,3 @@ WHERE
   AND cma.member_id = ?
   AND cma.ce_activity_id = ?
 GROUP BY cma.ce_activity_id`
-
-
