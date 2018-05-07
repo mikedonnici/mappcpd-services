@@ -54,10 +54,14 @@ var activitySave = &graphql.Field{
 			}
 
 			// add record, ensure not a duplicate
-			dupID := activityDuplicateID(memberID, ma)
+			dupID, err := activityDuplicateID(memberID, ma)
 			if dupID > 0 {
 				msg := fmt.Sprintf("The activity is an exact duplicate of id %v. To copy an activity at least one "+
 					"field must be changed, eg date.", dupID)
+				return nil, errors.New(msg)
+			}
+			if err != nil {
+				msg := fmt.Sprintf("Error checking for duplicate activity - %s", err.Error())
 				return nil, errors.New(msg)
 			}
 
@@ -133,7 +137,7 @@ var activityDelete = &graphql.Field{
 
 		activityID, ok := p.Args["id"].(int)
 		if ok {
-			return "CPD deleted", cpd.DeleteMemberActivity(memberID, activityID)
+			return "CPD deleted", cpd.Delete(memberID, activityID)
 		}
 		return nil, nil
 	},

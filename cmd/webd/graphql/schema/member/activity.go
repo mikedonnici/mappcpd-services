@@ -269,7 +269,7 @@ func updateActivity(memberID int, activityInput activityInputData) (activityData
 }
 
 // activityDuplicateID returns the id of a matching member activity, or 0 if not found
-func activityDuplicateID(memberID int, activityInput activityInputData) int {
+func activityDuplicateID(memberID int, activityInput activityInputData) (int, error) {
 
 	// Create the required value
 	ma := cpd.Input{
@@ -282,7 +282,7 @@ func activityDuplicateID(memberID int, activityInput activityInputData) int {
 		Description: activityInput.Description,
 	}
 
-	return cpd.DuplicateMemberActivity(ma)
+	return cpd.DuplicateOf(ma)
 }
 
 // activityIDByTypeID returns the activity id for an activity type id

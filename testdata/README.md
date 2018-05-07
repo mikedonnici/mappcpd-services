@@ -4,7 +4,6 @@
 
 
 
-
 ## Refs
 
 * https://medium.com/kongkow-it-medan/parallel-database-integration-test-on-go-application-8706b150ee2e

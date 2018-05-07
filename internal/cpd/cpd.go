@@ -1,6 +1,7 @@
 package cpd
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"time"
@@ -14,9 +15,9 @@ import (
 
 // CPD represents an instance of a cpd activity recorded by a member - ie a CPD diary entry
 type CPD struct {
-	ID          int                       `json:"id" bson:"id"`
-	MemberID    int                       `json:"memberId" bson:"memberId"`
-	CreatedAt   time.Time               `json:"createdAt" bson:"createdAt"`
+	ID          int               `json:"id" bson:"id"`
+	MemberID    int               `json:"memberId" bson:"memberId"`
+	CreatedAt   time.Time         `json:"createdAt" bson:"createdAt"`
 	UpdatedAt   time.Time         `json:"updatedAt" bson:"updatedAt"`
 	Date        string            `json:"date" bson:"date"`
 	DateISO     time.Time         `json:"dateISO" bson:"dateISO"`
@@ -43,7 +44,6 @@ type Input struct {
 }
 
 // MemberActivityAttachment contains information about a file attached to a member activity
-
 
 // ByID fetches a CPD record by id
 func ByID(id int) (CPD, error) {
@@ -95,46 +95,25 @@ func UpdateStore(a Input, conn datastore.MySQLConnection) error {
 	return update(a, conn)
 }
 
-// DuplicateMemberActivity returns the id of a duplicate member activity, or 0 if not found
-func DuplicateMemberActivity(a Input) int {
-
-	var dupId int
-
-	validate := validator.New()
-	err := validate.Struct(a)
-	if err != nil {
-		return dupId
-	}
-
-	query := `SELECT id FROM ce_m_activity WHERE member_id = "%v" AND ce_activity_id = "%v" AND 
-	ce_activity_type_id = "%v" AND activity_on = "%v" AND description = "%v" LIMIT 1`
-	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, a.Date, a.Description)
-
-	row := datastore.MySQL.Session.QueryRow(query)
-	row.Scan(&dupId)
-
-	return dupId
+// DuplicateOf returns the id of a duplicate member activity, or 0 if not found
+func DuplicateOf(a Input) (int, error) {
+	return duplicateOf(a, datastore.MySQL)
 }
 
-// DeleteMemberActivity deletes a member activity record
-func DeleteMemberActivity(memberID, activityID int) error {
-
-	query := `DELETE FROM ce_m_activity WHERE member_id = %d AND id = %d LIMIT 1`
-	query = fmt.Sprintf(query, memberID, activityID)
-	_, err := datastore.MySQL.Session.Exec(query)
-	if err != nil {
-		return err
-	}
-
-	return nil
+// DuplicateOf returns the id of a duplicate member activity, or 0 if not found - from the specified store
+func DuplicateOfStore(a Input, conn datastore.MySQLConnection) (int, error) {
+	return duplicateOf(a, conn)
 }
 
-// Save a recurring activity
-//func (a *members.RecurringActivity) Save() error {
-//
-//	return nil
-//}
+// Delete ensures the record is owned by MemberID before deleting
+func Delete(memberID, activityID int) error {
+	return delete(memberID, activityID, datastore.MySQL)
+}
 
+// DeleteStore ensures the record is owned by MemberID before deleting from specified datastore - used for testing
+func DeleteStore(memberID, activityID int, conn datastore.MySQLConnection) error {
+	return delete(memberID, activityID, conn)
+}
 
 func cpdByID(id int, conn datastore.MySQLConnection) (CPD, error) {
 
@@ -340,4 +319,34 @@ func update(a Input, conn datastore.MySQLConnection) error {
 	}
 
 	return nil
+}
+
+// delete requires memberID to ensure ownership of the cpd record
+func delete(memberID, activityID int, conn datastore.MySQLConnection) error {
+	query := `DELETE FROM ce_m_activity WHERE member_id = %d AND id = %d LIMIT 1`
+	query = fmt.Sprintf(query, memberID, activityID)
+	_, err := conn.Session.Exec(query)
+	return err
+}
+
+func duplicateOf(a Input, conn datastore.MySQLConnection) (int, error) {
+
+	var dupId int
+
+	validate := validator.New()
+	err := validate.Struct(a)
+	if err != nil {
+		return dupId, err
+	}
+
+	query := `SELECT id FROM ce_m_activity WHERE member_id = "%v" AND ce_activity_id = "%v" AND 
+		ce_activity_type_id = "%v" AND activity_on = "%v" AND description = "%v" LIMIT 1`
+	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, a.Date, a.Description)
+
+	err = conn.Session.QueryRow(query).Scan(&dupId)
+	if err == sql.ErrNoRows {
+		return dupId, nil
+	}
+
+	return dupId, err
 }

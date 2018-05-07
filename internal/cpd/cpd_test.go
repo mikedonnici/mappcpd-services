@@ -111,3 +111,52 @@ func TestUpdateCPD(t *testing.T) {
 
 	helper.Result(t, c.Description, r.Description)
 }
+
+func TestDuplicateOf(t *testing.T) {
+
+	// Fetch first cpd record and then try to insert it - should get '1' returned
+	a, err := cpd.ByIDStore(1, db.MySQL)
+	if err != nil {
+		t.Fatalf("Database error: %s", err)
+	}
+
+	i := cpd.Input{
+		MemberID: a.MemberID,
+		ActivityID: a.Activity.ID,
+		TypeID: int(a.Type.ID.Int64),
+		Date: a.Date,
+		Description: a.Description,
+		Evidence: a.Evidence,
+		UnitCredit: a.CreditData.UnitCredit,
+		Quantity: a.Credit,
+	}
+
+	dupID, err := cpd.DuplicateOfStore(i, db.MySQL)
+	if err != nil {
+		t.Fatalf("Database error: %s", err)
+	}
+
+	helper.Result(t, 1, dupID)
+}
+
+func TestDelete(t *testing.T) {
+
+	// get count, delete record id 3, count should be count - 1
+	xcpd, err := cpd.QueryStore("", db.MySQL)
+	if err != nil {
+		t.Fatalf("Database error: %s", err)
+	}
+	c1 := len(xcpd)
+
+	err = cpd.DeleteStore(1, 3, db.MySQL)
+	if err != nil {
+		t.Fatalf("Database error: %s", err)
+	}
+	xcpd, err = cpd.QueryStore("", db.MySQL)
+	if err != nil {
+		t.Fatalf("Database error: %s", err)
+	}
+	c2 := len(xcpd)
+
+	helper.Result(t, c1-1, c2)
+}
