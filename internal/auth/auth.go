@@ -1,10 +1,9 @@
 package auth
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
-
-	"database/sql"
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )

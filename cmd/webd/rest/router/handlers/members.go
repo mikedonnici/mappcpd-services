@@ -48,7 +48,7 @@ func MembersActivities(w http.ResponseWriter, r *http.Request) {
 
 	p := responder.New(middleware.UserAuthToken.Token)
 
-	a, err := cpd.MemberActivitiesByMemberID(middleware.UserAuthToken.Claims.ID)
+	a, err := cpd.ByMemberID(middleware.UserAuthToken.Claims.ID)
 
 	// Response
 	switch {

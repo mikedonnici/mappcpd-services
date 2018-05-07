@@ -10,14 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// ActivityCategory is the broadest grouping of activity and is purely descriptive
-type ActivityCategory struct {
-	ID          int    `json:"id" bson:"id"`
-	Code        string `json:"code" bson:"code"`
-	Name        string `json:"name" bson:"name"`
-	Description string `json:"description" bson:"description"`
-}
-
 // Activity describes a group of related activity types. This is the entity that includes the credit value
 // and caps for the activity (types) contained within.
 type Activity struct {
@@ -31,12 +23,20 @@ type Activity struct {
 	UnitName      string  `json:"unitName" bson:"unitName"`
 	CreditPerUnit float64 `json:"creditPerUnit" bson:"creditPerUnit"`
 	MaxCredit     float64 `json:"creditPerUnit" bson:"creditPerUnit"`
-	// Credit       ActivityCredit `json:"credit" bson:"credit"`
+	// Credit       Credit `json:"credit" bson:"credit"`
 }
 
-// ActivityCredit holds the detail about how the credit is calculated for the activity
+// Category is the broadest grouping of activity and is purely descriptive
+type Category struct {
+	ID          int    `json:"id" bson:"id"`
+	Code        string `json:"code" bson:"code"`
+	Name        string `json:"name" bson:"name"`
+	Description string `json:"description" bson:"description"`
+}
+
+// Credit holds the detail about how the credit is calculated for the activity
 // todo remove this and flatten into the Activity type - too complex
-type ActivityCredit struct {
+type Credit struct {
 	QuantityFixed   bool    `json:"quantityFixed"`
 	Quantity        float64 `json:"quantity" bson:"quantity"`
 	UnitCode        string  `json:"unitCode" bson:"unitCode"`
@@ -45,13 +45,12 @@ type ActivityCredit struct {
 	UnitCredit      float64 `json:"unitCredit" bson:"unitCredit"`
 }
 
-// ActivityType represents a specific form, or example, of an Activity, Where ActivityCategory is the broadest
-// descriptive attribute, ActivityType is the most specific. However, it is also purely descriptive as the numbers all
+// Type represents a specific form, or example, of an Activity, Where Category is the broadest
+// descriptive attribute, Type is the most specific. However, it is also purely descriptive as the numbers all
 // occur in the Activity entity.
-type ActivityType struct {
+type Type struct {
 	ID   sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
 	Name string        `json:"name" bson:"name"`
-	//Activity Activity      `json:"activity" bson:"activity"`
 }
 
 // All fetches active Activity records
@@ -65,12 +64,12 @@ func AllStore(conn datastore.MySQLConnection) ([]Activity, error) {
 }
 
 // Types fetches the activity types
-func Types(activityID int) ([]ActivityType, error) {
+func Types(activityID int) ([]Type, error) {
 	return activityTypes(activityID, datastore.MySQL)
 }
 
 // Types fetches the activity types from the specified datastore - used for testing
-func TypesStore(activityID int, conn datastore.MySQLConnection) ([]ActivityType, error) {
+func TypesStore(activityID int, conn datastore.MySQLConnection) ([]Type, error) {
 	return activityTypes(activityID, conn)
 }
 
@@ -84,84 +83,24 @@ func ByIDStore(id int, conn datastore.MySQLConnection) (Activity, error) {
 	return activityByID(id, conn)
 }
 
-// ActivityByActivityTypeID fetches a single activity by activity type id
-func ActivityByActivityTypeID(activityTypeID int) (Activity, error) {
-
-	var a Activity
-
-	// get the activity id
-	var id int
-	query := "SELECT ce_activity_id FROM ce_activity_type WHERE id = ?"
-	err := datastore.MySQL.Session.QueryRow(query, activityTypeID).Scan(&id)
-	if err != nil {
-		function, file, line, ok := runtime.Caller(0)
-		msg := utility.ErrorLocationMessage(function, file, line, ok, true)
-		return a, errors.Wrap(err, msg)
-	}
-
-	return ByID(id)
+// ByTypeID fetches an activity by type id
+func ByTypeID(typeID int) (Activity, error) {
+	return activityByTypeID(typeID, datastore.MySQL)
 }
 
-// ActivityUnitCredit gets the credit value, per unit (eg hour, item) for a particular
-// type of activity. For example, attendance at a workshop may be  measured in units
-// of 'hours', each of which is worth 1 CPD credit point. It received the
-// id of the activity (type) and returns the value as a float.
-// Note that it will also return an error if the activity (type) is not active
-func ActivityUnitCredit(id int) (float64, error) {
-
-	var p float64
-	query := `SELECT points_per_unit FROM ce_activity
-		  WHERE active = 1 AND id = ?`
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(&p)
-	if err != nil {
-		return p, err
-	}
-
-	return p, nil
+// ByTypeID fetches an activity by type id from the specified store - used for testing
+func ByTypeIDStore(typeID int, conn datastore.MySQLConnection) (Activity, error) {
+	return activityByTypeID(typeID, conn)
 }
 
-// ActivityCreditData gets the values for the ActivityCredit properties
-// for a particular activity type. This describes all of the information about
-// the way an activity is credited - units, points per unit, etc.
-//
-// It receives an argument that is the id of the activity unit record, that is,
-// from the ce_activity_unit table.
-func ActivityCreditData(activityUnitID int) (ActivityCredit, error) {
-
-	u := ActivityCredit{}
-	u.QuantityFixed = false
-
-	// Coalesce any NULL-able fields
-	query := `SELECT
-		COALESCE(name, ''),
-		COALESCE(description, ''),
-	    specify_quantity
-		FROM ce_activity_unit
-		WHERE id = ?`
-
-	// temp map the specify_quantity field
-	var specifyQuantity int
-
-	err := datastore.MySQL.Session.QueryRow(query, activityUnitID).Scan(
-		&u.UnitName,
-		&u.UnitDescription,
-		&specifyQuantity,
-	)
-
-	// MySQL table has a flag specify_quantity that tells the software if the user is allowed to input a quantity.
-	// If set to zero them the unit / item is measures as a 'single item' or thing, without a quanity. For example,
-	// publishing a paper - a single event.
-	if specifyQuantity == 0 {
-		u.QuantityFixed = true
-	}
-
-	return u, err
+// CreditPerUnit gets the credit value, per unit (eg hour, item) for an activity
+func CreditPerUnit(activityID int) (float64, error) {
+	return activityCreditPerUnit(activityID, datastore.MySQL)
 }
 
-// Save an activity to MySQL
-func (a Activity) Save() error {
-	//query :=
-	return nil
+// CreditPerUnitStore retrieves the credit per unit for an activity from the specified store - used for testing
+func CreditPerUnitStore(activityID int, conn datastore.MySQLConnection) (float64, error) {
+	return activityCreditPerUnit(activityID, conn)
 }
 
 func activityList(conn datastore.MySQLConnection) ([]Activity, error) {
@@ -190,12 +129,8 @@ func activityByID(id int, conn datastore.MySQLConnection) (Activity, error) {
 
 	var a Activity
 
-	// map ce_activity.ce_activity_unit_id
-	//var ceActivityUnitID int
-
-	// Not using .QueryRow even though is only one row - so can share the scanActivity func
 	q := Queries["select-activities"] + ` WHERE a.id = ? LIMIT 1`
-	rows, err := conn.Session.Query(q, id)
+	rows, err := conn.Session.Query(q, id) // not using .QueryRow so can share scanActivity func
 	if err != nil {
 		return a, err
 	}
@@ -208,9 +143,23 @@ func activityByID(id int, conn datastore.MySQLConnection) (Activity, error) {
 	return a, nil
 }
 
-func activityTypes(activityID int, conn datastore.MySQLConnection) ([]ActivityType, error) {
+func activityByTypeID(id int, conn datastore.MySQLConnection) (Activity, error) {
 
-	var xat []ActivityType
+	var activityID int
+	query := "SELECT ce_activity_id FROM ce_activity_type WHERE id = ?"
+	err := conn.Session.QueryRow(query, id).Scan(&activityID)
+	if err != nil {
+		function, file, line, ok := runtime.Caller(0)
+		msg := utility.ErrorLocationMessage(function, file, line, ok, true)
+		return Activity{}, errors.Wrap(err, msg)
+	}
+
+	return activityByID(activityID, conn)
+}
+
+func activityTypes(activityID int, conn datastore.MySQLConnection) ([]Type, error) {
+
+	var xat []Type
 
 	query := "SELECT id, name FROM ce_activity_type WHERE active = 1 AND ce_activity_id = ?"
 	rows, err := conn.Session.Query(query, activityID)
@@ -220,7 +169,7 @@ func activityTypes(activityID int, conn datastore.MySQLConnection) ([]ActivityTy
 	defer rows.Close()
 
 	for rows.Next() {
-		at := ActivityType{}
+		at := Type{}
 		err := rows.Scan(&at.ID, &at.Name)
 		if err != nil {
 			fmt.Println(err)
@@ -229,6 +178,13 @@ func activityTypes(activityID int, conn datastore.MySQLConnection) ([]ActivityTy
 	}
 
 	return xat, nil
+}
+
+func activityCreditPerUnit(id int, conn datastore.MySQLConnection) (float64, error)  {
+	var c float64
+	query := `SELECT points_per_unit FROM ce_activity WHERE active = 1 AND id = ?`
+	err := conn.Session.QueryRow(query, id).Scan(&c)
+	return c, err
 }
 
 func scanActivity(rows *sql.Rows) (Activity, error) {

@@ -91,7 +91,7 @@ func (ma *activityData) unpack(obj map[string]interface{}) error {
 	return nil
 }
 
-// unpack an object into a value of type MemberActivityInput
+// unpack an object into a value of type Input
 func (mai *activityInputData) unpack(obj map[string]interface{}) error {
 	if val, ok := obj["id"].(int); ok {
 		mai.ID = val
@@ -121,7 +121,7 @@ func mapActivitiesData(memberID int, filter map[string]interface{}) ([]activityD
 	var xa []activityData
 
 	// This returns a nested struct which is simplified below.
-	xma, err := cpd.MemberActivitiesByMemberID(memberID)
+	xma, err := cpd.ByMemberID(memberID)
 
 	// Set up date filters
 	from, okFrom := filter["from"].(time.Time)
@@ -186,7 +186,7 @@ func mapActivityData(memberID, memberActivityID int) (activityData, error) {
 	var a activityData
 
 	// This returns a nested struct which we can simplify
-	ma, err := cpd.MemberActivityByID(memberActivityID)
+	ma, err := cpd.ByID(memberActivityID)
 	if err != nil {
 		return a, err
 	}
@@ -222,7 +222,7 @@ func addActivity(memberID int, activityInput activityInputData) (activityData, e
 
 	// Create the required type for the insert
 	// todo: add evidence and attachment
-	ma := cpd.MemberActivityInput{
+	ma := cpd.Input{
 		MemberID:    memberID,
 		ActivityID:  activityInput.ActivityID,
 		TypeID:      activityInput.TypeID,
@@ -232,7 +232,7 @@ func addActivity(memberID int, activityInput activityInputData) (activityData, e
 		Evidence:    activityInput.Evidence,
 	}
 
-	newID, err := cpd.AddMemberActivity(ma)
+	newID, err := cpd.Add(ma)
 	if err != nil {
 		return ad, err
 	}
@@ -244,7 +244,7 @@ func addActivity(memberID int, activityInput activityInputData) (activityData, e
 func updateActivity(memberID int, activityInput activityInputData) (activityData, error) {
 
 	// Create the required value
-	ma := cpd.MemberActivityInput{
+	ma := cpd.Input{
 		ID:          activityInput.ID,
 		MemberID:    memberID,
 		ActivityID:  activityInput.ActivityID,
@@ -260,7 +260,7 @@ func updateActivity(memberID int, activityInput activityInputData) (activityData
 
 	// This just returns an error so re-fetch the member activity record
 	// so that all the fields are populated for the response.
-	err := cpd.UpdateMemberActivity(ma)
+	err := cpd.Update(ma)
 	if err != nil {
 		return mar, err
 	}
@@ -272,7 +272,7 @@ func updateActivity(memberID int, activityInput activityInputData) (activityData
 func activityDuplicateID(memberID int, activityInput activityInputData) int {
 
 	// Create the required value
-	ma := cpd.MemberActivityInput{
+	ma := cpd.Input{
 		ID:          activityInput.ID,
 		MemberID:    memberID,
 		ActivityID:  activityInput.ActivityID,
@@ -287,6 +287,6 @@ func activityDuplicateID(memberID int, activityInput activityInputData) int {
 
 // activityIDByTypeID returns the activity id for an activity type id
 func activityIDByTypeID(activityTypeID int) (int, error) {
-	a, err := activity.ActivityByActivityTypeID(activityTypeID)
+	a, err := activity.ByTypeID(activityTypeID)
 	return a.ID, err
 }

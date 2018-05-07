@@ -16,7 +16,6 @@ import (
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mappcpd/web-services/internal/constants"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
 )
@@ -121,19 +120,19 @@ func ResourceByID(id int) (*Resource, error) {
 	}
 
 	// Convert MySQL date time strings to time.Time
-	r.CreatedAt, err = time.Parse(constants.MySQLTimestampFormat, createdAt)
+	r.CreatedAt, err = time.Parse("2006-01-02 15:04:05", createdAt)
 	if err != nil {
 		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse created_at", id)
 		fmt.Println(msg, err)
 		//os.Exit(1)
 	}
-	r.UpdatedAt, _ = time.Parse(constants.MySQLTimestampFormat, updatedAt)
+	r.UpdatedAt, _ = time.Parse("2006-01-02 15:04:05", updatedAt)
 	if err != nil {
 		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse updated_at", id)
 		fmt.Println(msg, err)
 		//os.Exit(1)
 	}
-	r.PubDate.Date, err = time.Parse(constants.MySQLDateFormat, presentedOn)
+	r.PubDate.Date, err = time.Parse("2006-01-02", presentedOn)
 	if err != nil {
 		msg := fmt.Sprintf("ResourceByID() record %v - could not Parse presented_on", id)
 		fmt.Println(msg, err)
@@ -435,9 +434,9 @@ func (r *Resource) Save() (int, error) {
 	}
 
 	query = fmt.Sprintf(query, r.TypeID, 1, r.Primary,
-		r.CreatedAt.Format(constants.MySQLTimestampFormat),
-		r.UpdatedAt.Format(constants.MySQLTimestampFormat),
-		r.PubDate.Date.Format(constants.MySQLDateFormat),
+		r.CreatedAt.Format("2006-01-02 15:04:05"),
+		r.UpdatedAt.Format("2006-01-02 15:04:05"),
+		r.PubDate.Date.Format("2006-01-02"),
 		r.PubDate.Year,
 		r.PubDate.Month,
 		r.PubDate.Day,
@@ -482,8 +481,8 @@ func (r *Resource) Update(id int) error {
 	keywords := strings.Join(r.Keywords, ",")
 
 	query = fmt.Sprintf(query, r.TypeID, 1, r.Primary,
-		r.UpdatedAt.Format(constants.MySQLTimestampFormat),
-		r.PubDate.Date.Format(constants.MySQLDateFormat),
+		r.UpdatedAt.Format("2006-01-02 15:04:05"),
+		r.PubDate.Date.Format("2006-01-02"),
 		r.PubDate.Year,
 		r.PubDate.Month,
 		r.PubDate.Day,

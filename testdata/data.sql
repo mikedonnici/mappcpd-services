@@ -136,12 +136,9 @@ INSERT INTO `%s`.`ce_evaluation` VALUES
 
 -- name: insert-data-ce_m_activity
 INSERT INTO `%s`.`ce_m_activity` VALUES
-  (5839, 7821, 23, 25, NULL, NULL, 1, 1, '2018-04-30 04:29:13', '2018-04-30 04:29:13', '2018-04-30', 1.00, 1.00, 0,
-   'BJJ like Bruno Malfacine... control hands and sweep'),
-  (5840, 7821, 23, 25, NULL, NULL, 1, 0, '2018-04-30 07:09:48', '2018-04-30 07:09:48', '2018-04-30', 1.00, 1.00, 0,
-   'Test activity'),
-  (5841, 7821, 20, 1, NULL, NULL, 1, 0, '2018-04-30 07:15:24', '2018-04-30 07:15:24', '2018-04-30', 1.00, 3.00, 0,
-   'sdasd');
+  (1, 1, 23, 25, NULL, NULL, 1, 1, NOW(), NOW(), '2018-02-03', 1.00, 1.00, 0, 'BJJ like Bruno Malfacine'),
+  (2, 1, 23, 25, NULL, NULL, 1, 0, NOW(), NOW(), '2018-02-04', 1.00, 1.00, 0, 'Ate sausages and eggs'),
+  (3, 1, 20, 1, NULL, NULL, 1, 0, NOW(), NOW(), '2018-02-05', 1.00, 3.00, 0, 'Baked bread');
 
 -- name: insert-data-ce_m_activity_attachment
 INSERT INTO `%s`.`ce_m_activity_attachment` VALUES

@@ -5,7 +5,6 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-
 // Note represents a record of a comment, document or anything else. A Note can be linked to a member and
 // other entities such as an application, or an issue
 type Note struct {

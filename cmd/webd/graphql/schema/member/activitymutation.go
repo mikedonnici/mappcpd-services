@@ -133,7 +133,7 @@ var activityDelete = &graphql.Field{
 
 		activityID, ok := p.Args["id"].(int)
 		if ok {
-			return "Record deleted", cpd.DeleteMemberActivity(memberID, activityID)
+			return "CPD deleted", cpd.DeleteMemberActivity(memberID, activityID)
 		}
 		return nil, nil
 	},

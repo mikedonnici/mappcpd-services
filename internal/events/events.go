@@ -2,15 +2,13 @@
 package events
 
 import (
+	"database/sql"
 	"log"
 	"math"
 	"time"
 
-	"database/sql"
-
 	"github.com/pkg/errors"
 
-	"github.com/mappcpd/web-services/internal/constants"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
@@ -64,8 +62,8 @@ func DateRange(start, end time.Time) ([]Event, error) {
 	var xe []Event
 
 	// MySQL DATE format
-	sd := start.Format(constants.MySQLDateFormat)
-	ed := end.Format(constants.MySQLDateFormat)
+	sd := start.Format("2006-01-02")
+	ed := end.Format("2006-01-02")
 
 	q := `SELECT id, created_at, updated_at,
 		  COALESCE(start_on, ''),

@@ -4,15 +4,13 @@
 package attachments
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 
-	"database/sql"
-
-	"github.com/pkg/errors"
-
 	"github.com/mappcpd/web-services/internal/fileset"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/pkg/errors"
 )
 
 // Attachment contains data about an uploaded file (attachment)- that is
@@ -242,7 +240,7 @@ func MemberActivityAttachments(memberActivityID int) ([]Attachment, error) {
 
 	query := `SELECT
 			a.id AS 'attachmentId',
-			a.clean_filename as 'fileName',
+			a.clean_filename AS 'fileName',
 			CONCAT(fs.volume_name, fs.set_path, a.ce_m_activity_id, '/', a.cloudy_filename) AS 'filePath',
 			CONCAT(fu.base_url, fs.set_path, a.ce_m_activity_id, '/', a.cloudy_filename) AS 'fileUrl'
 			FROM ce_m_activity_attachment a

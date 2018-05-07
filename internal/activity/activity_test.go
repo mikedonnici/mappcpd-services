@@ -74,3 +74,23 @@ func TestActivityByID(t *testing.T) {
 		helper.Result(t, c.name, a.Name)
 	}
 }
+
+func TestActivityByTypeID(t *testing.T) {
+	cases := []struct {
+		typeID     int
+		activityID int
+	}{
+		{2, 20},
+		{13, 21},
+		{28, 23},
+		{36, 24},
+	}
+
+	for _, c := range cases {
+		a, err := activity.ByTypeIDStore(c.typeID, db.MySQL)
+		if err != nil {
+			t.Fatalf("Database error: %s", err)
+		}
+		helper.Result(t, c.activityID, a.ID)
+	}
+}

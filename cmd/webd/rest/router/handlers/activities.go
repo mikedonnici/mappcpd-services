@@ -87,7 +87,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Response
-	a, err := _ma.MemberActivityByID(int(id))
+	a, err := _ma.ByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -118,7 +118,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 	p := responder.New(middleware.UserAuthToken.Token)
 
 	// Decode JSON body into ActivityAttachment value
-	a :=_ma.MemberActivityInput{}
+	a :=_ma.Input{}
 	a.MemberID = middleware.UserAuthToken.Claims.ID
 	err := json.NewDecoder(r.Body).Decode(&a)
 	if err != nil {
@@ -128,7 +128,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aid, err := _ma.AddMemberActivity(a)
+	aid, err := _ma.Add(a)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -136,7 +136,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the new record for return
-	ar, err :=_ma.MemberActivityByID(int(aid))
+	ar, err :=_ma.ByID(int(aid))
 	if err != nil {
 		msg := "Could not fetch the new record"
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", msg + " " + err.Error()}
@@ -166,7 +166,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch the original activity record
-	a, err :=_ma.MemberActivityByID(int(id))
+	a, err :=_ma.ByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		p.Message = responder.Message{http.StatusNotFound, "failed", err.Error()}
@@ -185,8 +185,8 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Original activity - from above we have a MemberActivity but need a subset of this - ie MemberActivityInput
-	oa :=_ma.MemberActivityInput{
+	// Original activity - from above we have a CPD but need a subset of this - ie Input
+	oa :=_ma.Input{
 		ID:          a.ID,
 		MemberID:    a.MemberID,
 		ActivityID:  a.Activity.ID,
@@ -198,7 +198,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// new activity - ie, updated version posted in JSON body
-	na :=_ma.MemberActivityInput{}
+	na :=_ma.Input{}
 	err = json.NewDecoder(r.Body).Decode(&na)
 	if err != nil {
 		msg := "Error decoding JSON: " + err.Error() + ". Check the format of request body."
@@ -220,7 +220,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("New:", na)
 
 	// Update the activity record
-	err = _ma.UpdateMemberActivity(na)
+	err = _ma.Update(na)
 	if err != nil {
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -228,7 +228,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// updated record - fetch for response
-	ur, err :=_ma.MemberActivityByID(int(id))
+	ur, err :=_ma.ByID(int(id))
 	if err != nil {
 		msg := "Could not fetch the updated record"
 		p.Message = responder.Message{http.StatusInternalServerError, "failure", msg + " " + err.Error()}
@@ -370,7 +370,7 @@ func MembersActivitiesRecurringRecorder(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Record (or skip) the target activity (_id on url), and increment the schedule
+	// CPD (or skip) the target activity (_id on url), and increment the schedule
 	_id := mux.Vars(r)["_id"]
 	q := r.URL.Query()
 	// ?skip=anything will do...
@@ -378,7 +378,7 @@ func MembersActivitiesRecurringRecorder(w http.ResponseWriter, r *http.Request) 
 		fmt.Println("Skip recurring activity...")
 		err = ra.Skip(_id)
 	} else {
-		fmt.Println("Record recurring activity...")
+		fmt.Println("CPD recurring activity...")
 		err = ra.Record(_id)
 	}
 
@@ -427,7 +427,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 		p.Message = responder.Message{http.StatusBadRequest, "failed", msg}
 	}
 
-	a, err :=_ma.MemberActivityByID(int(id))
+	a, err :=_ma.ByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()
@@ -497,7 +497,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 		p.Send(w)
 		return
 	}
-	activity, err :=_ma.MemberActivityByID(int(id))
+	activity, err :=_ma.ByID(int(id))
 	switch {
 	case err == sql.ErrNoRows:
 		msg := fmt.Sprintf("No activity found with id %d -", id) + err.Error()

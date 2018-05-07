@@ -5,7 +5,7 @@ import (
 	"github.com/mappcpd/web-services/internal/activity"
 )
 
-// activityType is a local version of activities.ActivityType, to remove to the sql.NullInt64
+// activityType is a local version of activities.Type, to remove to the sql.NullInt64
 type activityType struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
@@ -17,7 +17,7 @@ func activitiesData() ([]activity.Activity, error) {
 }
 
 // activityTypesData returns sub types for an activity
-func activityTypesData(activityID int) ([]activity.ActivityType, error) {
+func activityTypesData(activityID int) ([]activity.Type, error) {
 	return activity.Types(activityID)
 }
 

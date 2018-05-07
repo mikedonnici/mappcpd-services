@@ -2,7 +2,7 @@ package note
 
 // Queries is a map containing common queries for the package
 var Queries = map[string]string{
-	"select-note": selectNote,
+	"select-note":        selectNote,
 	"select-attachments": selectAttachments,
 }
 
