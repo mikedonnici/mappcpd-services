@@ -68,6 +68,11 @@ func init() {
 	envr.New("fixrEnv", []string{
 		"MAPPCPD_SHORT_LINK_URL",
 		"MAPPCPD_SHORT_LINK_PREFIX",
+		"MAPPCPD_MONGO_DBNAME",
+		"MAPPCPD_MONGO_DESC",
+		"MAPPCPD_MONGO_URL",
+		"MAPPCPD_MYSQL_DESC",
+		"MAPPCPD_MYSQL_URL",
 	}).Auto()
 
 	// flags
