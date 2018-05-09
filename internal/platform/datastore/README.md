@@ -1,19 +1,21 @@
 ## datastore/
 
-The `datastore` package provides access to database sessions.
+The `datastore` package provides access to the various data sources
+for the application.
 
-A `datastore` value contains fields that point to database connections -
-thus far it may contain a `MySQLConnection` and a `MongoDBConnection`
+A `datastore.Datastore` value contains fields that point to database
+connections - thus far it may contain a `MySQLConnection` and a `MongoDBConnection`.
 
-A `datastore` can be passed to internal package functions so that the
-package can access the data it needs. However, as the `datastore`
-contains pointers to all of the databases resources the choice of how
-the data is obtained is left with the internal package itself.
+The `Datastore` values is passed to the `internal` package functions
+and those functions then determine which of the data sources are required
+to perform the task.
 
-For testing and general flexibility the datastore can be connected to
-individial databases, as well as to both.
+For testing, or some other reason, a `Datastore` can be connected to one
+source, or to all.
 
-**Connect to MySQL**
+Examples:
+
+**Connect to MySQL only**
 ```go
 	ds := datastore.New()
 	ds.MySQL = datastore.MySQLConnection{
@@ -27,7 +29,7 @@ individial databases, as well as to both.
 	fmt.Println("Connected to MySQL")
 ```
 
-**Connect to MongoDB**
+**Connect to MongoDB only**
 ```go
 	ds := datastore.New()
 	ds.MongoDB = datastore.MongoDBConnection{
@@ -42,7 +44,7 @@ individial databases, as well as to both.
 	fmt.Println("Connected to MongoDB")
 ```
 
-**Connect to Datastore using env vars**
+**Connect to all data sources using values from env vars**
 ```go
     envr.New("testEnv", []string{
 		"MAPPCPD_MYSQL_DESC",
@@ -71,5 +73,15 @@ individial databases, as well as to both.
 	fmt.Println("Connected to Datastore")
 ```
 
+In most cases within the application we need a `Datastore` that is
+connected to the sources specified by the env vars, so this convenience
+function can be used in place of the above:
+
+```go
+    ds, err := datastore.FromEnv()
+    if err != nil {
+        log.Fatalln("Could not set datastore -", err)
+    }
+```
 
 
