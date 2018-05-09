@@ -36,13 +36,13 @@ type RecurringActivity struct {
 
 // MemberRecurring initialises a value of type Recurring and returns a pointer to same.
 // It checks for an existing doc belonging to member (id), and if not found initialises a new one.
-func MemberRecurring(id int) (*Recurring, error) {
+func MemberRecurring(ds datastore.Datastore, id int) (*Recurring, error) {
 
 	// Initialise value with member id...
 	r := Recurring{MemberID: id}
 
 	// Get a pointer to the collection...
-	c, err := datastore.MongoDB.RecurringCol()
+	c, err := ds.MongoDB.RecurringCol()
 	if err != nil {
 		return &r, errors.New("MemberRecurring() could not get a pointer to collection -" + err.Error())
 	}
@@ -62,10 +62,10 @@ func MemberRecurring(id int) (*Recurring, error) {
 }
 
 // Save saves the Recurring value to MongoDB
-func (r *Recurring) Save() error {
+func (r *Recurring) Save(ds datastore.Datastore) error {
 
 	// get a pointer to the collection...
-	c, err := datastore.MongoDB.RecurringCol()
+	c, err := ds.MongoDB.RecurringCol()
 	if err != nil {
 		fmt.Println("Recurring.Save() could not get a pointer to collection -", err)
 		return err
@@ -83,22 +83,22 @@ func (r *Recurring) Save() error {
 }
 
 // RemoveActivity removes one of the recurring activities from the Recurring.All and saves the resulting doc
-func (r *Recurring) RemoveActivity(_id string) error {
+func (r *Recurring) RemoveActivity(ds datastore.Datastore, oid string) error {
 
 	// The activities are stored in a doc, as sub docs in an activity array.
 	// Removing one of them can be achieved with some fancy Mongo using $pull - like this:
-	// db.Recurring.update({"activities._id": ObjectId("59091436a9fb6e78d8945157")}, {$pull: {"activities": {"_id": ObjectId("59091436a9fb6e78d8945157")}}})
+	// db.Recurring.update({"activities.oid": ObjectId("59091436a9fb6e78d8945157")}, {$pull: {"activities": {"oid": ObjectId("59091436a9fb6e78d8945157")}}})
 
 	// get a pointer to the collection...
-	c, err := datastore.MongoDB.RecurringCol()
+	c, err := ds.MongoDB.RecurringCol()
 	if err != nil {
 		fmt.Println("Recurring.RemoveActivity() could not get a pointer to collection -", err)
 		return err
 	}
 
 	// Selector and updater
-	s := bson.M{"activities._id": bson.ObjectIdHex(_id)}
-	u := bson.M{"$pull": bson.M{"activities": bson.M{"_id": bson.ObjectIdHex(_id)}}}
+	s := bson.M{"activities.oid": bson.ObjectIdHex(oid)}
+	u := bson.M{"$pull": bson.M{"activities": bson.M{"oid": bson.ObjectIdHex(oid)}}}
 	err = c.Update(s, u)
 	if err != nil {
 		fmt.Println("Recurring.RemoveActivity() update error -", err)
@@ -107,10 +107,10 @@ func (r *Recurring) RemoveActivity(_id string) error {
 
 	// The database operation has succeeded but we haven't dropped the item from our struct slice!
 	// So this means the OLD way of simply changing the value in the struct first, and then saving, is JUST as efficient!
-	newMap := []RecurringActivity{}
+	var newMap []RecurringActivity
 	for _, v := range r.Activities {
 		// skip the one we deleted
-		if v.ID == bson.ObjectIdHex(_id) {
+		if v.ID == bson.ObjectIdHex(oid) {
 			continue
 		}
 		newMap = append(newMap, v)
@@ -121,21 +121,21 @@ func (r *Recurring) RemoveActivity(_id string) error {
 }
 
 // GetActivity returns just the RecurringActivity identified by _id
-func (r *Recurring) GetActivity(_id string) (RecurringActivity, error) {
+func (r *Recurring) GetActivity(oid string) (RecurringActivity, error) {
 
 	for _, v := range r.Activities {
-		if v.ID == bson.ObjectIdHex(_id) {
+		if v.ID == bson.ObjectIdHex(oid) {
 			return v, nil
 		}
 	}
 
-	return RecurringActivity{}, errors.New("No activity with id " + _id)
+	return RecurringActivity{}, errors.New("No activity with id " + oid)
 }
 
 // CPD writes a member activity record and sets the Next scheduled time for the recurring activity
-func (r *Recurring) Record(_id string) error {
+func (r *Recurring) Record(ds datastore.Datastore, oid string) error {
 
-	a, err := r.GetActivity(_id)
+	a, err := r.GetActivity(oid)
 	if err != nil {
 		return err
 	}
@@ -153,7 +153,7 @@ func (r *Recurring) Record(_id string) error {
 	ar.Description = a.Description
 
 	// Add activity to database
-	_, err = Add(ar)
+	_, err = Add(ds, ar)
 	if err != nil {
 		fmt.Println(err)
 		return err
@@ -161,15 +161,15 @@ func (r *Recurring) Record(_id string) error {
 
 	// Increment next
 	a.UpdateNext()
-	r.UpdateActivity(a)
+	r.UpdateActivity(ds, a)
 
 	return nil
 }
 
 // Skip just sets the Next scheduled time for the recurring activity, and saves to db
-func (r *Recurring) Skip(_id string) error {
+func (r *Recurring) Skip(ds datastore.Datastore, oid string) error {
 
-	a, err := r.GetActivity(_id)
+	a, err := r.GetActivity(oid)
 	if err != nil {
 		return err
 	}
@@ -181,16 +181,16 @@ func (r *Recurring) Skip(_id string) error {
 
 	// Increment next
 	a.UpdateNext()
-	r.UpdateActivity(a)
+	r.UpdateActivity(ds, a)
 
 	return nil
 }
 
 // UpdateActivity updates one RecurringActivity in the Recurring.All slice and saves it to the database
-func (r *Recurring) UpdateActivity(a RecurringActivity) {
+func (r *Recurring) UpdateActivity(ds datastore.Datastore, a RecurringActivity) {
 
 	// Replace the activity with a matching id
-	newMap := []RecurringActivity{}
+	var newMap []RecurringActivity
 	for _, v := range r.Activities {
 		if v.ID == a.ID {
 			v = a
@@ -199,7 +199,7 @@ func (r *Recurring) UpdateActivity(a RecurringActivity) {
 	}
 	r.Activities = newMap
 
-	r.Save()
+	r.Save(ds)
 }
 
 // UpdateNext pushed RecurringActivity.Next schedule forward

@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPingDatabase(t *testing.T) {
-	err := db.MySQL.Session.Ping()
+	err := db.DS.MySQL.Session.Ping()
 	if err != nil {
 		t.Fatal("Could not ping database")
 	}
@@ -40,7 +40,7 @@ func TestCPDByID(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		cpd, err := cpd.ByIDStore(c.id, db.MySQL)
+		cpd, err := cpd.ByID(db.DS, c.id)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -49,7 +49,7 @@ func TestCPDByID(t *testing.T) {
 }
 
 func TestCPDByMemberID(t *testing.T) {
-	xcpd, err := cpd.ByMemberIDStore(1, db.MySQL)
+	xcpd, err := cpd.ByMemberID(db.DS, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -57,7 +57,7 @@ func TestCPDByMemberID(t *testing.T) {
 }
 
 func TestCPDQuery(t *testing.T) {
-	xcpd, err := cpd.QueryStore("WHERE cma.description LIKE '%Bruno%'", db.MySQL)
+	xcpd, err := cpd.Query(db.DS, "WHERE cma.description LIKE '%Bruno%'")
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -66,21 +66,21 @@ func TestCPDQuery(t *testing.T) {
 
 func TestAddCPD(t *testing.T) {
 	c := cpd.Input{
-		MemberID: 1,
-		ActivityID: 24,
-		TypeID: 25,
-		Date: "2018-05-07",
-		Quantity: 2.25,
+		MemberID:    1,
+		ActivityID:  24,
+		TypeID:      25,
+		Date:        "2018-05-07",
+		Quantity:    2.25,
 		Description: "I added this record",
-		Evidence: false,
+		Evidence:    false,
 	}
-	id, err := cpd.AddStore(c, db.MySQL)
+	id, err := cpd.Add(db.DS, c)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 
 	// fetch the newly added record, and verify the description
-	r, err := cpd.ByIDStore(id, db.MySQL)
+	r, err := cpd.ByID(db.DS, id)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -90,21 +90,21 @@ func TestAddCPD(t *testing.T) {
 
 func TestUpdateCPD(t *testing.T) {
 	c := cpd.Input{
-		ID: 2,
-		MemberID: 1,
-		ActivityID: 24,
-		TypeID: 25,
-		Date: "2018-05-07",
-		Quantity: 2.25,
+		ID:          2,
+		MemberID:    1,
+		ActivityID:  24,
+		TypeID:      25,
+		Date:        "2018-05-07",
+		Quantity:    2.25,
 		Description: "The description was updated",
-		Evidence: false,
+		Evidence:    false,
 	}
-	err := cpd.UpdateStore(c, db.MySQL)
+	err := cpd.Update(db.DS, c)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 
-	r, err := cpd.ByIDStore(c.ID, db.MySQL)
+	r, err := cpd.ByID(db.DS, c.ID)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -115,23 +115,23 @@ func TestUpdateCPD(t *testing.T) {
 func TestDuplicateOf(t *testing.T) {
 
 	// Fetch first cpd record and then try to insert it - should get '1' returned
-	a, err := cpd.ByIDStore(1, db.MySQL)
+	a, err := cpd.ByID(db.DS, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 
 	i := cpd.Input{
-		MemberID: a.MemberID,
-		ActivityID: a.Activity.ID,
-		TypeID: int(a.Type.ID.Int64),
-		Date: a.Date,
+		MemberID:    a.MemberID,
+		ActivityID:  a.Activity.ID,
+		TypeID:      int(a.Type.ID.Int64),
+		Date:        a.Date,
 		Description: a.Description,
-		Evidence: a.Evidence,
-		UnitCredit: a.CreditData.UnitCredit,
-		Quantity: a.Credit,
+		Evidence:    a.Evidence,
+		UnitCredit:  a.CreditData.UnitCredit,
+		Quantity:    a.Credit,
 	}
 
-	dupID, err := cpd.DuplicateOfStore(i, db.MySQL)
+	dupID, err := cpd.DuplicateOf(db.DS, i)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -142,17 +142,17 @@ func TestDuplicateOf(t *testing.T) {
 func TestDelete(t *testing.T) {
 
 	// get count, delete record id 3, count should be count - 1
-	xcpd, err := cpd.QueryStore("", db.MySQL)
+	xcpd, err := cpd.Query(db.DS, "")
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 	c1 := len(xcpd)
 
-	err = cpd.DeleteStore(1, 3, db.MySQL)
+	err = cpd.Delete(db.DS, 1, 3)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
-	xcpd, err = cpd.QueryStore("", db.MySQL)
+	xcpd, err = cpd.Query(db.DS, "")
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}

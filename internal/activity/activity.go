@@ -53,62 +53,37 @@ type Type struct {
 	Name string        `json:"name" bson:"name"`
 }
 
-// All fetches active Activity records
-func All() ([]Activity, error) {
-	return activityList(datastore.MySQL)
-}
-
-// AllStore fetches active Activity records from the specified datastore - used for testing
-func AllStore(conn datastore.MySQLConnection) ([]Activity, error) {
-	return activityList(conn)
-}
-
-// Types fetches the activity types
-func Types(activityID int) ([]Type, error) {
-	return activityTypes(activityID, datastore.MySQL)
+// All fetches active Activity records from the specified datastore - used for testing
+func All(ds datastore.Datastore) ([]Activity, error) {
+	return activityList(ds)
 }
 
 // Types fetches the activity types from the specified datastore - used for testing
-func TypesStore(activityID int, conn datastore.MySQLConnection) ([]Type, error) {
-	return activityTypes(activityID, conn)
+func Types(ds datastore.Datastore, activityID int) ([]Type, error) {
+	return activityTypes(ds, activityID)
 }
 
-// ByID fetches an activity
-func ByID(id int) (Activity, error) {
-	return activityByID(id, datastore.MySQL)
-}
-
-// ByIDStore fetches an activity from the specified datastore - used for testing
-func ByIDStore(id int, conn datastore.MySQLConnection) (Activity, error) {
-	return activityByID(id, conn)
-}
-
-// ByTypeID fetches an activity by type id
-func ByTypeID(typeID int) (Activity, error) {
-	return activityByTypeID(typeID, datastore.MySQL)
+// ByID fetches an activity from the specified datastore - used for testing
+func ByID(ds datastore.Datastore, id int) (Activity, error) {
+	return activityByID(ds, id)
 }
 
 // ByTypeID fetches an activity by type id from the specified store - used for testing
-func ByTypeIDStore(typeID int, conn datastore.MySQLConnection) (Activity, error) {
-	return activityByTypeID(typeID, conn)
+func ByTypeID(ds datastore.Datastore, typeID int) (Activity, error) {
+	return activityByTypeID(ds, typeID)
 }
 
-// CreditPerUnit gets the credit value, per unit (eg hour, item) for an activity
-func CreditPerUnit(activityID int) (float64, error) {
-	return activityCreditPerUnit(activityID, datastore.MySQL)
+// CreditPerUnit retrieves the credit per unit for an activity from the specified store - used for testing
+func CreditPerUnit(ds datastore.Datastore, activityID int) (float64, error) {
+	return activityCreditPerUnit(ds, activityID)
 }
 
-// CreditPerUnitStore retrieves the credit per unit for an activity from the specified store - used for testing
-func CreditPerUnitStore(activityID int, conn datastore.MySQLConnection) (float64, error) {
-	return activityCreditPerUnit(activityID, conn)
-}
-
-func activityList(conn datastore.MySQLConnection) ([]Activity, error) {
+func activityList(ds datastore.Datastore) ([]Activity, error) {
 
 	var xa []Activity
 
 	q := Queries["select-activities"] + " WHERE a.active = 1"
-	rows, err := conn.Session.Query(q)
+	rows, err := ds.MySQL.Session.Query(q)
 	if err != nil {
 		return xa, err
 	}
@@ -125,12 +100,12 @@ func activityList(conn datastore.MySQLConnection) ([]Activity, error) {
 	return xa, nil
 }
 
-func activityByID(id int, conn datastore.MySQLConnection) (Activity, error) {
+func activityByID(ds datastore.Datastore, id int) (Activity, error) {
 
 	var a Activity
 
 	q := Queries["select-activities"] + ` WHERE a.id = ? LIMIT 1`
-	rows, err := conn.Session.Query(q, id) // not using .QueryRow so can share scanActivity func
+	rows, err := ds.MySQL.Session.Query(q, id) // not using .QueryRow so can share scanActivity func
 	if err != nil {
 		return a, err
 	}
@@ -143,26 +118,26 @@ func activityByID(id int, conn datastore.MySQLConnection) (Activity, error) {
 	return a, nil
 }
 
-func activityByTypeID(id int, conn datastore.MySQLConnection) (Activity, error) {
+func activityByTypeID(ds datastore.Datastore, id int) (Activity, error) {
 
 	var activityID int
 	query := "SELECT ce_activity_id FROM ce_activity_type WHERE id = ?"
-	err := conn.Session.QueryRow(query, id).Scan(&activityID)
+	err := ds.MySQL.Session.QueryRow(query, id).Scan(&activityID)
 	if err != nil {
 		function, file, line, ok := runtime.Caller(0)
 		msg := utility.ErrorLocationMessage(function, file, line, ok, true)
 		return Activity{}, errors.Wrap(err, msg)
 	}
 
-	return activityByID(activityID, conn)
+	return activityByID(ds, activityID)
 }
 
-func activityTypes(activityID int, conn datastore.MySQLConnection) ([]Type, error) {
+func activityTypes(ds datastore.Datastore, activityID int) ([]Type, error) {
 
 	var xat []Type
 
 	query := "SELECT id, name FROM ce_activity_type WHERE active = 1 AND ce_activity_id = ?"
-	rows, err := conn.Session.Query(query, activityID)
+	rows, err := ds.MySQL.Session.Query(query, activityID)
 	if err != nil {
 		return xat, err
 	}
@@ -180,10 +155,10 @@ func activityTypes(activityID int, conn datastore.MySQLConnection) ([]Type, erro
 	return xat, nil
 }
 
-func activityCreditPerUnit(id int, conn datastore.MySQLConnection) (float64, error)  {
+func activityCreditPerUnit(ds datastore.Datastore, id int) (float64, error) {
 	var c float64
 	query := `SELECT points_per_unit FROM ce_activity WHERE active = 1 AND id = ?`
-	err := conn.Session.QueryRow(query, id).Scan(&c)
+	err := ds.MySQL.Session.QueryRow(query, id).Scan(&c)
 	return c, err
 }
 

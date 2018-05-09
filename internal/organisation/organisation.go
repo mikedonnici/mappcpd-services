@@ -17,43 +17,33 @@ type Organisation struct {
 	Groups []Organisation `json:"groups,omitempty" bson:"groups,omitempty"`
 }
 
-// ByID fetches an organisation record from the default datastore
-func ByID(id int) (Organisation, error) {
-	return orgByID(id, datastore.MySQL)
-}
-
-// ByIDStore fetches an organisation record from the specified datastore - used for testing
-func ByIDStore(id int, conn datastore.MySQLConnection) (Organisation, error) {
-	return orgByID(id, conn)
+// ByID fetches an organisation record
+func ByID(ds datastore.Datastore, id int) (Organisation, error) {
+	return orgByID(ds, id)
 }
 
 // All fetches all active Organisations
-func All() ([]Organisation, error) {
-	return orgList(datastore.MySQL)
+func All(ds datastore.Datastore) ([]Organisation, error) {
+	return orgList(ds)
 }
 
-// AllStore fetches all active Organisations from the specified datastore - used for testing
-func AllStore(conn datastore.MySQLConnection) ([]Organisation, error) {
-	return orgList(conn)
-}
-
-func orgByID(id int, conn datastore.MySQLConnection) (Organisation, error) {
+func orgByID(ds datastore.Datastore, id int) (Organisation, error) {
 
 	var o Organisation
 
 	query := `SELECT id, short_name, name, phone, fax, email, web 
 				FROM organisation WHERE active = 1 AND id = ?`
-	err := conn.Session.QueryRow(query, id).Scan(&o.ID, &o.Code, &o.Name, &o.Phone, &o.Fax, &o.Email, &o.URL)
+	err := ds.MySQL.Session.QueryRow(query, id).Scan(&o.ID, &o.Code, &o.Name, &o.Phone, &o.Fax, &o.Email, &o.URL)
 	if err != nil {
 		return o, err
 	}
 
-	o.Groups, err = childOrgs(o.ID, conn)
+	o.Groups, err = childOrgs(ds, o.ID)
 
 	return o, err
 }
 
-func orgList(conn datastore.MySQLConnection) ([]Organisation, error) {
+func orgList(ds datastore.Datastore) ([]Organisation, error) {
 
 	var xo []Organisation
 
@@ -61,7 +51,7 @@ func orgList(conn datastore.MySQLConnection) ([]Organisation, error) {
 	query := `SELECT id, short_name, name, phone, fax, email, web 
 				FROM organisation WHERE active = 1 AND parent_organisation_id IS NULL`
 
-	rows, err := conn.Session.Query(query)
+	rows, err := ds.MySQL.Session.Query(query)
 	if err != nil {
 		return xo, err
 	}
@@ -72,7 +62,7 @@ func orgList(conn datastore.MySQLConnection) ([]Organisation, error) {
 		rows.Scan(&o.ID, &o.Code, &o.Name, &o.Phone, &o.Fax, &o.Email, &o.URL)
 
 		var err error
-		o.Groups, err = childOrgs(o.ID, conn)
+		o.Groups, err = childOrgs(ds, o.ID)
 		if err != nil {
 			return xo, err
 		}
@@ -84,13 +74,13 @@ func orgList(conn datastore.MySQLConnection) ([]Organisation, error) {
 }
 
 // childOrgs fetches active sub organisations (groups) for the organisation specified by id.
-func childOrgs(id int, conn datastore.MySQLConnection) ([]Organisation, error) {
+func childOrgs(ds datastore.Datastore, id int) ([]Organisation, error) {
 
 	var xo []Organisation
 
 	query := `SELECT id, short_name, name, phone, fax, email, web FROM 
 				organisation WHERE active = 1 AND parent_organisation_id = ?`
-	rows, err := conn.Session.Query(query, id)
+	rows, err := ds.MySQL.Session.Query(query, id)
 	if err != nil {
 		return xo, err
 	}

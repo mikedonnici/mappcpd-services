@@ -25,33 +25,23 @@ type Attachment struct {
 	URL  string `json:"url" bson:"url"`
 }
 
-// ByID fetches a Note from the default datastore
-func ByID(id int) (Note, error) {
-	return noteByID(id, datastore.MySQL)
+// ByID fetches a Note from the specified datastore - used for testing
+func ByID(ds datastore.Datastore, id int) (Note, error) {
+	return noteByID(ds, id)
 }
 
-// ByIDStore fetches a Note from the specified datastore - used for testing
-func ByIDStore(id int, conn datastore.MySQLConnection) (Note, error) {
-	return noteByID(id, conn)
-}
-
-// ByMemberID fetches all the notes linked to a Member
-func ByMemberID(memberID int) ([]Note, error) {
-	return notesByMemberID(memberID, datastore.MySQL)
-}
-
-// ByMemberIDStore fetches all the notes linked to a Member from the specified datastore - used for testing
-func ByMemberIDStore(memberID int, conn datastore.MySQLConnection) ([]Note, error) {
-	return notesByMemberID(memberID, conn)
+// ByMemberID fetches all the notes linked to a Member from the specified datastore - used for testing
+func ByMemberID(ds datastore.Datastore, memberID int) ([]Note, error) {
+	return notesByMemberID(ds, memberID)
 }
 
 // noteByID fetches a Note record from the specified data store
-func noteByID(id int, conn datastore.MySQLConnection) (Note, error) {
+func noteByID(ds datastore.Datastore, id int) (Note, error) {
 
 	n := Note{ID: id}
 
 	query := Queries["select-note"] + " WHERE wn.id = ?"
-	err := conn.Session.QueryRow(query, id).Scan(
+	err := ds.MySQL.Session.QueryRow(query, id).Scan(
 		&n.ID,
 		&n.Type,
 		&n.MemberID,
@@ -64,17 +54,17 @@ func noteByID(id int, conn datastore.MySQLConnection) (Note, error) {
 		return n, err
 	}
 
-	n.Attachments, err = attachments(n.ID, conn)
+	n.Attachments, err = attachments(ds, n.ID)
 
 	return n, err
 }
 
-func notesByMemberID(memberID int, conn datastore.MySQLConnection) ([]Note, error) {
+func notesByMemberID(ds datastore.Datastore, memberID int) ([]Note, error) {
 
 	var xn []Note
 
 	query := Queries["select-note"] + " WHERE m.id = ? ORDER BY wn.effective_on DESC"
-	rows, err := conn.Session.Query(query, memberID)
+	rows, err := ds.MySQL.Session.Query(query, memberID)
 	if err != nil {
 		return xn, err
 	}
@@ -93,7 +83,7 @@ func notesByMemberID(memberID int, conn datastore.MySQLConnection) ([]Note, erro
 		)
 
 		var err error
-		n.Attachments, err = attachments(n.ID, conn)
+		n.Attachments, err = attachments(ds, n.ID)
 		if err != nil {
 			return xn, nil
 		}
@@ -104,12 +94,12 @@ func notesByMemberID(memberID int, conn datastore.MySQLConnection) ([]Note, erro
 	return xn, nil
 }
 
-func attachments(noteID int, conn datastore.MySQLConnection) ([]Attachment, error) {
+func attachments(ds datastore.Datastore, noteID int) ([]Attachment, error) {
 
 	var xa []Attachment
 
 	query := Queries["select-attachments"] + " WHERE wa.wf_note_id = ?"
-	rows, err := conn.Session.Query(query, noteID)
+	rows, err := ds.MySQL.Session.Query(query, noteID)
 	if err != nil {
 		return xa, err
 	}

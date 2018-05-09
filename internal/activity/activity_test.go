@@ -22,14 +22,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestPingDatabase(t *testing.T) {
-	err := db.MySQL.Session.Ping()
+	err := db.DS.MySQL.Session.Ping()
 	if err != nil {
 		t.Fatal("Could not ping database")
 	}
 }
 
 func TestActivityCount(t *testing.T) {
-	xa, err := activity.AllStore(db.MySQL)
+	xa, err := activity.All(db.DS)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -49,7 +49,7 @@ func TestActivityTypesCount(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		xa, err := activity.TypesStore(c.id, db.MySQL)
+		xa, err := activity.Types(db.DS, c.id)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -67,7 +67,7 @@ func TestActivityByID(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		a, err := activity.ByIDStore(c.id, db.MySQL)
+		a, err := activity.ByID(db.DS, c.id)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -87,7 +87,7 @@ func TestActivityByTypeID(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		a, err := activity.ByTypeIDStore(c.typeID, db.MySQL)
+		a, err := activity.ByTypeID(db.DS, c.typeID)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}

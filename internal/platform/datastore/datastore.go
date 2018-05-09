@@ -1,69 +1,84 @@
 package datastore
 
 import (
-	"fmt"
 	"log"
+	"os"
 
-	"github.com/34South/envr"
+	"github.com/pkg/errors"
 )
 
-// MySQL global provides access to the session value, *sql.DB, via the .Session field.
-// Originally it pointed directly at *sql.DB however this was done to make it consistent with the
-// MongoDB value, and to allow helper methods to be provided later on.
-// So queries are accessed like this: MySQL.Session.Query()
-var MySQL MySQLConnection
-
-// MongoDB global is used for convenient access to methods for accessing MongoDB collections.
-// This works slightly differently from MySQL as there are methods that return pointers
-// to each collection in MongoDB, and these pointers (*Collection values) provide methods to manipulate data.
-var MongoDB MongoDBConnection
-
-func Connect() {
-
-	connectMySQL()
-	connectMongoDB()
+// Datastore contains connections to the various databases
+type Datastore struct {
+	MySQL   MySQLConnection
+	MongoDB MongoDBConnection
 }
 
-// connectMySQL establishes a MySQL connection
-func connectMySQL() {
-
-	envr.New("mysqlEnv", []string{
-		"MAPPCPD_MYSQL_URL",
-		"MAPPCPD_MYSQL_DESC",
-	}).Auto()
-
-	err := MySQL.ConnectEnv() // this does not really open a new connection
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	err = MySQL.Session.Ping() // This DOES open a connection if necessary. This makes sure the db is accessible
-	if err != nil {
-		log.Fatalf("Error opening MySQL connection: %s\n", err.Error())
-	}
-
-	fmt.Println("datastore connected to MySQL:", MySQL.Description)
+// New returns a pointer to a Datastore
+func New() *Datastore {
+	return &Datastore{}
 }
 
-// connectMongoDB establishes a connection to DB2
-func connectMongoDB() {
+// ConnectAll establishes sessions with the databases
+func (d *Datastore) ConnectAll() error {
 
-	envr.New("mongoEnv", []string{
-		"MAPPCPD_MONGO_URL",
-		"MAPPCPD_MONGO_DBNAME",
-		"MAPPCPD_MONGO_DESC",
-	}).Auto()
-
-	err := MongoDB.Connect()
+	err := d.ConnectMySQL()
 	if err != nil {
-		log.Fatalln(err)
+		return err
 	}
 
-	// Set global pointer to session for convenience
-	err = MongoDB.session.Ping()
+	err = d.ConnectMongoDB()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ConnectMySQL establishes a Session with the MySQL database
+func (d *Datastore) ConnectMySQL() error {
+
+	err := d.MySQL.Connect()
+	if err != nil {
+		return errors.Wrap(err, "Error connecting to MySQL")
+	}
+	err = d.MySQL.Session.Ping()
+	if err != nil {
+		return errors.Wrap(err, "Error communicating with MySQL")
+	}
+
+	return nil
+}
+
+// ConnectMongoDB establishes a connection to DB2
+func (d *Datastore) ConnectMongoDB() error {
+
+	err := d.MongoDB.Connect()
+	if err != nil {
+		return errors.Wrap(err, "Error connecting to MongoDB")
+	}
+
+	err = d.MongoDB.Session.Ping()
 	if err != nil {
 		log.Fatalf("Error opening MongoDB connection: %s\n", err.Error())
 	}
 
-	fmt.Println("datastore connected to MongoDB:", MongoDB.Source)
+	return nil
+}
+
+// FromEnv sets up the default datastore using env vars
+func FromEnv() (Datastore, error) {
+
+	DS := New()
+	DS.MySQL = MySQLConnection{
+		DSN:  os.Getenv("MAPPCPD_MYSQL_URL"),
+		Desc: os.Getenv("MAPPCPD_MYSQL_DESC"),
+	}
+	DS.MongoDB = MongoDBConnection{
+		DSN:    os.Getenv("MAPPCPD_MONGO_URL"),
+		DBName: os.Getenv("MAPPCPD_MONGO_DBNAME"),
+		Desc:   os.Getenv("MAPPCPD_MONGO_DESC"),
+	}
+
+	err := DS.ConnectAll()
+	return *DS, err
 }

@@ -43,85 +43,48 @@ type Input struct {
 	Evidence    bool    `json:"evidence"`
 }
 
-// MemberActivityAttachment contains information about a file attached to a member activity
-
-// ByID fetches a CPD record by id
-func ByID(id int) (CPD, error) {
-	return cpdByID(id, datastore.MySQL)
+// ByID fetches a CPD record by id from the specified store - used for testing
+func ByID(ds datastore.Datastore, id int) (CPD, error) {
+	return cpdByID(ds, id)
 }
 
-// ByIDStore fetches a CPD record by id from the specified store - used for testing
-func ByIDStore(id int, conn datastore.MySQLConnection) (CPD, error) {
-	return cpdByID(id, conn)
-}
-
-// ByMemberID fetches all cpd belonging to a member
-func ByMemberID(memberID int) ([]CPD, error) {
-	return cpdByMemberID(memberID, datastore.MySQL)
-}
-
-// ByMemberIDStore fetches all cpd belonging to a member from the specified store - used for testing
-func ByMemberIDStore(memberID int, conn datastore.MySQLConnection) ([]CPD, error) {
-	return cpdByMemberID(memberID, conn)
+// ByMemberID fetches all cpd belonging to a member from the specified store - used for testing
+func ByMemberID(ds datastore.Datastore, memberID int) ([]CPD, error) {
+	return cpdByMemberID(ds, memberID)
 }
 
 // Query runs the base cpd query with any filter clause
-func Query(sqlClause string) ([]CPD, error) {
-	return cpdQuery(sqlClause, datastore.MySQL)
+func Query(ds datastore.Datastore, sqlClause string) ([]CPD, error) {
+	return cpdQuery(ds, sqlClause)
 }
 
-// Query runs the base cpd query with any filter clause
-func QueryStore(sqlClause string, conn datastore.MySQLConnection) ([]CPD, error) {
-	return cpdQuery(sqlClause, conn)
-}
-
-// Add inserts a new cpd record and returns the new id
-func Add(a Input) (int, error) {
-	return add(a, datastore.MySQL)
-}
-
-// AddStore inserts a new cpd record into the specified datastore, and returns the new id - used for testing
-func AddStore(a Input, conn datastore.MySQLConnection) (int, error) {
-	return add(a, conn)
-}
-
-// Update updates a cpd record
-func Update(a Input) error {
-	return update(a, datastore.MySQL)
+// Add inserts a new cpd record into the specified datastore, and returns the new id - used for testing
+func Add(ds datastore.Datastore, a Input) (int, error) {
+	return add(ds, a)
 }
 
 // Update updates a cpd record in the specified store - used for testing
-func UpdateStore(a Input, conn datastore.MySQLConnection) error {
-	return update(a, conn)
-}
-
-// DuplicateOf returns the id of a duplicate member activity, or 0 if not found
-func DuplicateOf(a Input) (int, error) {
-	return duplicateOf(a, datastore.MySQL)
+func Update(ds datastore.Datastore, a Input) error {
+	return update(ds, a)
 }
 
 // DuplicateOf returns the id of a duplicate member activity, or 0 if not found - from the specified store
-func DuplicateOfStore(a Input, conn datastore.MySQLConnection) (int, error) {
-	return duplicateOf(a, conn)
+func DuplicateOf(ds datastore.Datastore, a Input) (int, error) {
+	return duplicateOf(ds, a)
 }
 
-// Delete ensures the record is owned by MemberID before deleting
-func Delete(memberID, activityID int) error {
-	return delete(memberID, activityID, datastore.MySQL)
+// Delete ensures the record is owned by MemberID before deleting from specified datastore - used for testing
+func Delete(ds datastore.Datastore, memberID, activityID int) error {
+	return delete(ds, memberID, activityID)
 }
 
-// DeleteStore ensures the record is owned by MemberID before deleting from specified datastore - used for testing
-func DeleteStore(memberID, activityID int, conn datastore.MySQLConnection) error {
-	return delete(memberID, activityID, conn)
-}
-
-func cpdByID(id int, conn datastore.MySQLConnection) (CPD, error) {
+func cpdByID(ds datastore.Datastore, id int) (CPD, error) {
 
 	a := CPD{}
 	var evidence int // stored as 0/1 in db - translate to bool
 
 	query := Queries["select-member-activity"] + ` WHERE cma.id = ?`
-	err := conn.Session.QueryRow(query, id).Scan(
+	err := ds.MySQL.Session.QueryRow(query, id).Scan(
 		&a.ID,
 		&a.MemberID,
 		&a.Date,
@@ -158,12 +121,12 @@ func cpdByID(id int, conn datastore.MySQLConnection) (CPD, error) {
 	return a, nil
 }
 
-func cpdByMemberID(id int, conn datastore.MySQLConnection) ([]CPD, error) {
+func cpdByMemberID(ds datastore.Datastore, id int) ([]CPD, error) {
 
 	var xc []CPD
 
 	query := Queries["select-member-activity"] + ` WHERE member_id = ? ORDER BY activity_on DESC`
-	rows, err := conn.Session.Query(query, id)
+	rows, err := ds.MySQL.Session.Query(query, id)
 	if err != nil {
 		return xc, err
 	}
@@ -203,12 +166,12 @@ func cpdByMemberID(id int, conn datastore.MySQLConnection) ([]CPD, error) {
 	return xc, nil
 }
 
-func cpdQuery(clause string, conn datastore.MySQLConnection) ([]CPD, error) {
+func cpdQuery(ds datastore.Datastore, clause string) ([]CPD, error) {
 
 	var xc []CPD
 
 	query := Queries["select-member-activity"] + ` ` + clause
-	rows, err := conn.Session.Query(query)
+	rows, err := ds.MySQL.Session.Query(query)
 	if err != nil {
 		return xc, err
 	}
@@ -248,7 +211,7 @@ func cpdQuery(clause string, conn datastore.MySQLConnection) ([]CPD, error) {
 	return xc, nil
 }
 
-func add(a Input, conn datastore.MySQLConnection) (int, error) {
+func add(ds datastore.Datastore, a Input) (int, error) {
 
 	validate := validator.New()
 	err := validate.Struct(a)
@@ -257,7 +220,7 @@ func add(a Input, conn datastore.MySQLConnection) (int, error) {
 	}
 
 	// Look up the credit-per-unit for this type of activity...
-	uc, err := activity.CreditPerUnitStore(a.ActivityID, conn)
+	uc, err := activity.CreditPerUnit(ds, a.ActivityID)
 	if err != nil {
 		return 0, err
 	}
@@ -275,7 +238,7 @@ func add(a Input, conn datastore.MySQLConnection) (int, error) {
 	VALUES("%v", "%v", "%v", "%v", NOW(), NOW(), "%v", "%v", "%v", "%v")`
 	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description)
 
-	r, err := conn.Session.Exec(query)
+	r, err := ds.MySQL.Session.Exec(query)
 	if err != nil {
 		return 0, err
 	}
@@ -289,7 +252,7 @@ func add(a Input, conn datastore.MySQLConnection) (int, error) {
 	return int(id), nil
 }
 
-func update(a Input, conn datastore.MySQLConnection) error {
+func update(ds datastore.Datastore, a Input) error {
 
 	validate := validator.New()
 	err := validate.Struct(a)
@@ -297,7 +260,7 @@ func update(a Input, conn datastore.MySQLConnection) error {
 		return err
 	}
 
-	uc, err := activity.CreditPerUnitStore(a.ActivityID, conn)
+	uc, err := activity.CreditPerUnit(ds, a.ActivityID)
 	if err != nil {
 		return err
 	}
@@ -313,7 +276,7 @@ func update(a Input, conn datastore.MySQLConnection) error {
     updated_at = NOW(), activity_on = "%v", quantity= "%v", points_per_unit= "%v", description = "%v"
     WHERE id = %v LIMIT 1`
 	query = fmt.Sprintf(query, a.ActivityID, a.TypeID, evidence, a.Date, a.Quantity, a.UnitCredit, a.Description, a.ID)
-	_, err = conn.Session.Exec(query)
+	_, err = ds.MySQL.Session.Exec(query)
 	if err != nil {
 		return err
 	}
@@ -322,14 +285,14 @@ func update(a Input, conn datastore.MySQLConnection) error {
 }
 
 // delete requires memberID to ensure ownership of the cpd record
-func delete(memberID, activityID int, conn datastore.MySQLConnection) error {
+func delete(ds datastore.Datastore, memberID, activityID int) error {
 	query := `DELETE FROM ce_m_activity WHERE member_id = %d AND id = %d LIMIT 1`
 	query = fmt.Sprintf(query, memberID, activityID)
-	_, err := conn.Session.Exec(query)
+	_, err := ds.MySQL.Session.Exec(query)
 	return err
 }
 
-func duplicateOf(a Input, conn datastore.MySQLConnection) (int, error) {
+func duplicateOf(ds datastore.Datastore, a Input) (int, error) {
 
 	var dupId int
 
@@ -343,7 +306,7 @@ func duplicateOf(a Input, conn datastore.MySQLConnection) (int, error) {
 		ce_activity_type_id = "%v" AND activity_on = "%v" AND description = "%v" LIMIT 1`
 	query = fmt.Sprintf(query, a.MemberID, a.ActivityID, a.TypeID, a.Date, a.Description)
 
-	err = conn.Session.QueryRow(query).Scan(&dupId)
+	err = ds.MySQL.Session.QueryRow(query).Scan(&dupId)
 	if err == sql.ErrNoRows {
 		return dupId, nil
 	}

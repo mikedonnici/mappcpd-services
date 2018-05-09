@@ -1,21 +1,19 @@
 package member
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 	"sync"
 	"time"
 
-	"database/sql"
-
-	"github.com/pkg/errors"
-	"gopkg.in/mgo.v2/bson"
-
 	"github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/note"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
+	"github.com/pkg/errors"
+	"gopkg.in/mgo.v2/bson"
 )
 
 // Note trying to scan NULL db values into strings throws an error. This is discussed here:
@@ -129,7 +127,7 @@ type Speciality struct {
 }
 
 // SetActive sets the Active boolean value
-func (m *Member) SetActive() error {
+func (m *Member) SetActive(ds datastore.Datastore) error {
 
 	// Assume inactive unless otherwise
 	m.Active = false
@@ -139,7 +137,7 @@ func (m *Member) SetActive() error {
 
 	query := `SELECT ms_status_id FROM ms_m_status WHERE
 	active = 1 AND current = 1 AND member_id = ?`
-	err := datastore.MySQL.Session.QueryRow(query, m.ID).Scan(&active)
+	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(&active)
 	switch {
 	case err == sql.ErrNoRows:
 		// for the no rows case spit out a message but we don't need to bomb out with a 500
@@ -163,13 +161,13 @@ func (m *Member) SetActive() error {
 }
 
 // SetTitle sets the title (Mr, Prof, Dr) and Post nominal, if any
-func (m *Member) SetTitle() error {
+func (m *Member) SetTitle(ds datastore.Datastore) error {
 
 	query := `SELECT
 	COALESCE(a.name, '') FROM a_name_prefix a
 	RIGHT JOIN member m ON m.a_name_prefix_id = a.id
 	WHERE m.id = ?`
-	err := datastore.MySQL.Session.QueryRow(query, m.ID).Scan(&m.Title)
+	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(&m.Title)
 	switch {
 	case err == sql.ErrNoRows:
 		// Do nothing... there is just no title
@@ -184,7 +182,7 @@ func (m *Member) SetTitle() error {
 }
 
 // SetContactLocations populates the Contact.Locations []Location
-func (m *Member) SetContactLocations() error {
+func (m *Member) SetContactLocations(ds datastore.Datastore) error {
 
 	query := `SELECT
 	     COALESCE(mpct.name, ''),
@@ -211,7 +209,7 @@ func (m *Member) SetContactLocations() error {
 
 	//log.Println(sql)
 
-	rows, err := datastore.MySQL.Session.Query(query, m.ID)
+	rows, err := ds.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		// No rows
@@ -278,7 +276,7 @@ func (m *Member) SetMemberships() error {
 
 // GetTitle populates the MembershipTitle field for a particular Membership.
 // It receives the Membership index (mi) which points to the relevant item in []Membership
-func (m *Member) SetMembershipTitle(mi int) error {
+func (m *Member) SetMembershipTitle(ds datastore.Datastore, mi int) error {
 
 	// For now we will just set the Member.MembershipTitle field to a string
 	// with the name of the title. TitleHistory contains all the details
@@ -310,11 +308,11 @@ func (m *Member) SetMembershipTitle(mi int) error {
 		ORDER BY mmt.id DESC
 		LIMIT 1`
 
-	err := datastore.MySQL.Session.QueryRow(query, m.ID).Scan(
+	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(
 		//&t.Date,
 		//&t.Code,
 		&t,
-		//&t.Description,
+		//&t.Desc,
 	)
 
 	// IMPORTANT - if no rows are found this is NOT an error here
@@ -339,7 +337,7 @@ func (m *Member) SetMembershipTitle(mi int) error {
 // GetTitleHistory populates the Member.TitleHistory field for the Membership
 // at index 'mi. Very similar to GetTitle except there may be more than one
 // MembershipTitle so it uses []MembershipTitle
-func (m *Member) SetMembershipTitleHistory(mi int) error {
+func (m *Member) SetMembershipTitleHistory(ds datastore.Datastore, mi int) error {
 
 	query := `SELECT
 		COALESCE(mmt.granted_on, ''),
@@ -352,7 +350,7 @@ func (m *Member) SetMembershipTitleHistory(mi int) error {
 		WHERE mmt.member_id = ?
 		ORDER BY mmt.id DESC`
 
-	rows, err := datastore.MySQL.Session.Query(query, m.ID)
+	rows, err := ds.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		// no rows
@@ -392,7 +390,7 @@ func (m *Member) SetMembershipTitleHistory(mi int) error {
 	return nil
 }
 
-func (m *Member) SetQualifications() error {
+func (m *Member) SetQualifications(ds datastore.Datastore) error {
 
 	query := `SELECT
 	COALESCE(mq.short_name, ''),
@@ -404,7 +402,7 @@ func (m *Member) SetQualifications() error {
 	WHERE mmq.member_id = ?
 	ORDER BY year DESC`
 
-	rows, err := datastore.MySQL.Session.Query(query, m.ID)
+	rows, err := ds.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil
@@ -441,7 +439,7 @@ func (m *Member) SetQualifications() error {
 }
 
 // SetPositions fetches the Positions held by a member and sets the corresponding fields
-func (m *Member) SetPositions() error {
+func (m *Member) SetPositions(ds datastore.Datastore) error {
 
 	query := `SELECT
 	COALESCE(organisation.short_name, ''),
@@ -456,7 +454,7 @@ func (m *Member) SetPositions() error {
 	LEFT JOIN organisation ON mmp.organisation_id = organisation.id
 	WHERE mmp.member_id = ?`
 
-	rows, err := datastore.MySQL.Session.Query(query, m.ID)
+	rows, err := ds.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil
@@ -496,7 +494,7 @@ func (m *Member) SetPositions() error {
 }
 
 // SetSpecialities fetches the specialities for a member and sets the corresponding fields
-func (m *Member) SetSpecialities() error {
+func (m *Member) SetSpecialities(ds datastore.Datastore) error {
 
 	query := `SELECT
 			COALESCE(s.name, ''),
@@ -506,7 +504,7 @@ func (m *Member) SetSpecialities() error {
 			LEFT JOIN mp_speciality s ON ms.mp_speciality_id = s.id
 			WHERE ms.member_id = ?`
 
-	rows, err := datastore.MySQL.Session.Query(query, m.ID)
+	rows, err := ds.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil
@@ -592,7 +590,7 @@ func (m *Member) GetNotes(entityName string, entityID string) []note.Note {
 
 // MemberByID fetches a member record by id, populates a Member value
 // with some of the data and returns a pointer to Member
-func MemberByID(id int) (*Member, error) {
+func MemberByID(ds datastore.Datastore, id int) (*Member, error) {
 
 	// Set up a new empty Member
 	m := Member{ID: id}
@@ -620,7 +618,7 @@ func MemberByID(id int) (*Member, error) {
 	var createdAt string
 	var updatedAt string
 
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
+	err := ds.MySQL.Session.QueryRow(query, id).Scan(
 		&createdAt,
 		&updatedAt,
 		&m.FirstName,
@@ -650,21 +648,21 @@ func MemberByID(id int) (*Member, error) {
 	m.CreatedAt, _ = utility.DateTime(createdAt)
 	m.UpdatedAt, _ = utility.DateTime(updatedAt)
 
-	err = m.SetActive()
+	err = m.SetActive(ds)
 	if err != nil {
 		msg := "MemberByID() failed to set Active status"
 		log.Println(msg, err)
 		return &m, errors.Wrap(err, msg)
 	}
 
-	err = m.SetTitle()
+	err = m.SetTitle(ds)
 	if err != nil {
 		msg := "MemberByID() failed to set title"
 		log.Println(msg, err)
 		return &m, errors.Wrap(err, msg)
 	}
 
-	err = m.SetContactLocations()
+	err = m.SetContactLocations(ds)
 	if err != nil {
 		msg := "MemberByID() failed to set contact locations"
 		log.Println(msg, err)
@@ -685,7 +683,7 @@ func MemberByID(id int) (*Member, error) {
 	for i := range m.Memberships {
 
 		// Set Membership.MembershipTitle for Membership value at [i]
-		err = m.SetMembershipTitle(i)
+		err = m.SetMembershipTitle(ds, i)
 		if err != nil {
 			msg := "MemberByID() failed to set membership title"
 			log.Println(msg, err)
@@ -693,7 +691,7 @@ func MemberByID(id int) (*Member, error) {
 		}
 
 		// Set Membership.TitleHistory for Membership value at [i]
-		err = m.SetMembershipTitleHistory(i)
+		err = m.SetMembershipTitleHistory(ds, i)
 		if err != nil {
 			msg := "MemberByID() failed to set membership title history"
 			log.Println(msg, err)
@@ -702,7 +700,7 @@ func MemberByID(id int) (*Member, error) {
 	}
 
 	// Set Qualifications
-	err = m.SetQualifications()
+	err = m.SetQualifications(ds)
 	if err != nil {
 		msg := "MemberByID() failed to set qualifications"
 		log.Println(msg, err)
@@ -710,7 +708,7 @@ func MemberByID(id int) (*Member, error) {
 	}
 
 	// Set Positions
-	err = m.SetPositions()
+	err = m.SetPositions(ds)
 	if err != nil {
 		msg := "MemberByID() failed to set positions"
 		log.Println(msg, err)
@@ -718,7 +716,7 @@ func MemberByID(id int) (*Member, error) {
 	}
 
 	// Set Specialities
-	err = m.SetSpecialities()
+	err = m.SetSpecialities(ds)
 	if err != nil {
 		msg := "MemberByID() failed to set specialities"
 		log.Println(msg, err)
@@ -731,7 +729,7 @@ func MemberByID(id int) (*Member, error) {
 // UpdateMember will update the MySQL member record
 // 'm' is a map of the JSON body POSTed in which contains any parts of the
 // member record we want to update.
-func UpdateMember(m map[string]interface{}) error {
+func UpdateMember(ds datastore.Datastore, m map[string]interface{}) error {
 
 	do := false // a flag to decide if we can proceed
 
@@ -760,7 +758,7 @@ func UpdateMember(m map[string]interface{}) error {
 
 	if do == true {
 		fmt.Printf("UpdateMember(): %s\n", query)
-		_, err := datastore.MySQL.Session.Exec(query)
+		_, err := ds.MySQL.Session.Exec(query)
 		if err != nil {
 			msg := "UpdateMember() sql error"
 			log.Println(msg, err)
@@ -777,13 +775,13 @@ func UpdateMember(m map[string]interface{}) error {
 }
 
 // UpdateMemberDoc updates the JSON-formatted member record in MongoDB
-func UpdateMemberDoc(m *Member, w *sync.WaitGroup) {
+func UpdateMemberDoc(ds datastore.Datastore, m *Member, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := datastore.MongoDB.MembersCollection()
+	mc, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		msg := "UpdateMemberDoc() could not get pointer to collection"
 		log.Println(msg, err)
@@ -806,10 +804,10 @@ func UpdateMemberDoc(m *Member, w *sync.WaitGroup) {
 
 // SyncMember synchronises the Member record from MySQL -> MongoDB
 // Todo - this should not DECIDE on sync based on updated date... should just do one job
-func SyncMember(m *Member) {
+func SyncMember(ds datastore.Datastore, m *Member) {
 
 	// Fetch the current Doc (if there) and compare updatedAt
-	m2, err := DocMembersOne(bson.M{"id": m.ID}, bson.M{})
+	m2, err := DocMembersOne(ds, bson.M{"id": m.ID}, bson.M{})
 	if err != nil {
 		log.Println("Target document error: ", err, "- so do an upsert")
 	}
@@ -826,7 +824,7 @@ func SyncMember(m *Member) {
 	// Update the document in the Members collection
 	var w sync.WaitGroup
 	w.Add(1)
-	go UpdateMemberDoc(m, &w)
+	go UpdateMemberDoc(ds, m, &w)
 	w.Wait()
 }
 
@@ -835,9 +833,9 @@ func SyncMember(m *Member) {
 // this is that the fields are returned in alphabetical order so it is not as readable
 // as the Member struct. Option might be to use the Member struct when no projection
 // is specified.
-func DocMembersAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
+func DocMembersAll(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	members, err := datastore.MongoDB.MembersCollection()
+	members, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -856,9 +854,9 @@ func DocMembersAll(q map[string]interface{}, p map[string]interface{}) ([]interf
 }
 
 // todo ... deprecate this func in favour of one that returns []Member?
-func DocMembersLimit(q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
+func DocMembersLimit(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
 
-	members, err := datastore.MongoDB.MembersCollection()
+	members, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -877,11 +875,11 @@ func DocMembersLimit(q map[string]interface{}, p map[string]interface{}, l int) 
 }
 
 // DocMembersOne returns one member, unmarshaled into the proper struct
-func DocMembersOne(q map[string]interface{}, p map[string]interface{}) (Member, error) {
+func DocMembersOne(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}) (Member, error) {
 
 	m := Member{}
 
-	members, err := datastore.MongoDB.MembersCollection()
+	members, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		return m, err
 	}
@@ -899,14 +897,14 @@ func DocMembersOne(q map[string]interface{}, p map[string]interface{}) (Member, 
 
 // FetchMembers returns values of type Member from the Members collection in MongoDB, based on the query and
 // limited by the value of limit. If limit is 0 all results are returned.
-func FetchMembers(query map[string]interface{}, limit int) ([]Member, error) {
+func FetchMembers(ds datastore.Datastore, query map[string]interface{}, limit int) ([]Member, error) {
 
 	var data []Member
 
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
 
-	c, err := datastore.MongoDB.MembersCollection()
+	c, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -916,13 +914,13 @@ func FetchMembers(query map[string]interface{}, limit int) ([]Member, error) {
 }
 
 // SaveDoc method upserts Member doc to MongoDB
-func (m *Member) SaveDoc() error {
+func (m *Member) SaveDoc(ds datastore.Datastore) error {
 
 	// Make selector for Upsert
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := datastore.MongoDB.MembersCollection()
+	mc, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
 		return err
@@ -939,13 +937,13 @@ func (m *Member) SaveDoc() error {
 }
 
 // UpdateDoc method updates Member doc to MongoDB
-func (m *Member) UpdateDoc() error {
+func (m *Member) UpdateDoc(ds datastore.Datastore) error {
 
 	// Selector
 	mid := map[string]int{"id": m.ID}
 
 	// Get pointer to the Members collection
-	mc, err := datastore.MongoDB.MembersCollection()
+	mc, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
 		return err

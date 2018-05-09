@@ -3,12 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
 	"github.com/34South/envr"
 	"github.com/mappcpd/web-services/cmd/webd/graphql"
 	"github.com/mappcpd/web-services/cmd/webd/rest"
+	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 const defaulRestServerPort = "5000"
@@ -16,13 +18,18 @@ const defaulGraphQLServerPort = "5001"
 
 func init() {
 	msg := fmt.Sprint("Initialising environment...")
-	env := envr.New("myEnv", []string{
+	env := envr.New("webdEnv", []string{
 		"MAPPCPD_API_URL",
 		"MAPPCPD_SHORT_LINK_URL",
 		"MAPPCPD_SHORT_LINK_PREFIX",
 		"AWS_ACCESS_KEY_ID",
 		"AWS_SECRET_ACCESS_KEY",
 		"WEBD_TYPE",
+		"MAPPCPD_MYSQL_DESC",
+		"MAPPCPD_MYSQL_URL",
+		"MAPPCPD_MONGO_DESC",
+		"MAPPCPD_MONGO_DBNAME",
+		"MAPPCPD_MONGO_URL",
 	}).Auto()
 	if env.Ready {
 		msg += "ready!"
@@ -31,6 +38,12 @@ func init() {
 }
 
 func main() {
+
+	// Set the datastore from env vars
+	ds, err := datastore.FromEnv()
+	if err != nil {
+		log.Fatalln("Could not set datastore -", err)
+	}
 
 	// Options for starting the server are varied.
 	// Can only start a single web process on Heroku so use env var WEBD_TYPE to specify which type.
@@ -63,10 +76,11 @@ func main() {
 	}
 
 	if serverType == "graphql" {
-		graphql.Start(serverPort)
+		graphql.Start(serverPort, ds)
 	}
+
 	if serverType == "rest" {
-		rest.Start(serverPort)
+		rest.Start(serverPort, ds)
 	}
 
 	// ??

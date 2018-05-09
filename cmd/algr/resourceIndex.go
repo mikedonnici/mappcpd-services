@@ -4,13 +4,13 @@ import (
 	"time"
 
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
-	"github.com/mappcpd/web-services/internal/resources"
+	"github.com/mappcpd/web-services/internal/resource"
 	"gopkg.in/mgo.v2/bson"
 )
 
 type resourceIndex struct {
 	Name      string
-	RawData   []resources.Resource
+	RawData   []resource.Resource
 	IndexData []algoliasearch.Object
 	Error     error
 }
@@ -41,12 +41,12 @@ func (ri *resourceIndex) fullIndex() ([]algoliasearch.Object, error) {
 func (ri *resourceIndex) fetchLimitedData() {
 	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
 	query := bson.M{"active": true, "primary": true, "updatedAt": bson.M{"$gte": timeBack}}
-	ri.RawData, ri.Error = resources.FetchResources(query, 0)
+	ri.RawData, ri.Error = resource.FetchResources(query, 0)
 }
 
 func (ri *resourceIndex) fetchAllData() {
 	query := bson.M{"active": true, "primary": true}
-	ri.RawData, ri.Error = resources.FetchResources(query, 0)
+	ri.RawData, ri.Error = resource.FetchResources(query, 0)
 }
 
 func (ri *resourceIndex) createIndexObjects() {

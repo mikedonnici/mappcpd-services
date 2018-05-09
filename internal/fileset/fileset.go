@@ -4,13 +4,11 @@
 package fileset
 
 import (
+	"database/sql"
 	"fmt"
 
-	"database/sql"
-
-	"github.com/pkg/errors"
-
 	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/pkg/errors"
 )
 
 // FileSet represent a row from the fs_set table and describes a "set" of related files in cloud storage.
@@ -26,29 +24,29 @@ type FileSet struct {
 }
 
 // NoteAttachment returns a pointer to a FileSet with relevant values for a Note attachment
-func NoteAttachment() (FileSet, error) {
-	return get("wf_attachment")
+func NoteAttachment(ds datastore.Datastore) (FileSet, error) {
+	return get(ds, "wf_attachment")
 }
 
 // ActivityAttachment returns a pointer to a FileSet with relevant values for an Activity attachment
-func ActivityAttachment() (FileSet, error) {
-	return get("ce_m_activity_attachment")
+func ActivityAttachment(ds datastore.Datastore) (FileSet, error) {
+	return get(ds, "ce_m_activity_attachment")
 }
 
 // ResourceAttachment returns a pointer to a FileSet with relevant values for a Resource attachment
-func ResourceAttachment() (FileSet, error) {
-	return get("ol_resource_file")
+func ResourceAttachment(ds datastore.Datastore) (FileSet, error) {
+	return get(ds, "ol_resource_file")
 }
 
 // New returns a pointer to an initialised FileSet value. It receives the setPath, eg '/notes/' which is the base
 // path / pseudo path (S3) for all files stored in the set.
-func get(entity string) (FileSet, error) {
+func get(ds datastore.Datastore, entity string) (FileSet, error) {
 
 	var fs FileSet
 	fs.Entity = entity
 
 	query := "SELECT id, volume_name, set_path FROM fs_set WHERE active = 1 AND current = 1 and entity_name = ?"
-	err := datastore.MySQL.Session.QueryRow(query, fs.Entity).Scan(
+	err := ds.MySQL.Session.QueryRow(query, fs.Entity).Scan(
 		&fs.ID,
 		&fs.Volume,
 		&fs.Path,

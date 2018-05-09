@@ -17,7 +17,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/mappcpd/web-services/internal/resources"
+	"github.com/mappcpd/web-services/internal/resource"
 )
 
 type link struct {
@@ -94,7 +94,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	datastore.Connect()
+	datastore.ConnectAll()
 
 	for _, v := range tasks {
 
@@ -257,9 +257,9 @@ func checkSync(l link) error {
 
 // getLinkDoc fetches a doc from the Links collection.If the doc is not found it
 // returns a valid, but empty, value of type resources.Link.
-func getLinkDoc(shortPath string) (resources.Link, error) {
+func getLinkDoc(shortPath string) (resource.Link, error) {
 
-	var l resources.Link
+	var l resource.Link
 
 	// Always set this as it is used as the KEY for Links docs
 	l.ShortUrl = shortPath
@@ -289,7 +289,7 @@ func getLinkDoc(shortPath string) (resources.Link, error) {
 // sync upserts a doc to the Links collection. The selector is the shortPath value, eg /r123.
 // This value will always be the same and we don't know if we are creating a new record
 // or modifying an existing one. So shortPath is the best identifier.
-func sync(ld resources.Link, shortPath string) error {
+func sync(ld resource.Link, shortPath string) error {
 
 	c, err := datastore.MongoDB.LinksCol()
 	if err != nil {

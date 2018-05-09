@@ -52,7 +52,7 @@ func init() {
 		"MAPPCPD_ALGOLIA_RESOURCES_INDEX",
 	}).Auto()
 
-	datastore.Connect()
+	datastore.ConnectAll()
 }
 
 func main() {

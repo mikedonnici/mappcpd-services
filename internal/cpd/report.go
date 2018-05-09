@@ -44,7 +44,7 @@ type activityRecord struct {
 }
 
 // MemberActivityReports generates evaluation period reports for a member.
-func MemberActivityReports(memberID int) ([]MemberActivityReport, error) {
+func MemberActivityReports(ds datastore.Datastore, memberID int) ([]MemberActivityReport, error) {
 
 	var es []MemberActivityReport
 
@@ -54,7 +54,7 @@ func MemberActivityReports(memberID int) ([]MemberActivityReport, error) {
 	LEFT JOIN ce_evaluation ce ON cme.ce_evaluation_id = ce.id
 	WHERE member_id = ?`
 
-	rows, err := datastore.MySQL.Session.Query(query, memberID)
+	rows, err := ds.MySQL.Session.Query(query, memberID)
 	if err != nil {
 		return es, err
 	}
@@ -72,7 +72,7 @@ func MemberActivityReports(memberID int) ([]MemberActivityReport, error) {
 			&e.Closed,
 		)
 
-		err := e.generateActivitySummary()
+		err := e.generateActivitySummary(ds)
 		if err != nil {
 			return es, err
 		}
@@ -84,11 +84,11 @@ func MemberActivityReports(memberID int) ([]MemberActivityReport, error) {
 }
 
 // CurrentEvaluationPeriodReport returns a MemberActivityReport for the current evaluation period.
-func CurrentEvaluationPeriodReport(memberID int) (MemberActivityReport, error) {
+func CurrentEvaluationPeriodReport(ds datastore.Datastore, memberID int) (MemberActivityReport, error) {
 
 	var me MemberActivityReport
 
-	xme, err := MemberActivityReports(memberID)
+	xme, err := MemberActivityReports(ds, memberID)
 	if err != nil {
 		return me, err
 	}
@@ -102,10 +102,10 @@ func CurrentEvaluationPeriodReport(memberID int) (MemberActivityReport, error) {
 	return me, nil
 }
 
-func (e *MemberActivityReport) generateActivitySummary() error {
+func (e *MemberActivityReport) generateActivitySummary(ds datastore.Datastore) error {
 
 	// Need empty activities on the report, could not sort with JOIN in a single query as empty activities were omitted
-	xa, err := activity.All()
+	xa, err := activity.All(ds)
 	if err != nil {
 		return err
 	}
@@ -116,8 +116,8 @@ func (e *MemberActivityReport) generateActivitySummary() error {
 			ActivityName: a.Name,
 			MaxCredit:    a.MaxCredit,
 		}
-		ar.summary(*e)
-		ar.fetchActivityRecords(e.MemberID, e.StartDate, e.EndDate)
+		ar.summary(ds, *e)
+		ar.fetchActivityRecords(ds, e.MemberID, e.StartDate, e.EndDate)
 		e.Activities = append(e.Activities, ar)
 	}
 
@@ -127,10 +127,10 @@ func (e *MemberActivityReport) generateActivitySummary() error {
 }
 
 // summary fills in the details for one activity in a report
-func (a *activityReport) summary(e MemberActivityReport) error {
+func (a *activityReport) summary(ds datastore.Datastore, e MemberActivityReport) error {
 
 	query := Queries["select-cpd-summary-by-activity-id"]
-	rows := datastore.MySQL.Session.QueryRow(query, e.StartDate, e.EndDate, e.MemberID, a.ActivityID)
+	rows := ds.MySQL.Session.QueryRow(query, e.StartDate, e.EndDate, e.MemberID, a.ActivityID)
 	err := rows.Scan(
 		&a.ActivityUnits,
 		&a.CreditPerUnit,
@@ -145,10 +145,10 @@ func (a *activityReport) summary(e MemberActivityReport) error {
 	return nil
 }
 
-func (a *activityReport) fetchActivityRecords(memberID int, startDate, endDate string) {
+func (a *activityReport) fetchActivityRecords(ds datastore.Datastore, memberID int, startDate, endDate string) {
 	clause := `WHERE member_id = %d AND cma.activity_on >= "%s" AND cma.activity_on <= "%s" ORDER BY cma.activity_on DESC`
 	clause = fmt.Sprintf(clause, memberID, startDate, endDate)
-	ma, err := Query(clause)
+	ma, err := Query(ds, clause)
 	if err != nil {
 		fmt.Println(err)
 		return
