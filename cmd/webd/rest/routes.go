@@ -114,7 +114,6 @@ func GeneralMiddleware(r *mux.Router) *negroni.Negroni {
 	return n
 }
 
-
 // MemberSubRouter is a sub router for endpoints relevant to member user requests.
 func MemberSubRouter(prefix string) *mux.Router {
 

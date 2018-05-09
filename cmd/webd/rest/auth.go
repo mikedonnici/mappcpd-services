@@ -3,7 +3,7 @@ package rest
 import (
 	"encoding/json"
 	"net/http"
-	
+
 	"github.com/mappcpd/web-services/internal/auth"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 )

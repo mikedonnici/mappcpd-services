@@ -2,8 +2,8 @@ package rest
 
 import (
 	"log"
-	"strconv"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	"github.com/mappcpd/web-services/internal/platform/jwt"

@@ -3,10 +3,10 @@ package graphql
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	"github.com/graphql-go/graphql"
 	"github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/pkg/errors"
 )
 
 // activitySave handles mutation (add / update) of a member activity

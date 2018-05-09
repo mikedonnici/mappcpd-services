@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/mappcpd/web-services/internal/activity"
 	"github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/date"
+	"github.com/pkg/errors"
 )
 
 // activityData is a leaner representation of members.activityData

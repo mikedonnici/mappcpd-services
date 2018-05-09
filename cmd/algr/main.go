@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/34South/envr"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"time"
 )
 
 // updateSched is a date flag used to determine the updateSched for a particular index
@@ -43,6 +43,8 @@ var resourceIndexName string
 
 var sched = scheduledUpdateType()
 
+var DS datastore.Datastore
+
 func init() {
 
 	envr.New("algrEnv", []string{
@@ -52,7 +54,11 @@ func init() {
 		"MAPPCPD_ALGOLIA_RESOURCES_INDEX",
 	}).Auto()
 
-	datastore.ConnectAll()
+	var err error
+	DS, err = datastore.FromEnv()
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func main() {

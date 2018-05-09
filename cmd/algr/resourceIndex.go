@@ -41,12 +41,12 @@ func (ri *resourceIndex) fullIndex() ([]algoliasearch.Object, error) {
 func (ri *resourceIndex) fetchLimitedData() {
 	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
 	query := bson.M{"active": true, "primary": true, "updatedAt": bson.M{"$gte": timeBack}}
-	ri.RawData, ri.Error = resource.FetchResources(query, 0)
+	ri.RawData, ri.Error = resource.FetchResources(DS, query, 0)
 }
 
 func (ri *resourceIndex) fetchAllData() {
 	query := bson.M{"active": true, "primary": true}
-	ri.RawData, ri.Error = resource.FetchResources(query, 0)
+	ri.RawData, ri.Error = resource.FetchResources(DS, query, 0)
 }
 
 func (ri *resourceIndex) createIndexObjects() {

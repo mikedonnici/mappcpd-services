@@ -4,9 +4,9 @@ import (
 	"log"
 	"time"
 
-	"gopkg.in/mgo.v2/bson"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type Link struct {
