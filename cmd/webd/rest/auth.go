@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 
@@ -36,7 +37,11 @@ func AuthMemberLogin(w http.ResponseWriter, r *http.Request) {
 	// AuthMember returns ID and Name which we pass to the token generator
 	id, name, err := auth.AuthMember(DS, a.Login, a.Password)
 	if err != nil {
-		p.Message = Message{http.StatusUnauthorized, "failure", err.Error()}
+		msg := err.Error()
+		if err == sql.ErrNoRows {
+			msg = "Login failed"
+		}
+		p.Message = Message{http.StatusUnauthorized, "failure", msg}
 		p.Send(w)
 		return
 	}
@@ -180,7 +185,11 @@ func AuthAdminLogin(w http.ResponseWriter, r *http.Request) {
 	// PostAdminAuth returns ID and Name which we pass to the token generator
 	id, name, err := auth.AdminAuth(DS, a.Login, a.Password)
 	if err != nil {
-		p.Message = Message{http.StatusUnauthorized, "failure", err.Error()}
+		msg := err.Error()
+		if err == sql.ErrNoRows {
+			msg = "Login failed"
+		}
+		p.Message = Message{http.StatusUnauthorized, "failure", msg}
 		p.Send(w)
 		return
 	}

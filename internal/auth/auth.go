@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"database/sql"
-	"errors"
 	"fmt"
 
 	"github.com/mappcpd/web-services/internal/platform/datastore"
@@ -18,22 +16,9 @@ func AuthMember(ds datastore.Datastore, u, p string) (int, string, error) {
 
 	var id int
 	var name string
-	var errMsg error
 	err := ds.MySQL.Session.QueryRow(query).Scan(&id, &name)
-
-	// zero rows is a failed login
-	if err == sql.ErrNoRows {
-		errMsg = errors.New("Login details incorrect")
-		return id, name, errMsg
-	}
-
-	// DB or some other error
-	if err != nil {
-		return id, name, err
-	}
-
-	// Logged in!
-	return id, name, nil
+	// Note: err == sql.ErrorNoRows for a failed login
+	return id, name, err
 }
 
 // AuthScope gets the authorizations scopes or 'roles' for a user by user (member) id.
@@ -57,34 +42,9 @@ func AdminAuth(ds datastore.Datastore, u, p string) (int, string, error) {
 	var name string
 	var active int
 	var locked int
-	var errMsg error
 	err := ds.MySQL.Session.QueryRow(query).Scan(&id, &name, &active, &locked)
 
-	// zero rows is a failed login
-	if err == sql.ErrNoRows {
-		errMsg = errors.New("Login details incorrect")
-		return id, name, errMsg
-	}
-
-	// Account is locked
-	if locked == 1 {
-		errMsg = errors.New("Admin account locked - contact systems administrator")
-		return id, name, errMsg
-	}
-
-	// Account inactive
-	if active == 0 {
-		errMsg = errors.New("Admin account inactive - contact systems administrator")
-		return id, name, errMsg
-	}
-
-	// DB or some other error
-	if err != nil {
-		return id, name, err
-	}
-
-	// Authenticated
-	return id, name, nil
+	return id, name, err
 }
 
 // AdminAuthScope gets the authorizations scopes or 'roles' for an admin user by user id.

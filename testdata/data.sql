@@ -320,11 +320,10 @@ INSERT INTO `%s`.`fs_url` VALUES
 
 -- name: insert-data-member
 INSERT INTO `%s`.`member` VALUES
-  (1, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1970-06-17', NULL, NULL, 'Dolan',
-                                                                '', 'Webster', NULL, NULL, NULL,
-   'ac@malesuadaut.net', NULL, '', NULL, NULL, NULL),
-  (2, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1978-05-12', NULL, NULL, 'Velma',
-                                                                '', 'Whitley', NULL, NULL, NULL,
+  (1, 2, 0, 14, NULL, 1, 1, 1, 1, NOW(), NOW(), NULL, '1970-11-03', '2000-01-01', 'M', 'Michael', 'Peter', 'Donnici', NULL,
+                                                NULL, NULL, 'michael@mesa.net.au', NULL, '5f4dcc3b5aa765d61d8327deb882cf99', NULL, NULL, NULL),
+  (2, 2, 0, 14, NULL, 1, 1, 0, 1, NOW(), NOW(), NULL, '1978-05-12', NULL, NULL, 'Velma',
+                                                '', 'Whitley', NULL, NULL, NULL,
    'sapien.cursus@gravidamauris.ca', NULL, '', NULL, NULL, NULL),
   (3, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1965-10-07', NULL, NULL,
                                                                 'Jakeem', '', 'Sellers', NULL, NULL,
