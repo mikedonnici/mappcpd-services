@@ -14,7 +14,7 @@ import (
 // ModulesID fetches a single resource from the MySQLConnection db
 func ModulesID(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
@@ -42,7 +42,7 @@ func ModulesID(w http.ResponseWriter, r *http.Request) {
 func ModulesCollection(w http.ResponseWriter, r *http.Request) {
 
 	// Response
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)

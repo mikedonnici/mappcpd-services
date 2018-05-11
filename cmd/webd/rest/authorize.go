@@ -25,7 +25,7 @@ func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
 		return false
 	}
 
-	// Create an AuthToken value from the token string
+	// Create an Encoded value from the token string
 	at, err := jwt.Check(t)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
@@ -79,7 +79,7 @@ func AuthorizeID(w http.ResponseWriter, r *http.Request, mid int) bool {
 		return false
 	}
 
-	// Create an AuthToken value from the token string
+	// Create an Encoded value from the token string
 	at, err := jwt.Check(t)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}

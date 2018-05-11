@@ -47,7 +47,7 @@ func AuthMemberLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// We have authenticated the user, now set the user's scope
-	scopes, err := auth.AuthScope(id)
+	scope, err := auth.AuthScope(id)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -58,8 +58,7 @@ func AuthMemberLogin(w http.ResponseWriter, r *http.Request) {
 	//
 	//}
 
-	// Generate the token
-	at, err := jwt.CreateJWT(id, name, scopes)
+	at, err := freshToken(id, name, scope)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -72,7 +71,7 @@ func AuthMemberLogin(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
-// AuthMemberCheckHandler handles a GET request that will verify the JSON Web Token
+// AuthMemberCheckHandler handles a GET request that will verify the JSON Web Encoded
 func AuthMemberCheckHandler(w http.ResponseWriter, r *http.Request) {
 
 	p := Payload{}
@@ -103,7 +102,7 @@ func AuthMemberCheckHandler(w http.ResponseWriter, r *http.Request) {
 // and issue a fresh one, so the consumer can update it at their end
 func MembersToken(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Get the token from the auth header, 'Bearer' seems useless but this is an OAuth2 standard
 	// Authorization: Bearer [jwt]
@@ -132,14 +131,14 @@ func MembersToken(w http.ResponseWriter, r *http.Request) {
 
 	// Fresh token - re-check the Scope from db rather than copying it from the current
 	// token - in case permissions have been changed
-	scopes, err := auth.AuthScope(at.Claims.ID)
+	scope, err := auth.AuthScope(at.Claims.ID)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	nt, err := jwt.CreateJWT(at.Claims.ID, at.Claims.Name, scopes)
+	nt, err := freshToken(at.Claims.ID, at.Claims.Name, scope)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -150,7 +149,7 @@ func MembersToken(w http.ResponseWriter, r *http.Request) {
 	p.Message = Message{http.StatusOK, "success", "Current token is valid, fresh token supplied in data.new.token"}
 
 	// Data payload will contain the current and a fresh token
-	data := make(map[string]jwt.AuthToken)
+	data := make(map[string]jwt.Token)
 	data["current"] = at
 	data["new"] = nt
 	p.Data = data
@@ -194,16 +193,14 @@ func AuthAdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// We have authenticated the user, now set the user's scope
-	scopes, err := auth.AdminAuthScope(id)
+	scope, err := auth.AdminAuthScope(id)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	// Generate the token
-	at, err := jwt.CreateJWT(id, name, scopes)
+	at, err := freshToken(id, name, scope)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -250,14 +247,14 @@ func AuthAdminRefreshHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Fresh token - recheck the Scope from db rather than copying it from the current
 	// token - in case permissions have been changed
-	scopes, err := auth.AdminAuthScope(at.Claims.ID)
+	scope, err := auth.AdminAuthScope(at.Claims.ID)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
 		return
 	}
 
-	nt, err := jwt.CreateJWT(at.Claims.ID, at.Claims.Name, scopes)
+	nt, err := freshToken(at.Claims.ID, at.Claims.Name, scope)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -268,7 +265,7 @@ func AuthAdminRefreshHandler(w http.ResponseWriter, r *http.Request) {
 	p.Message = Message{http.StatusOK, "success", "Current token is valid, fresh token supplied in data.new.token"}
 
 	// Data payload will contain the current and a fresh token
-	data := make(map[string]jwt.AuthToken)
+	data := make(map[string]jwt.Token)
 	data["current"] = at
 	data["new"] = nt
 	p.Data = data

@@ -14,7 +14,7 @@ import (
 // ResourcesID fetches a single resource from the MySQLConnection db
 func ResourcesID(w http.ResponseWriter, req *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 	// Request - convert id from string to int type
 	v := mux.Vars(req)
 	id, err := strconv.Atoi(v["id"])
@@ -43,7 +43,7 @@ func ResourcesID(w http.ResponseWriter, req *http.Request) {
 func ResourcesCollection(w http.ResponseWriter, r *http.Request) {
 
 	// Response
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)

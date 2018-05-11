@@ -13,23 +13,25 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-const defaulRestServerPort = "5000"
-const defaulGraphQLServerPort = "5001"
+const defaultRestServerPort = "5000"
+const defaultGraphQLServerPort = "5001"
 
 func init() {
 	msg := fmt.Sprint("Initialising environment...")
 	env := envr.New("webdEnv", []string{
-		"MAPPCPD_API_URL",
-		"MAPPCPD_SHORT_LINK_URL",
-		"MAPPCPD_SHORT_LINK_PREFIX",
 		"AWS_ACCESS_KEY_ID",
 		"AWS_SECRET_ACCESS_KEY",
-		"WEBD_TYPE",
+		"MAPPCPD_API_URL",
+		"MAPPCPD_JWT_TTL_HOURS",
+		"MAPPCPD_JWT_SIGNING_KEY",
+		"MAPPCPD_SHORT_LINK_URL",
+		"MAPPCPD_SHORT_LINK_PREFIX",
 		"MAPPCPD_MYSQL_DESC",
 		"MAPPCPD_MYSQL_URL",
 		"MAPPCPD_MONGO_DESC",
 		"MAPPCPD_MONGO_DBNAME",
 		"MAPPCPD_MONGO_URL",
+		"WEBD_TYPE",
 	}).Auto()
 	if env.Ready {
 		msg += "ready!"
@@ -58,12 +60,12 @@ func main() {
 	if strings.ToLower(*serverFlag) == "rest" {
 		fmt.Println("Starting REST server...")
 		serverType = "rest"
-		serverPort = defaulRestServerPort
+		serverPort = defaultRestServerPort
 	}
 	if strings.ToLower(*serverFlag) == "graphql" {
 		fmt.Println("Starting GraphQL server...")
 		serverType = "graphql"
-		serverPort = defaulGraphQLServerPort
+		serverPort = defaultGraphQLServerPort
 	}
 
 	// Override default port numbers with optional -p flag (if set) or with env var PORT.

@@ -31,7 +31,7 @@ var Mutation = &graphql.Field{
 				return nil, err
 			}
 
-			m.Token, err = member.FreshToken(token)
+			m.Token, err = member.RefreshToken(token)
 			if err != nil {
 				return m, err
 			}

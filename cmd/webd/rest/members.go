@@ -16,7 +16,7 @@ import (
 // MembersProfile fetches a member record by id
 func MembersProfile(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Get user id from token
 	id := UserAuthToken.Claims.ID
@@ -43,7 +43,7 @@ func MembersProfile(w http.ResponseWriter, _ *http.Request) {
 // MembersActivities fetches activity records for a member
 func MembersActivities(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	a, err := cpd.ByMemberID(DS, UserAuthToken.Claims.ID)
 
@@ -70,7 +70,7 @@ func MembersActivities(w http.ResponseWriter, _ *http.Request) {
 // by gathering the CPD activities within the dates, adding them up, applying caps etc
 func MembersEvaluation(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Collect the evaluation periods
 	es, err := cpd.MemberActivityReports(DS, UserAuthToken.Claims.ID)
@@ -96,7 +96,7 @@ func MembersEvaluation(w http.ResponseWriter, _ *http.Request) {
 // CurrentActivityReport
 func CurrentActivityReport(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 	reportData, err := cpd.CurrentEvaluationPeriodReport(DS, UserAuthToken.Claims.ID)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
@@ -113,7 +113,7 @@ func CurrentActivityReport(w http.ResponseWriter, _ *http.Request) {
 // EmailCurrentActivityReport
 func EmailCurrentActivityReport(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 	reportData, err := cpd.CurrentEvaluationPeriodReport(DS, UserAuthToken.Claims.ID)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}

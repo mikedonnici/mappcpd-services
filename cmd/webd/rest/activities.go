@@ -22,7 +22,7 @@ import (
 // All fetches list of activity types
 func Activities(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	al, err := activity.All(DS)
 	if err != nil {
@@ -44,7 +44,7 @@ func Activities(w http.ResponseWriter, _ *http.Request) {
 // ActivitiesID fetches a single activity type by ID
 func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -72,7 +72,7 @@ func ActivitiesID(w http.ResponseWriter, r *http.Request) {
 // MembersActivitiesID fetches a single activity record by id
 func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -96,7 +96,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 
 	// Authorization - need  owner of the record
 	if UserAuthToken.Claims.ID != a.MemberID {
-		p.Message = Message{http.StatusUnauthorized, "failed", "Token does not belong to the owner of resource"}
+		p.Message = Message{http.StatusUnauthorized, "failed", "Encoded does not belong to the owner of resource"}
 		p.Send(w)
 		return
 	}
@@ -110,7 +110,7 @@ func MembersActivitiesID(w http.ResponseWriter, r *http.Request) {
 // MembersActivitiesAdd adds a new activity for the logged in member
 func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Decode JSON body into ActivityAttachment value
 	a := cpd.Input{}
@@ -151,7 +151,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 // update one to many fields.
 func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Get activity id from path... and make it an int
 	v := mux.Vars(r)
@@ -175,7 +175,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 
 	// Authorization - need  owner of the record
 	if UserAuthToken.Claims.ID != a.MemberID {
-		p.Message = Message{http.StatusUnauthorized, "failed", "Token does not belong to the owner of resource"}
+		p.Message = Message{http.StatusUnauthorized, "failed", "Encoded does not belong to the owner of resource"}
 		p.Send(w)
 		return
 	}
@@ -240,7 +240,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 // MembersActivitiesRecurring fetches the member's recurring activities (if any) stored in MongoDB
 func MembersActivitiesRecurring(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	ra, err := cpd.MemberRecurring(DS, UserAuthToken.Claims.ID)
 	if err != nil {
@@ -259,7 +259,7 @@ func MembersActivitiesRecurring(w http.ResponseWriter, _ *http.Request) {
 // Note that this function reads and writes only to MongoDB
 func MembersActivitiesRecurringAdd(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Get user id from token
 	id := UserAuthToken.Claims.ID
@@ -310,7 +310,7 @@ func MembersActivitiesRecurringAdd(w http.ResponseWriter, r *http.Request) {
 // doc in the collection, only one element from the array of recurring activities in the doc that belongs to the member
 func MembersActivitiesRecurringRemove(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Get user id from token
 	id := UserAuthToken.Claims.ID
@@ -394,7 +394,7 @@ func MembersActivitiesRecurringRecorder(w http.ResponseWriter, r *http.Request) 
 // MembersActivitiesAttachmentRequest handles request for a signed URL to upload an attachment for a CPD activity
 func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	upload := struct {
 		SignedRequest  string `json:"signedRequest"`
@@ -438,7 +438,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 
 	// Authorization - need  owner of the record
 	if UserAuthToken.Claims.ID != a.MemberID {
-		p.Message = Message{http.StatusUnauthorized, "failed", "Token does not belong to the owner of resource"}
+		p.Message = Message{http.StatusUnauthorized, "failed", "Encoded does not belong to the owner of resource"}
 		p.Send(w)
 		return
 	}
@@ -476,7 +476,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 // MembersActivitiesAttachmentRegister registers an uploaded file in the database.
 func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	a := attachments.New()
 	// not required for this type of attachment but stick it on for good measure :)
@@ -509,7 +509,7 @@ func MembersActivitiesAttachmentRegister(w http.ResponseWriter, r *http.Request)
 	}
 	// CHECK OWNER!!
 	if UserAuthToken.Claims.ID != activity.MemberID {
-		p.Message = Message{http.StatusUnauthorized, "failed", "Token does not belong to the owner of this resource"}
+		p.Message = Message{http.StatusUnauthorized, "failed", "Encoded does not belong to the owner of this resource"}
 		p.Data = a
 		p.Send(w)
 		return

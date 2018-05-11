@@ -8,7 +8,7 @@ import (
 
 // Query resolves member queries, is a 'viewer' field for the member (user) identified by the token
 var Query = &graphql.Field{
-	Description: "Member queries require a valid JSON Web Token for auth and data in child nodes will always " +
+	Description: "Member queries require a valid JSON Web Encoded for auth and data in child nodes will always " +
 		"belong to the member identified by the token.",
 	Type: memberType,
 	Args: graphql.FieldConfigArgument{
@@ -33,7 +33,7 @@ var Query = &graphql.Field{
 				return nil, err
 			}
 
-			m.Token, err = member.FreshToken(token)
+			m.Token, err = member.RefreshToken(token)
 			if err != nil {
 				return m, err
 			}

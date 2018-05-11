@@ -10,8 +10,8 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
-// UserAuthToken is a global AuthToken that is set up by the middleware for convenience
-var UserAuthToken jwt.AuthToken
+// UserAuthToken is a global Encoded that is set up by the middleware for convenience
+var UserAuthToken jwt.Token
 
 // ValidateToken validate the JSON web token passed in the Authorization header. For now
 // a POST request to /auth simply returns, without checking the token, as this is
@@ -37,7 +37,7 @@ func ValidateToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc
 		return
 	}
 
-	// Set the global AuthToken
+	// Set the global Encoded
 	UserAuthToken, err = jwt.Check(t)
 	if err != nil {
 		p.Message = Message{http.StatusUnauthorized, "failure", "Authorization failed: " + err.Error()}

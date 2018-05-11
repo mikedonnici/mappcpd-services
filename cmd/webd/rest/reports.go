@@ -9,7 +9,7 @@ import (
 // ReportsTest handles a request to test the reports route
 func ReportsTest(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 	p.Message = Message{http.StatusOK, "success", "Request to reports test handler successful!"}
 	p.Send(w)
 }
@@ -17,7 +17,7 @@ func ReportsTest(w http.ResponseWriter, _ *http.Request) {
 // ReportsModulesByDate fetches data on modules by year-month
 func ReportsModulesByDate(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	report, err := reports.ReportModulesByDate(DS)
 	if err != nil {
@@ -41,7 +41,7 @@ func ReportsModulesByDate(w http.ResponseWriter, _ *http.Request) {
 // dates are reported by ReportsPointsByActivityDate
 func ReportsPointsByRecordDate(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	report, err := reports.ReportPointsByRecordDate(DS)
 	if err != nil {
@@ -64,7 +64,7 @@ func ReportsPointsByRecordDate(w http.ResponseWriter, _ *http.Request) {
 // according to the date of the activity itself - that is CPD Activity as opposed to system activity (above)
 func ReportsPointsByActivityDate(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	report, err := reports.ReportPointsByActivityDate(DS)
 	if err != nil {

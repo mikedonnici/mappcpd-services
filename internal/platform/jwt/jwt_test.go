@@ -2,19 +2,17 @@ package jwt_test
 
 import (
 	"fmt"
-	"testing"
 	"strings"
+	"testing"
 	"time"
 
-	"github.com/mappcpd/web-services/testdata"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/mappcpd/web-services/testdata"
 )
 
 const issuer = "TestTokenIssuer"
 const signingKey = "testTokenSigningKey"
 const ttlHours = 4
-const success = "\u2713"
-const failure = "\u2717"
 
 var helper = testdata.NewHelper()
 
@@ -72,7 +70,7 @@ func TestTTL(t *testing.T) {
 	tk, _ := jwt.New(issuer, signingKey, ttlHours)
 	tk.Encode()
 	msg := fmt.Sprintf("ExpiresAt should be %v hours in the future", ttlHours)
-	unixHours := time.Now().Unix()/3600
-	expHours := tk.Claims.ExpiresAt/3600
-	helper.MessageResult(t, msg, 4, int(expHours - unixHours))
+	unixHours := time.Now().Unix() / 3600
+	expHours := tk.Claims.ExpiresAt / 3600
+	helper.MessageResult(t, msg, 4, int(expHours-unixHours))
 }

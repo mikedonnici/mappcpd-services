@@ -20,7 +20,7 @@ import (
 // AdminTest is a test endpoint
 func AdminTest(w http.ResponseWriter, _ *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 	p.Message = Message{http.StatusOK, "success", "Hi Admin!"}
 	p.Send(w)
 }
@@ -33,7 +33,7 @@ func AdminTest(w http.ResponseWriter, _ *http.Request) {
 // API is for DB access at this stage.
 func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	var err error
 	var query map[string]interface{}
@@ -106,7 +106,7 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 		Limit      int                    `json:"limit"`
 	}
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)
@@ -141,7 +141,7 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 // AdminMembersUpdate will update a member record by processing the JSON body
 func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -210,7 +210,7 @@ func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
 // AdminMembersNotes fetches all Notes belonging to a Member
 func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -237,7 +237,7 @@ func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 // AdminNotes fetches a single Note record by Note ID
 func AdminNotes(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -264,7 +264,7 @@ func AdminNotes(w http.ResponseWriter, r *http.Request) {
 // AdminMembersID fetches a member record from the MySQLConnection DB, by id
 func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Request - convert id from string to int type
 	v := mux.Vars(r)
@@ -293,7 +293,7 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 // AdminIDList fetches a list of all member ids from MySQL
 func AdminIDList(w http.ResponseWriter, req *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Request - requires at least the 't' query to specify the table name
 	// and can have the option 'f' as raw HTML filter
@@ -335,7 +335,7 @@ func AdminBatchResourcesPost(w http.ResponseWriter, r *http.Request) {
 	}
 	b := batch{}
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	// Pull the JSON body out of the request
 	decoder := json.NewDecoder(r.Body)
@@ -387,7 +387,7 @@ func AdminBatchResourcesPost(w http.ResponseWriter, r *http.Request) {
 // AdminNotesAttachmentRequest handles a request for a signed url to upload a notes attachment
 func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	upload := struct {
 		SignedRequest  string `json:"signedRequest"`
@@ -462,7 +462,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 // AdminNotesAttachmentRegister registers a file attachment for a note.
 func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	a := attachments.New()
 	a.UserID = UserAuthToken.Claims.ID
@@ -523,7 +523,7 @@ func AdminNotesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 // AdminResourcesAttachmentRequest handles a request for a signed url to upload a resource attachment
 func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	upload := struct {
 		SignedRequest  string `json:"signedRequest"`
@@ -599,7 +599,7 @@ func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 // url then the resource file is designated as a thumbnail by setting thumbnail flag to 1 in db.
 func AdminResourcesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 
-	p := NewResponder(UserAuthToken.Token)
+	p := NewResponder(UserAuthToken.Encoded)
 
 	a := attachments.New()
 	a.UserID = UserAuthToken.Claims.ID

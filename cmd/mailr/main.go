@@ -354,7 +354,7 @@ func auth() error {
 	json.NewDecoder(res.Body).Decode(&auth)
 	token = auth.Data.Token
 	if len(token) == 0 {
-		return errors.New("Token has no length")
+		return errors.New("Encoded has no length")
 	}
 
 	return nil
