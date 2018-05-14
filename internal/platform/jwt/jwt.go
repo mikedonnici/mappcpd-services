@@ -43,10 +43,16 @@ func New(issuer, signingKey string, ttlHours int) *Token {
 	return &t
 }
 
-// ValidFrom is used to override the default start time of time.Now()
-func (t *Token) ValidFrom(iat time.Time) *Token {
-	t.Claims.IssuedAt = iat.Unix()
-	t.Claims.ExpiresAt = iat.Add(time.Hour * time.Duration(t.ttlHours)).Unix()
+// SetTimes sets the issuer, and time-related claims - requires the issue at time to be passed in.
+func (t *Token) SetTimes(iat time.Time) *Token {
+
+	t.Claims.StandardClaims.IssuedAt = iat.Unix()
+	t.Claims.StandardClaims.ExpiresAt = iat.Add(time.Hour * time.Duration(t.ttlHours)).Unix()
+
+	// Set Unix dates at root of struct for convenience (??)
+	t.IssuedAt = time.Unix(int64(t.Claims.StandardClaims.IssuedAt), 0)
+	t.ExpiresAt = time.Unix(int64(t.Claims.StandardClaims.ExpiresAt), 0)
+
 	return t
 }
 
@@ -68,17 +74,6 @@ func (t *Token) Encode() (Token, error) {
 	return *t, err
 }
 
-// SetTimes sets the issuer, and time-related claims - requires the issue at time to be passed in.
-func (t *Token) SetTimes(iat time.Time) {
-
-	t.Claims.StandardClaims.IssuedAt = iat.Unix()
-	t.Claims.StandardClaims.ExpiresAt = iat.Add(time.Hour * time.Duration(t.ttlHours)).Unix()
-
-	// Set Unix dates at root of struct for convenience (??)
-	t.IssuedAt = time.Unix(int64(t.Claims.StandardClaims.IssuedAt), 0)
-	t.ExpiresAt = time.Unix(int64(t.Claims.StandardClaims.ExpiresAt), 0)
-}
-
 // CustomClaims sets custom claims
 func (t *Token) CustomClaims(claims map[string]interface{}) *Token {
 
@@ -95,20 +90,7 @@ func (t *Token) CustomClaims(claims map[string]interface{}) *Token {
 	return t
 }
 
-//// CheckScope checks a token has a particular scope string, Received token (t) and the string (s) to check for.
-//func (t *Token) CheckScope(s string) bool {
-//	for _, v := range t.Claims.Scope {
-//		if v == s {
-//			return true
-//		}
-//	}
-//	return false
-//}
-
-//func (t *Token) String() string {
-//	return string(t.Encoded)
-//}
-
+// Valid returns true if the Token.Encoded string is a valid JWT
 func (t *Token) Valid() bool {
 	_, err := jwt.Parse(t.Encoded, func(tok *jwt.Token) (interface{}, error) {
 		return []byte(t.signingKey), nil
@@ -117,6 +99,11 @@ func (t *Token) Valid() bool {
 		return false
 	}
 	return true
+}
+
+// String returns the encoded token string (JWS)
+func (t *Token) String() string {
+	return string(t.Encoded)
 }
 
 // Decode attempts to decode token with signingKey and returns a new Token value if everything checks out
