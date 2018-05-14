@@ -1,6 +1,8 @@
 package graphql
 
 import (
+	"os"
+
 	"github.com/graphql-go/graphql"
 	"github.com/mappcpd/web-services/internal/attachments"
 	"github.com/mappcpd/web-services/internal/date"
@@ -21,7 +23,7 @@ var activityQuery = &graphql.Field{
 
 		// Always extract the member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
-		at, err := jwt.Check(token.(string))
+		at, err := jwt.Decode(token.(string), os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 		if err != nil {
 			return nil, err
 		}
@@ -58,7 +60,7 @@ var activitiesQuery = &graphql.Field{
 
 		// Extract member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
-		at, err := jwt.Check(token.(string))
+		at, err := jwt.Decode(token.(string), os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 		if err != nil {
 			return nil, err
 		}

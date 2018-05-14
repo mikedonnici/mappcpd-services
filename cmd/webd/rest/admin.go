@@ -399,7 +399,7 @@ func AdminNotesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 		FileType: r.FormValue("filetype"),
 	}
 
-	// Check we have required query params
+	// Decode we have required query params
 	if upload.FileName == "" || upload.FileType == "" {
 		msg := "Problems with query params, should have: ?filename=___&filetype=___"
 		p.Message = Message{http.StatusBadRequest, "failed", msg}
@@ -535,7 +535,7 @@ func AdminResourcesAttachmentRequest(w http.ResponseWriter, r *http.Request) {
 		FileType: r.FormValue("filetype"),
 	}
 
-	// Check we have required query params
+	// Decode we have required query params
 	if upload.FileName == "" || upload.FileType == "" {
 		msg := "Problems with query params, should have: ?filename=___&filetype=___"
 		p.Message = Message{http.StatusBadRequest, "failed", msg}
@@ -644,7 +644,7 @@ func AdminResourcesAttachmentRegister(w http.ResponseWriter, r *http.Request) {
 	}
 	a.FileSet = fs
 
-	// Check if it is a thumbnail
+	// Decode if it is a thumbnail
 	var flag string
 	if r.FormValue("thumbnail") == "1" {
 		flag = "thumbnail"

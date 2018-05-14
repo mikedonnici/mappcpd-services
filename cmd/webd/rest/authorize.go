@@ -1,64 +1,11 @@
 package rest
 
 import (
-	"log"
 	"net/http"
-	"strconv"
+	"os"
 
-	"github.com/gorilla/mux"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
-
-// AuthorizeScope checks token claims 'scope' field for one or more string values and returns
-// false if any are missing.
-// TODO: Authorize maybe should be some kind of middleware once we implement sub routers
-func AuthorizeScope(w http.ResponseWriter, r *http.Request, s ...string) bool {
-
-	p := Payload{}
-
-	// Get token string from header
-	a := r.Header.Get("Authorization")
-	t, err := jwt.FromHeader(a)
-	if err != nil {
-		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
-		p.Send(w)
-		return false
-	}
-
-	// Create an Encoded value from the token string
-	at, err := jwt.Check(t)
-	if err != nil {
-		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
-		p.Send(w)
-		return false
-	}
-
-	// Now we can check the Scope claims for the strings passed in, and respond
-	// on first negative - ie as soon as we find a missing scope authorization
-	for i := range s {
-		// "self" is a key word to check that the id on the url matches the id in the token
-		if s[i] == "self" {
-			// Get the ID off the url...
-			v := mux.Vars(r)
-			id, err := strconv.Atoi(v["id"])
-			if err != nil {
-				log.Printf("Authorize() error: %s", err.Error())
-				return false
-			}
-			// Compare with the ID in the token
-			if id != at.Claims.ID {
-				return false
-			}
-		} else {
-			if at.CheckScope(s[i]) == false {
-				return false
-			}
-		}
-	}
-
-	// All clear
-	return true
-}
 
 // AuthorizeID checks the member id passed in matches the token ID. This is used when a
 // request is made that related to a record owned by a member. For example:
@@ -80,7 +27,7 @@ func AuthorizeID(w http.ResponseWriter, r *http.Request, mid int) bool {
 	}
 
 	// Create an Encoded value from the token string
-	at, err := jwt.Check(t)
+	at, err := jwt.Decode(t, os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)

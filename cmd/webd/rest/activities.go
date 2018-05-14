@@ -117,7 +117,7 @@ func MembersActivitiesAdd(w http.ResponseWriter, r *http.Request) {
 	a.MemberID = UserAuthToken.Claims.ID
 	err := json.NewDecoder(r.Body).Decode(&a)
 	if err != nil {
-		msg := "Error decoding JSON: " + err.Error() + ". Check the format of request body."
+		msg := "Error decoding JSON: " + err.Error() + ". Decode the format of request body."
 		p.Message = Message{http.StatusBadRequest, "failure", msg}
 		p.Send(w)
 		return
@@ -196,7 +196,7 @@ func MembersActivitiesUpdate(w http.ResponseWriter, r *http.Request) {
 	na := cpd.Input{}
 	err = json.NewDecoder(r.Body).Decode(&na)
 	if err != nil {
-		msg := "Error decoding JSON: " + err.Error() + ". Check the format of request body."
+		msg := "Error decoding JSON: " + err.Error() + ". Decode the format of request body."
 		p.Message = Message{http.StatusBadRequest, "failure", msg}
 		p.Send(w)
 		return
@@ -406,7 +406,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 		FileType: r.FormValue("filetype"),
 	}
 
-	// Check we have required query params
+	// Decode we have required query params
 	if upload.FileName == "" || upload.FileType == "" {
 		msg := "Problems with query params, should have: ?filename=___&filetype=___"
 		p.Message = Message{http.StatusInternalServerError, "failed", msg}
@@ -414,7 +414,7 @@ func MembersActivitiesAttachmentRequest(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Check logged in member owns the activity record
+	// Decode logged in member owns the activity record
 	v := mux.Vars(r)
 	id, err := strconv.Atoi(v["id"])
 	if err != nil {

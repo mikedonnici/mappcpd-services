@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -38,7 +39,7 @@ func ValidateToken(w http.ResponseWriter, r *http.Request, next http.HandlerFunc
 	}
 
 	// Set the global Encoded
-	UserAuthToken, err = jwt.Check(t)
+	UserAuthToken, err = jwt.Decode(t, os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 	if err != nil {
 		p.Message = Message{http.StatusUnauthorized, "failure", "Authorization failed: " + err.Error()}
 		p.Send(w)
@@ -53,7 +54,7 @@ func AdminScope(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 
 	p := Payload{}
 
-	if UserAuthToken.CheckScope("admin") == false {
+	if UserAuthToken.Claims.Role != "admin" {
 		p.Message = Message{http.StatusUnauthorized, "failed", "Admin Scope Required: token does not belong to an admin user"}
 		p.Send(w)
 		return
@@ -74,7 +75,7 @@ func MemberScope(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) 
 
 	p := Payload{}
 
-	if UserAuthToken.CheckScope("member") == false {
+	if UserAuthToken.Claims.Role != "member" {
 		p.Message = Message{http.StatusUnauthorized, "failed", "Member Scope Required: token does not belong to a member user"}
 		p.Send(w)
 		return

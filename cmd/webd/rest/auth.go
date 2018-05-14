@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/mappcpd/web-services/internal/auth"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
@@ -46,19 +47,7 @@ func AuthMemberLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// We have authenticated the user, now set the user's scope
-	scope, err := auth.AuthScope(id)
-	if err != nil {
-		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
-		p.Send(w)
-		return
-	}
-
-	//if a.Scope == "admin" {
-	//
-	//}
-
-	at, err := freshToken(id, name, scope)
+	at, err := freshToken(id, name, "member")
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -86,7 +75,7 @@ func AuthMemberCheckHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jt, err := jwt.Check(t)
+	jt, err := jwt.Decode(t, os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 	if err != nil {
 		p.Message = Message{http.StatusUnauthorized, "failure", "Authorization failed: " + err.Error()}
 		p.Send(w)
@@ -114,8 +103,8 @@ func MembersToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check current token first
-	at, err := jwt.Check(t)
+	// Decode current token first
+	at, err := jwt.Decode(t, os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 	if err != nil {
 		p.Message = Message{http.StatusUnauthorized, "failure", "Cannot refresh token as current token is invalid: " + err.Error()}
 		p.Send(w)
@@ -123,22 +112,13 @@ func MembersToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure the current token has "member" scope to prevent switch from admin token
-	if at.CheckScope("member") == false {
+	if at.Claims.Role != "member" {
 		p.Message = Message{http.StatusUnauthorized, "failure", "Cannot refresh non-member token"}
 		p.Send(w)
 		return
 	}
 
-	// Fresh token - re-check the Scope from db rather than copying it from the current
-	// token - in case permissions have been changed
-	scope, err := auth.AuthScope(at.Claims.ID)
-	if err != nil {
-		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
-		p.Send(w)
-		return
-	}
-
-	nt, err := freshToken(at.Claims.ID, at.Claims.Name, scope)
+	nt, err := freshToken(at.Claims.ID, at.Claims.Name, at.Claims.Role)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -193,14 +173,7 @@ func AuthAdminLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scope, err := auth.AdminAuthScope(id)
-	if err != nil {
-		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
-		p.Send(w)
-		return
-	}
-
-	at, err := freshToken(id, name, scope)
+	at, err := freshToken(id, name, "admin")
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)
@@ -230,8 +203,8 @@ func AuthAdminRefreshHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check current token first
-	at, err := jwt.Check(t)
+	// Decode current token first
+	at, err := jwt.Decode(t, os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 	if err != nil {
 		p.Message = Message{http.StatusUnauthorized, "failure", "Cannot refresh token as current token is invalid: " + err.Error()}
 		p.Send(w)
@@ -239,22 +212,13 @@ func AuthAdminRefreshHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Make sure the current token has admin scope to prevent a normal user token upgrading to admin!
-	if at.CheckScope("admin") == false {
+	if at.Claims.Role != "admin" {
 		p.Message = Message{http.StatusUnauthorized, "failure", "Cannot refresh non-admin token"}
 		p.Send(w)
 		return
 	}
 
-	// Fresh token - recheck the Scope from db rather than copying it from the current
-	// token - in case permissions have been changed
-	scope, err := auth.AdminAuthScope(at.Claims.ID)
-	if err != nil {
-		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
-		p.Send(w)
-		return
-	}
-
-	nt, err := freshToken(at.Claims.ID, at.Claims.Name, scope)
+	nt, err := freshToken(at.Claims.ID, at.Claims.Name, "admin")
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failure", err.Error()}
 		p.Send(w)

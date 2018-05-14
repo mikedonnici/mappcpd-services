@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/graphql-go/graphql"
 	"github.com/mappcpd/web-services/internal/cpd"
@@ -25,7 +26,7 @@ var activitySave = &graphql.Field{
 
 		// Always extract the member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
-		at, err := jwt.Check(token.(string))
+		at, err := jwt.Decode(token.(string), os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 		if err != nil {
 			return nil, err
 		}
@@ -128,7 +129,7 @@ var activityDelete = &graphql.Field{
 
 		// Always extract the member id from the token, available thus:
 		token := p.Info.VariableValues["token"]
-		at, err := jwt.Check(token.(string))
+		at, err := jwt.Decode(token.(string), os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 		if err != nil {
 			return nil, err
 		}

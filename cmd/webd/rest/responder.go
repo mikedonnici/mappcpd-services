@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/mappcpd/web-services/internal/auth"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 	"github.com/pkg/errors"
 )
@@ -54,29 +53,13 @@ func NewResponder(ts string) *Payload {
 	p := Payload{}
 
 	// if universal UserAuthToken value is present, use this to set fresh token
-	t, err := jwt.Check(ts)
+	t, err := jwt.Decode(ts, os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 	if err != nil {
 		// No panic here, we'll just not do a fresh token
 		return &p
 	}
 
-	// otherwise, set p.Encoded to a FRESH token for either member or admin,
-	// based on the scope of the current token
-	//if t.CheckScope("member") {
-	//	fmt.Println("Member token")
-	//}
-	//if t.CheckScope("admin") {
-	//	fmt.Println("Admin token")
-	//}
-
-	// Fresh token - re-check the Scope from db rather than copying it from the current
-	// token - in case permissions have been changed
-	scope, err := auth.AuthScope(t.Claims.ID)
-	if err != nil {
-		return &p
-	}
-
-	ft, err := freshToken(t.Claims.ID, t.Claims.Name, scope)
+	ft, err := freshToken(t.Claims.ID, t.Claims.Name, t.Claims.Role)
 	if err != nil {
 		return &p
 	}
@@ -105,30 +88,22 @@ func (p Payload) Send(w http.ResponseWriter) error {
 }
 
 // freshToken issues a new token and adds custom claims id (member id) and name (member name) and well as custom scope
-func freshToken(id int, name string, scope []string) (jwt.Token, error) {
+func freshToken(id int, name string, role string) (jwt.Token, error) {
 
-	var t *jwt.Token
+	var t jwt.Token
 
 	iss := os.Getenv("MAPPCPD_API_URL")
 	key := os.Getenv("MAPPCPD_JWT_SIGNING_KEY")
 	ttl, err := strconv.Atoi(os.Getenv("MAPPCPD_JWT_TTL_HOURS"))
 	if err != nil {
-		return *t, errors.Wrap(err, "Could not create fresh token")
+		return t, errors.Wrap(err, "Could not convert hours string to int")
 	}
 
-	t, err = jwt.New(iss, key, ttl)
-	if err != nil {
-		return *t, errors.Wrap(err, "Could not create fresh token")
+	c := map[string]interface{}{
+		"id":   id,
+		"name": name,
+		"role": role,
 	}
 
-	t.Claims.ID = id
-	t.Claims.Name = name
-	t.Claims.Scope = scope
-
-	err = t.Encode()
-	if err != nil {
-		return *t, errors.Wrap(err, "Could not encode token")
-	}
-
-	return *t, nil
+	return jwt.New(iss, key, ttl).CustomClaims(c).Encode()
 }

@@ -1,6 +1,8 @@
 package graphql
 
 import (
+	"os"
+
 	"github.com/graphql-go/graphql"
 	"github.com/mappcpd/web-services/internal/member"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
@@ -20,7 +22,7 @@ var Mutation = &graphql.Field{
 		token, ok := p.Args["token"].(string)
 		if ok {
 
-			at, err := jwt.Check(token)
+			at, err := jwt.Decode(token, os.Getenv("MAPPCPD_JWT_SIGNING_KEY"))
 			if err != nil {
 				return nil, err
 			}
