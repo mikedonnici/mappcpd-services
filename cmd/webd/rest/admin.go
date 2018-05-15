@@ -37,7 +37,6 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 
 	var err error
 	var query map[string]interface{}
-	var projection map[string]interface{}
 
 	// Query
 	query, err = queryParams(r.FormValue("q"))
@@ -53,32 +52,7 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Projection
-	projection = projectParams(r.FormValue("p"))
-
-	// limit
-	limit := 0
-	if len(r.FormValue("l")) > 0 {
-		limit, err = strconv.Atoi(r.FormValue("l"))
-		if err != nil {
-			p.Message = Message{
-				http.StatusBadRequest,
-				"failed",
-				err.Error(),
-			}
-			p.Send(w)
-			return
-		}
-	}
-
-	// Run the query...
-	var res []interface{}
-	if limit > 0 {
-		res, err = member.DocMembersLimit(DS, query, projection, limit)
-	} else {
-		res, err = member.SearchDocDB(DS, query, projection)
-	}
-
+	xm, err := member.SearchDocDB(DS, query)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -86,9 +60,12 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.Message = Message{http.StatusOK, "success", "Data retrieved from ???"}
-	c := len(res)
-	p.Meta = DocMeta{c, query, projection}
-	p.Data = res
+	c := len(xm)
+	p.Meta = MongoMeta{c, query}
+	p.Data = xm
+	if len(xm) == 1 {
+		p.Data = xm[0] // No need to respond with an array of 1
+	}
 	p.Send(w)
 }
 
@@ -102,8 +79,6 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 	// ie. this is what we are expecting
 	type Find struct {
 		Query      map[string]interface{} `json:"query"`
-		Projection map[string]interface{} `json:"projection"`
-		Limit      int                    `json:"limit"`
 	}
 
 	p := NewResponder(UserAuthToken.Encoded)
@@ -118,13 +93,7 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Limit query
-	var res []interface{}
-	if f.Limit > 0 {
-		res, err = member.DocMembersLimit(DS, f.Query, f.Projection, f.Limit)
-	} else {
-		res, err = member.SearchDocDB(DS, f.Query, f.Projection)
-	}
+	xm, err := member.SearchDocDB(DS, f.Query)
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
 		p.Send(w)
@@ -132,9 +101,12 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.Message = Message{http.StatusOK, "success", "Data retrieved from ???"}
-	c := len(res)
-	p.Meta = DocMeta{c, f.Query, f.Projection}
-	p.Data = res
+	c := len(xm)
+	p.Meta = MongoMeta{c, f.Query}
+	p.Data = xm
+	if len(xm) == 1 {
+		p.Data = xm[0] // remove array for single result
+	}
 	p.Send(w)
 }
 

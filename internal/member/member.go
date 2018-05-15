@@ -3,14 +3,12 @@ package member
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
 	"github.com/mappcpd/web-services/internal/cpd"
 	"github.com/mappcpd/web-services/internal/date"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/mappcpd/web-services/internal/utility"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -478,11 +476,6 @@ func UpdateDocDB(ds datastore.Datastore, m *Member) error {
 		return errors.Wrap(err, "UpdateDocDB upsert error")
 	}
 
-	// Tell wait group we're done, if it was passed in
-	//if w != nil {
-	//	w.Done()
-	//}
-
 	return nil
 }
 
@@ -490,143 +483,72 @@ func UpdateDocDB(ds datastore.Datastore, m *Member) error {
 // than the updateAt field in the MongoDB member doc
 func SyncByUpdatedAt(ds datastore.Datastore, m *Member) error {
 
-	m2, err := DocMembersOne(ds, bson.M{"id": m.ID}, bson.M{})
+	xm, err := SearchDocDB(ds, bson.M{"id": m.ID})
 	if err != nil && err != mgo.ErrNotFound {
 		return errors.Wrap(err, "SyncByUpdatedAt Mongo query error")
 	}
 
-	// no sync
-	if m.UpdatedAt.Equal(m2.UpdatedAt) {
+	if len(xm) > 1 {
+		return errors.New(fmt.Sprintf("SyncByUpdatedAt found %v sync targets - should only be one!", len(xm)))
+	}
+
+	if m.UpdatedAt.Equal(xm[0].UpdatedAt) {
 		return nil
 	}
 
 	return UpdateDocDB(ds, m)
 }
 
-// SearchDocDB searches the Member collection using the specified query and returns []interface{} so that the
-// projection can be applied.
-func SearchDocDB(ds datastore.Datastore, query map[string]interface{}, projection map[string]interface{}) ([]interface{}, error) {
+// SearchDocDB searches the Member collection using the specified query
+func SearchDocDB(ds datastore.Datastore, query bson.M) ([]Member, error) {
+
+	var xm []Member
 
 	members, err := ds.MongoDB.MembersCollection()
 	if err != nil {
 		return nil, err
 	}
 
-	// Convert string date filters to time.Time
-	//utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
-
-	// Run query and return results
-	var r []interface{}
-	err = members.Find(query).Select(projection).All(&r)
+	err = members.Find(query).All(&xm)
 	if err != nil {
 		return nil, err
 	}
 
-	return r, nil
+	return xm, nil
 }
 
-// todo ... deprecate this func in favour of one that returns []Member?
-func DocMembersLimit(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
+// SaveDocDB method upserts Member doc to MongoDB
+func (m *Member) SaveDocDB(ds datastore.Datastore) error {
 
-	members, err := ds.MongoDB.MembersCollection()
-	if err != nil {
-		return nil, err
-	}
+	selector := map[string]int{"id": m.ID}
 
-	// Convert string date filters to time.Time
-	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
-
-	// Run query and return results
-	var r []interface{}
-	err = members.Find(q).Select(p).Limit(l).All(&r)
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
-}
-
-// DocMembersOne returns one member, unmarshaled into the proper struct
-func DocMembersOne(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}) (Member, error) {
-
-	m := Member{}
-
-	members, err := ds.MongoDB.MembersCollection()
-	if err != nil {
-		return m, err
-	}
-
-	// Convert string date filters to time.Time
-	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
-
-	err = members.Find(q).Select(p).One(&m)
-	if err != nil {
-		return m, err
-	}
-
-	return m, nil
-}
-
-// FetchMembers returns values of type Member from the Members collection in MongoDB, based on the query and
-// limited by the value of limit. If limit is 0 all results are returned.
-func FetchMembers(ds datastore.Datastore, query map[string]interface{}, limit int) ([]Member, error) {
-
-	var data []Member
-
-	// Convert string date filters to time.Time
-	utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
-
-	c, err := ds.MongoDB.MembersCollection()
-	if err != nil {
-		return nil, err
-	}
-	err = c.Find(query).Limit(limit).All(&data)
-
-	return data, err
-}
-
-// SaveDoc method upserts Member doc to MongoDB
-func (m *Member) SaveDoc(ds datastore.Datastore) error {
-
-	// Make selector for Upsert
-	mid := map[string]int{"id": m.ID}
-
-	// Get pointer to the Members collection
 	mc, err := ds.MongoDB.MembersCollection()
 	if err != nil {
-		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
-		return err
+		return errors.Wrap(err, "SaveDocDB could not get member collection")
 	}
 
-	// Upsert
-	_, err = mc.Upsert(mid, &m)
+	_, err = mc.Upsert(selector, &m)
 	if err != nil {
-		log.Printf("Error updating document in Members collection: %s\n", err.Error())
+		return errors.Wrap(err, "SaveDocDB upsert error")
 	}
 
-	fmt.Println(".SaveDoc() succeeded")
 	return nil
 }
 
-// UpdateDoc method updates Member doc to MongoDB
-func (m *Member) UpdateDoc(ds datastore.Datastore) error {
+// UpdateDocDB method updates Member doc to MongoDB
+func (m *Member) UpdateDocDB(ds datastore.Datastore) error {
 
-	// Selector
-	mid := map[string]int{"id": m.ID}
+	selector := map[string]int{"id": m.ID}
 
-	// Get pointer to the Members collection
 	mc, err := ds.MongoDB.MembersCollection()
 	if err != nil {
-		log.Printf("Error getting pointer to Members collection: %s\n", err.Error())
-		return err
+		return errors.Wrap(err, "UpdateDocDB could not get member collection")
 	}
 
-	// Update
-	err = mc.Update(mid, &m)
+	err = mc.Update(selector, &m)
 	if err != nil {
-		log.Printf("Error updating document in Members collection: %s\n", err.Error())
+		return errors.Wrap(err, "UpdateDocDB update error")
 	}
 
-	fmt.Println(".UpdateDoc() succeeded")
 	return nil
 }

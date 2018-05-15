@@ -37,7 +37,6 @@ type Message struct {
 type DocMeta struct {
 	Count      int                    `json:"count" bson:"count"`
 	Query      map[string]interface{} `json:"query" bson:"query"`
-	Projection map[string]interface{} `json:"projection" bson:"projection"`
 }
 
 // MongoMeta stores the meta information from a query to MongoDB
