@@ -11,7 +11,7 @@ import (
 	"github.com/rs/cors"
 )
 
-// DS represents the global datastore passed to internal packages by the handlers
+// Store represents the global datastore passed to internal packages by the handlers
 var DS datastore.Datastore
 
 // Start fires up the GraphQL server

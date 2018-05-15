@@ -4,7 +4,7 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
-// DS represents the global datastore passed to internal packages by the handlers
+// Store represents the global datastore passed to internal packages by the handlers
 var DS datastore.Datastore
 
 // Start fires up the REST server and sets the global datastore

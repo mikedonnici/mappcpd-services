@@ -8,24 +8,24 @@ import (
 type memberData struct {
 	ID             int                     `json:"id"`
 	Token          string                  `json:"token"`
-	Active         bool                    `json:"active"`
-	Title          string                  `json:"title"`
-	FirstName      string                  `json:"firstName"`
-	MiddleNames    string                  `json:"middleNames"`
-	LastName       string                  `json:"lastName"`
-	PostNominal    string                  `json:"postNominal"`
-	DateOfBirth    string                  `json:"dateOfBirth"`
-	Email          string                  `json:"email"`
-	Mobile         string                  `json:"mobile"`
-	Locations      []member.MemberLocation `json:"locations"`
-	Qualifications []member.Qualification  `json:"qualifications"`
-	Positions      []member.Position       `json:"positions"`
+	Active         bool                   `json:"active"`
+	Title          string                 `json:"title"`
+	FirstName      string                 `json:"firstName"`
+	MiddleNames    string                 `json:"middleNames"`
+	LastName       string                 `json:"lastName"`
+	PostNominal    string                 `json:"postNominal"`
+	DateOfBirth    string                 `json:"dateOfBirth"`
+	Email          string                 `json:"email"`
+	Mobile         string                 `json:"mobile"`
+	Locations      []member.Location      `json:"locations"`
+	Qualifications []member.Qualification `json:"qualifications"`
+	Positions      []member.Position      `json:"positions"`
 }
 
 // mapMemberData fetches a member record by id, and maps field values to the local memberData type
 func mapMemberData(id int) (memberData, error) {
 	var m memberData
-	mp, err := member.MemberByID(DS, id)
+	mp, err := member.ByID(DS, id)
 	if err != nil {
 		return m, err
 	}

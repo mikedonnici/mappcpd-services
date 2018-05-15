@@ -27,7 +27,7 @@ func AdminSubRouter(prefix string) *mux.Router {
 	admin.Methods("GET").Path("/members").HandlerFunc(AdminMembersSearch)
 	admin.Methods("POST").Path("/members").HandlerFunc(AdminMembersSearchPost)
 	admin.Methods("GET").Path("/members/{id:[0-9]+}").HandlerFunc(AdminMembersID)
-	admin.Methods("POST").Path("/members/{id:[0-9]+}").HandlerFunc(AdminMembersUpdate)
+	//admin.Methods("POST").Path("/members/{id:[0-9]+}").HandlerFunc(AdminMembersUpdate)
 	admin.Methods("GET").Path("/members/{id:[0-9]+}/notes").HandlerFunc(AdminMembersNotes)
 	admin.Methods("GET").Path("/notes/{id:[0-9]+}").HandlerFunc(AdminNotes)
 	admin.Methods("GET").Path("/organisations").HandlerFunc(AllOrganisations)

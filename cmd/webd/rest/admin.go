@@ -138,75 +138,6 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 	p.Send(w)
 }
 
-// AdminMembersUpdate will update a member record by processing the JSON body
-func AdminMembersUpdate(w http.ResponseWriter, r *http.Request) {
-
-	p := NewResponder(UserAuthToken.Encoded)
-
-	// Request - convert id from string to int type
-	v := mux.Vars(r)
-	id, err := strconv.Atoi(v["id"])
-	if err != nil {
-		p.Message = Message{http.StatusBadRequest, "failed", err.Error()}
-	}
-
-	// Response
-	m, err := member.MemberByID(DS, int(id))
-
-	switch {
-	case err == sql.ErrNoRows:
-		p.Message = Message{http.StatusNotFound, "failed", err.Error()}
-	case err != nil:
-		p.Message = Message{http.StatusNotFound, "failed", err.Error()}
-	default:
-
-		// Pull the JSON body out of the request
-		decoder := json.NewDecoder(r.Body)
-		var j map[string]interface{}
-		err = decoder.Decode(&j)
-		if err != nil {
-			p.Message = Message{http.StatusBadRequest, "failure", err.Error()}
-			p.Send(w)
-			return
-		}
-
-		fmt.Printf("%T %s\n", j, j)
-		fmt.Printf("j[id] %T %v\n", j["id"], j["id"])
-		fmt.Printf("m[id] %T %v\n", m.ID, m.ID)
-
-		// As a small sanity check make sure the id on the url
-		// matches the id passed in the JSON body
-		if j["id"] == "" {
-			p.Message = Message{http.StatusBadRequest, "failed", "MySQLConnection row id must be included in the JSON body"}
-			p.Send(w)
-			return
-		}
-		// need type assertion as j["id"] is float64 when decoded from JSON
-		jid := int(j["id"].(float64))
-		fmt.Printf("%v %T - %v %T", m.ID, m.ID, jid, jid)
-		if m.ID != jid {
-			p.Message = Message{http.StatusBadRequest, "failed", "ID on the request URL does not match the ID in the Body"}
-			p.Send(w)
-			return
-		}
-
-		err := member.UpdateMember(DS, j)
-		if err != nil {
-			p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
-			p.Send(w)
-			return
-		}
-
-		m, _ = member.MemberByID(DS, int(id)) // Re-fetch
-		member.SyncMember(DS, m)              // Sync to doc db
-
-		p.Message = Message{http.StatusOK, "success", "MySQLConnection record updated and copied to MongoDB"}
-		p.Data = m
-	}
-
-	p.Send(w)
-}
-
 // AdminMembersNotes fetches all Notes belonging to a Member
 func AdminMembersNotes(w http.ResponseWriter, r *http.Request) {
 
@@ -274,7 +205,7 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get the Member record
-	m, err := member.MemberByID(DS, int(id))
+	m, err := member.ByID(DS, int(id))
 	// Response
 	switch {
 	case err == sql.ErrNoRows:

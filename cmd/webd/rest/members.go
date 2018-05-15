@@ -22,7 +22,7 @@ func MembersProfile(w http.ResponseWriter, _ *http.Request) {
 	id := UserAuthToken.Claims.ID
 
 	// Get the Member record
-	m, err := member.MemberByID(DS, id)
+	m, err := member.ByID(DS, id)
 	// Response
 	switch {
 	case err == sql.ErrNoRows:

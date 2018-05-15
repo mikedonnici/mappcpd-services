@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/mappcpd/web-services/internal/cpd"
-	"github.com/mappcpd/web-services/internal/note"
+	"github.com/mappcpd/web-services/internal/date"
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
 	"github.com/pkg/errors"
@@ -44,7 +44,7 @@ type Member struct {
 	Gender         string          `json:"gender" bson:"gender"`
 	DateOfBirth    string          `json:"dateOfBirth" bson:"dateOfBirth"`
 	Memberships    []Membership    `json:"memberships" bson:"memberships"`
-	Contact        MemberContact   `json:"contact" bson:"contact"`
+	Contact        Contact         `json:"contact" bson:"contact"`
 	Qualifications []Qualification `json:"qualifications" bson:"qualifications"`
 	Positions      []Position      `json:"positions" bson:"positions"`
 	Specialities   []Speciality    `json:"specialities" bson:"specialities"`
@@ -55,20 +55,20 @@ type Member struct {
 
 type Members []Member
 
-// Contact struct holds all contact information for a member
-type MemberContact struct {
-	EmailPrimary   string           `json:"emailPrimary" bson:"emailPrimary"`
-	EmailSecondary string           `json:"emailSecondary" bson:"emailSecondary"`
-	Mobile         string           `json:"mobile" bson:"mobile"`
-	Locations      []MemberLocation `json:"locations" bson:"locations"`
+// Contact struct holds all Contact information for a member
+type Contact struct {
+	EmailPrimary   string     `json:"emailPrimary" bson:"emailPrimary"`
+	EmailSecondary string     `json:"emailSecondary" bson:"emailSecondary"`
+	Mobile         string     `json:"mobile" bson:"mobile"`
+	Locations      []Location `json:"locations" bson:"locations"`
 
-	// Flags that indicate members consent to appear in the directory, and to have contact details shared in directory
+	// Flags that indicate members consent to appear in the directory, and to have Contact details shared in directory
 	Directory bool `json:"directory" bson:"directory"`
 	Consent   bool `json:"consent" bson:"consent"`
 }
 
-// Location defines a contact place or contact 'card'
-type MemberLocation struct {
+// Location defines a Contact place or Contact 'card'
+type Location struct {
 	Preference  int    `json:"order" bson:"order"`
 	Description string `json:"type" bson:"type"`
 	Address     string `json:"address" bson:"address"`
@@ -124,40 +124,6 @@ type Speciality struct {
 	Name        string `json:"name" bson:"name"`
 	Description string `json:"description" bson:"description"`
 	Start       string `json:"start" bson:"start"`
-}
-
-// SetActive sets the Active boolean value
-func (m *Member) SetActive(ds datastore.Datastore) error {
-
-	// Assume inactive unless otherwise
-	m.Active = false
-
-	// store result from db query
-	var active int
-
-	query := `SELECT ms_status_id FROM ms_m_status WHERE
-	active = 1 AND current = 1 AND member_id = ?`
-	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(&active)
-	switch {
-	case err == sql.ErrNoRows:
-		// for the no rows case spit out a message but we don't need to bomb out with a 500
-		// otherwise no record will be returned to the caller
-		msg := fmt.Sprintf(".SetActive() could not find a record with 'current'/'active' = 1 for member id %v - will assume members 'active' status is false - ", m.ID)
-		log.Println(msg, err)
-		return nil
-
-	case err != nil:
-		msg := ".SetActive() failed"
-		log.Println(msg, err)
-		return errors.Wrap(err, msg)
-	}
-
-	// Found a record, if it has a value of 1 then member is active, otherwise it remains as false
-	if active == 1 {
-		m.Active = true
-	}
-
-	return nil
 }
 
 // SetTitle sets the title (Mr, Prof, Dr) and Post nominal, if any
@@ -223,7 +189,7 @@ func (m *Member) SetContactLocations(ds datastore.Datastore) error {
 
 	for rows.Next() {
 
-		l := MemberLocation{}
+		l := Location{}
 
 		err := rows.Scan(
 			&l.Description,
@@ -286,49 +252,16 @@ func (m *Member) SetMembershipTitle(ds datastore.Datastore, mi int) error {
 	//t := MembershipTitle{}
 	t := ""
 
-	// TODO: Make this work for different organisations
-	//sql := `SELECT
-	//	COALESCE(mmt.granted_on, ''),
-	//	"no code",
-	//	COALESCE(mt.name, ''),
-	//	COALESCE(mt.description, '')
-	//	FROM ms_title mt
-	//	INNER JOIN ms_m_title mmt ON mt.id = mmt.ms_title_id
-	//	WHERE mmt.member_id = ?
-	//	AND current = 1
-	//	ORDER BY mmt.id DESC
-	//	LIMIT 1`
-
-	query := `SELECT
-		COALESCE(mt.name, '')
-		FROM ms_title mt
-		INNER JOIN ms_m_title mmt ON mt.id = mmt.ms_title_id
-		WHERE mmt.member_id = ?
-		AND current = 1
-		ORDER BY mmt.id DESC
-		LIMIT 1`
-
-	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(
-		//&t.Date,
-		//&t.Code,
-		&t,
-		//&t.Desc,
-	)
-
-	// IMPORTANT - if no rows are found this is NOT an error here
-	// it just means there are no memberships. There is a big HACK
-	// here whereby the membership is deleted if there is no membership title
+	query := Queries["select-membership-title"]
+	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(&t)
 	switch {
 	case err == sql.ErrNoRows:
 		// remove the default membership as there is no title
 		m.Memberships = []Membership{}
 		return nil
 	case err != nil:
-		msg := ".SetMembershipTitle() sql error"
-		log.Println(msg, err)
-		return errors.Wrap(err, msg)
+		return errors.Wrap(err, "SetMembershipTitle error")
 	default:
-		// Set the MembershipTitle value for the Membership at index 'mi'
 		m.Memberships[mi].Title = t
 		return nil
 	}
@@ -339,26 +272,13 @@ func (m *Member) SetMembershipTitle(ds datastore.Datastore, mi int) error {
 // MembershipTitle so it uses []MembershipTitle
 func (m *Member) SetMembershipTitleHistory(ds datastore.Datastore, mi int) error {
 
-	query := `SELECT
-		COALESCE(mmt.granted_on, ''),
-		"no code",
-		COALESCE(mt.name, ''),
-		COALESCE(mt.description, ''),
-		COALESCE(mmt.comment, '')
-		FROM ms_title mt
-		INNER JOIN ms_m_title mmt ON mt.id = mmt.ms_title_id
-		WHERE mmt.member_id = ?
-		ORDER BY mmt.id DESC`
-
+	query := Queries["select-membership-title-history"]
 	rows, err := ds.MySQL.Session.Query(query, m.ID)
 	switch {
 	case err == sql.ErrNoRows:
-		// no rows
 		return nil
 	case err != nil:
-		msg := ".SetMembershipTitleHistory() sql error"
-		log.Println(msg, err)
-		return errors.Wrap(err, msg)
+		return errors.Wrap(err, "SetMembershipTitleHistory query error")
 	}
 	defer rows.Close()
 
@@ -373,18 +293,10 @@ func (m *Member) SetMembershipTitleHistory(ds datastore.Datastore, mi int) error
 			&t.Comment,
 		)
 		if err != nil {
-			msg := ".SetMembershipTitleHistory() failed to scan row"
-			fmt.Println(msg, err)
-			return errors.Wrap(err, msg)
+			return errors.Wrap(err, "SetMembershipTitleHistory scan error")
 		}
 
-		//notes := m.GetNotes("", "124")
-
-		//t.Notes = notes
-
-		// Append the historical title to the TitleHistory []MembershipTitle
 		m.Memberships[mi].TitleHistory = append(m.Memberships[mi].TitleHistory, t)
-
 	}
 
 	return nil
@@ -392,24 +304,13 @@ func (m *Member) SetMembershipTitleHistory(ds datastore.Datastore, mi int) error
 
 func (m *Member) SetQualifications(ds datastore.Datastore) error {
 
-	query := `SELECT
-	COALESCE(mq.short_name, ''),
-	COALESCE(mq.name, ''),
-	COALESCE(mq.description, ''),
-	COALESCE(mmq.year, '')
-	FROM mp_m_qualification mmq
-	LEFT JOIN mp_qualification mq ON mmq.mp_qualification_id = mq.id
-	WHERE mmq.member_id = ?
-	ORDER BY year DESC`
-
+	query := Queries["select-member-qualifications"]
 	rows, err := ds.MySQL.Session.Query(query, m.ID)
-	switch {
-	case err == sql.ErrNoRows:
+	if err == sql.ErrNoRows {
 		return nil
-	case err != nil:
-		msg := ".SetQualifications() sql error"
-		fmt.Println(msg, err)
-		return errors.Wrap(err, msg)
+	}
+	if err != nil {
+		return errors.Wrap(err, "SetQualifications query error")
 	}
 	defer rows.Close()
 
@@ -424,13 +325,8 @@ func (m *Member) SetQualifications(ds datastore.Datastore) error {
 			&q.Year,
 		)
 		if err != nil {
-			msg := ".SetQualifications() failed to scan row"
-			fmt.Println(msg, err)
-			return errors.Wrap(err, msg)
+			return errors.Wrap(err, "SetQualifications scan error")
 		}
-
-		// Trim additional address newlines
-		//l.Address = strings.Trim(l.Address, "\n")
 
 		m.Qualifications = append(m.Qualifications, q)
 	}
@@ -441,27 +337,14 @@ func (m *Member) SetQualifications(ds datastore.Datastore) error {
 // SetPositions fetches the Positions held by a member and sets the corresponding fields
 func (m *Member) SetPositions(ds datastore.Datastore) error {
 
-	query := `SELECT
-	COALESCE(organisation.short_name, ''),
-	COALESCE(organisation.name, ''),
-	COALESCE(mp.short_name, ''),
-	COALESCE(mp.name, ''),
-	COALESCE(mp.description, ''),
-	COALESCE(mmp.start_on, ''),
-	COALESCE(mmp.end_on, '')
-	FROM mp_m_position mmp
-	LEFT JOIN mp_position mp ON mmp.mp_position_id = mp.id
-	LEFT JOIN organisation ON mmp.organisation_id = organisation.id
-	WHERE mmp.member_id = ?`
+	query := Queries["select-member-positions"]
 
 	rows, err := ds.MySQL.Session.Query(query, m.ID)
-	switch {
-	case err == sql.ErrNoRows:
+	if err == sql.ErrNoRows {
 		return nil
-	case err != nil:
-		msg := ".SetPositions() sql error"
-		fmt.Println(msg, err)
-		return errors.Wrap(err, msg)
+	}
+	if err != nil {
+		return errors.Wrap(err, "SetPositions query error")
 	}
 	defer rows.Close()
 
@@ -479,13 +362,8 @@ func (m *Member) SetPositions(ds datastore.Datastore) error {
 			&p.End,
 		)
 		if err != nil {
-			msg := ".SetPositions() failed to scan row"
-			log.Println(msg, err)
-			return errors.Wrap(err, msg)
+			return errors.Wrap(err, "SetPositions scan error")
 		}
-
-		// Trim additional address newlines
-		//l.Address = strings.Trim(l.Address, "\n")
 
 		m.Positions = append(m.Positions, p)
 	}
@@ -496,22 +374,13 @@ func (m *Member) SetPositions(ds datastore.Datastore) error {
 // SetSpecialities fetches the specialities for a member and sets the corresponding fields
 func (m *Member) SetSpecialities(ds datastore.Datastore) error {
 
-	query := `SELECT
-			COALESCE(s.name, ''),
-			COALESCE(s.description, ''),
-			COALESCE(ms.start_on, '')
-			FROM mp_m_speciality ms
-			LEFT JOIN mp_speciality s ON ms.mp_speciality_id = s.id
-			WHERE ms.member_id = ?`
-
+	query := Queries["select-member-specialities"]
 	rows, err := ds.MySQL.Session.Query(query, m.ID)
-	switch {
-	case err == sql.ErrNoRows:
+	if err == sql.ErrNoRows {
 		return nil
-	case err != nil:
-		msg := ".SetSpecialities() sql error"
-		fmt.Println(msg, err)
-		return errors.Wrap(err, msg)
+	}
+	if err != nil {
+		return errors.Wrap(err, "SetSpecialities query error")
 	}
 	defer rows.Close()
 
@@ -525,9 +394,7 @@ func (m *Member) SetSpecialities(ds datastore.Datastore) error {
 			&s.Start,
 		)
 		if err != nil {
-			msg := ".SetSpecialities() failed to scan row"
-			log.Println(msg, err)
-			return errors.Wrap(err, msg)
+			return errors.Wrap(err, "SetSpecialities scan error")
 		}
 
 		m.Specialities = append(m.Specialities, s)
@@ -536,89 +403,19 @@ func (m *Member) SetSpecialities(ds datastore.Datastore) error {
 	return nil
 }
 
-// GetNotes fetches notes relating, optionally those that relate to
-// a particular entity 'e'. An 'entity' is a value in the db that
-// describes the table (entity) to which the note is linked. For example,
-// a note relating to a membership title would have the value mp_title
-func (m *Member) GetNotes(entityName string, entityID string) []note.Note {
+// ByID returns a pointer to a populated Member value
+func ByID(ds datastore.Datastore, id int) (*Member, error) {
 
-	query := `SELECT
-		wn.effective_on,
-		wn.note,
-		wna.association,
-		wna.association_entity_id
-		FROM wf_note wn
-		LEFT JOIN wf_note_association wna ON wn.id = wna.wf_note_id
-		WHERE wna.member_id = ?
-		%s %s
-		ORDER BY wn.effective_on DESC`
-
-	// filter by entity name
-	s1 := ""
-	if len(entityName) > 0 {
-		s1 = " AND " + entityName + " clause here"
-	}
-
-	// Further filter by a specific entity id
-	s2 := ""
-	if len(entityID) > 0 {
-		s2 = " AND " + entityID + " clause here"
-	}
-
-	query = fmt.Sprintf(query, s1, s2)
-	fmt.Println(query)
-
-	// Get the notes relating to this title
-	n1 := note.Note{
-		ID:            123,
-		DateCreated:   "2016-01-01",
-		DateUpdated:   "2016-02-02",
-		DateEffective: "2016-03-03",
-		Content:       "This is the actual note...",
-	}
-
-	n2 := note.Note{
-		ID:            123,
-		DateCreated:   "2016-04-01",
-		DateUpdated:   "2016-05-02",
-		DateEffective: "2016-06-03",
-		Content:       "This is the second note...",
-	}
-
-	return []note.Note{n2, n1}
-}
-
-// MemberByID fetches a member record by id, populates a Member value
-// with some of the data and returns a pointer to Member
-func MemberByID(ds datastore.Datastore, id int) (*Member, error) {
-
-	// Set up a new empty Member
 	m := Member{ID: id}
 
-	// Coalesce any NULL-able fields
-	query := `SELECT
-	created_at,
-	updated_at,
-	COALESCE(first_name, ''),
-	COALESCE(middle_names, ''),
-	COALESCE(last_name, ''),
-	CONCAT(COALESCE(suffix, ''), ' ', COALESCE(qualifications_other, '')),
-	COALESCE(gender, ''),
-	COALESCE(date_of_birth, ''),
-	COALESCE(primary_email, ''),
-    COALESCE(secondary_email, ''),
-    COALESCE(mobile_phone, ''),
-    consent_directory,
-    consent_contact
-    FROM member WHERE id = ?`
+	query := Queries["select-member"]
 
-	// TODO - post nominal fields need to be more cleanly handled in the actual MappCPD application
-
-	// Hold these until we fix them up
+	var active int
 	var createdAt string
 	var updatedAt string
 
 	err := ds.MySQL.Session.QueryRow(query, id).Scan(
+		&active,
 		&createdAt,
 		&updatedAt,
 		&m.FirstName,
@@ -633,145 +430,71 @@ func MemberByID(ds datastore.Datastore, id int) (*Member, error) {
 		&m.Contact.Directory,
 		&m.Contact.Consent,
 	)
-	switch {
-	case err == sql.ErrNoRows:
-		msg := fmt.Sprintf("MemberByID() could not find record with id %v", id)
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
-	case err != nil:
-		msg := "MemberByID() sql error"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+
+	if err == sql.ErrNoRows {
+		return &m, errors.Wrap(err, "No member record with that id")
+	}
+	if err != nil {
+		return &m, errors.Wrap(err, "SQL error")
 	}
 
-	// Convert MySQL date time strings to time.Time
-	m.CreatedAt, _ = utility.DateTime(createdAt)
-	m.UpdatedAt, _ = utility.DateTime(updatedAt)
+	if active == 1 {
+		m.Active = true
+	}
 
-	err = m.SetActive(ds)
+	m.CreatedAt, err = date.StringToTime(createdAt)
 	if err != nil {
-		msg := "MemberByID() failed to set Active status"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+		return &m, errors.Wrap(err, "Error converting createdAt to Time")
+	}
+	m.UpdatedAt, err = date.StringToTime(updatedAt)
+	if err != nil {
+		return &m, errors.Wrap(err, "Error converting updatedAt to Time")
 	}
 
 	err = m.SetTitle(ds)
 	if err != nil {
-		msg := "MemberByID() failed to set title"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+		return &m, errors.Wrap(err, "SetTitle error")
 	}
 
 	err = m.SetContactLocations(ds)
 	if err != nil {
-		msg := "MemberByID() failed to set contact locations"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+		return &m, errors.Wrap(err, "SetContactLocations error")
 	}
 
-	// Set Memberships
+	// TODO: There are no multiple memberships at this stage
 	err = m.SetMemberships()
 	if err != nil {
-		msg := "MemberByID() failed to set memberships"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+		return &m, errors.Wrap(err, "SetMemberships error")
 	}
-
-	// TODO: Membership is a botch and causes all non-member to fail to sync
-	// MembershipTitle is a child of each Membership, so we
-	// we repeat this for each membership
 	for i := range m.Memberships {
 
-		// Set Membership.MembershipTitle for Membership value at [i]
 		err = m.SetMembershipTitle(ds, i)
 		if err != nil {
-			msg := "MemberByID() failed to set membership title"
-			log.Println(msg, err)
-			return &m, errors.Wrap(err, msg)
+			return &m, errors.Wrap(err, "SetMembershipTitle error")
 		}
 
-		// Set Membership.TitleHistory for Membership value at [i]
 		err = m.SetMembershipTitleHistory(ds, i)
 		if err != nil {
-			msg := "MemberByID() failed to set membership title history"
-			log.Println(msg, err)
-			return &m, errors.Wrap(err, msg)
+			return &m, errors.Wrap(err, "SetMembershipTitleHistory error")
 		}
 	}
 
-	// Set Qualifications
 	err = m.SetQualifications(ds)
 	if err != nil {
-		msg := "MemberByID() failed to set qualifications"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+		return &m, errors.Wrap(err, "SetQualifications error")
 	}
 
-	// Set Positions
 	err = m.SetPositions(ds)
 	if err != nil {
-		msg := "MemberByID() failed to set positions"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+		return &m, errors.Wrap(err, "SetPositions")
 	}
 
-	// Set Specialities
 	err = m.SetSpecialities(ds)
 	if err != nil {
-		msg := "MemberByID() failed to set specialities"
-		log.Println(msg, err)
-		return &m, errors.Wrap(err, msg)
+		return &m, errors.Wrap(err, "SetSpecialities")
 	}
 
 	return &m, nil
-}
-
-// UpdateMember will update the MySQL member record
-// 'm' is a map of the JSON body POSTed in which contains any parts of the
-// member record we want to update.
-func UpdateMember(ds datastore.Datastore, m map[string]interface{}) error {
-
-	do := false // a flag to decide if we can proceed
-
-	// This maps the json field names with the MySQl column names
-	dbMap := map[string]string{
-		"gender":      "gender",
-		"firstName":   "first_name",
-		"middleNames": "middle_names",
-		"lastName":    "last_name",
-		"dateOfBirth": "date_of_birth",
-	}
-
-	query := "UPDATE member SET "
-	for i, v := range dbMap {
-
-		if _, ok := m[i]; ok {
-
-			if do == true {
-				query = query + ", "
-			}
-			do = true
-			query = query + fmt.Sprintf(`%s="%s"`, v, m[i])
-		}
-	}
-	query = query + fmt.Sprintf(` WHERE id = %v LIMIT 1`, m["id"])
-
-	if do == true {
-		fmt.Printf("UpdateMember(): %s\n", query)
-		_, err := ds.MySQL.Session.Exec(query)
-		if err != nil {
-			msg := "UpdateMember() sql error"
-			log.Println(msg, err)
-			return errors.Wrap(err, msg)
-		}
-	} else {
-		msg := "UpdateMember() failed"
-		err := errors.New("No valid fields posted")
-		log.Println(msg, err)
-		return errors.Wrap(err, msg)
-	}
-
-	return nil
 }
 
 // UpdateMemberDoc updates the JSON-formatted member record in MongoDB

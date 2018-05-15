@@ -8,7 +8,7 @@ import (
 	"github.com/mappcpd/web-services/testdata"
 )
 
-var db = testdata.NewTestDB()
+var db = testdata.NewDataStore()
 var helper = testdata.NewHelper()
 
 func TestMain(m *testing.M) {
@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPingDatabase(t *testing.T) {
-	err := db.DS.MySQL.Session.Ping()
+	err := db.Store.MySQL.Session.Ping()
 	if err != nil {
 		t.Fatal("Could not ping database")
 	}
@@ -40,7 +40,7 @@ func TestCPDByID(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		cpd, err := cpd.ByID(db.DS, c.id)
+		cpd, err := cpd.ByID(db.Store, c.id)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -49,7 +49,7 @@ func TestCPDByID(t *testing.T) {
 }
 
 func TestCPDByMemberID(t *testing.T) {
-	xcpd, err := cpd.ByMemberID(db.DS, 1)
+	xcpd, err := cpd.ByMemberID(db.Store, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -57,7 +57,7 @@ func TestCPDByMemberID(t *testing.T) {
 }
 
 func TestCPDQuery(t *testing.T) {
-	xcpd, err := cpd.Query(db.DS, "WHERE cma.description LIKE '%Bruno%'")
+	xcpd, err := cpd.Query(db.Store, "WHERE cma.description LIKE '%Bruno%'")
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -74,13 +74,13 @@ func TestAddCPD(t *testing.T) {
 		Description: "I added this record",
 		Evidence:    false,
 	}
-	id, err := cpd.Add(db.DS, c)
+	id, err := cpd.Add(db.Store, c)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 
 	// fetch the newly added record, and verify the description
-	r, err := cpd.ByID(db.DS, id)
+	r, err := cpd.ByID(db.Store, id)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -99,12 +99,12 @@ func TestUpdateCPD(t *testing.T) {
 		Description: "The description was updated",
 		Evidence:    false,
 	}
-	err := cpd.Update(db.DS, c)
+	err := cpd.Update(db.Store, c)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 
-	r, err := cpd.ByID(db.DS, c.ID)
+	r, err := cpd.ByID(db.Store, c.ID)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -115,7 +115,7 @@ func TestUpdateCPD(t *testing.T) {
 func TestDuplicateOf(t *testing.T) {
 
 	// Fetch first cpd record and then try to insert it - should get '1' returned
-	a, err := cpd.ByID(db.DS, 1)
+	a, err := cpd.ByID(db.Store, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -131,7 +131,7 @@ func TestDuplicateOf(t *testing.T) {
 		Quantity:    a.Credit,
 	}
 
-	dupID, err := cpd.DuplicateOf(db.DS, i)
+	dupID, err := cpd.DuplicateOf(db.Store, i)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -142,17 +142,17 @@ func TestDuplicateOf(t *testing.T) {
 func TestDelete(t *testing.T) {
 
 	// get count, delete record id 3, count should be count - 1
-	xcpd, err := cpd.Query(db.DS, "")
+	xcpd, err := cpd.Query(db.Store, "")
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
 	c1 := len(xcpd)
 
-	err = cpd.Delete(db.DS, 1, 3)
+	err = cpd.Delete(db.Store, 1, 3)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
-	xcpd, err = cpd.Query(db.DS, "")
+	xcpd, err = cpd.Query(db.Store, "")
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}

@@ -116,3 +116,56 @@ func attachments(ds datastore.Datastore, noteID int) ([]Attachment, error) {
 
 	return xa, nil
 }
+
+
+// GetNotes fetches notes relating, optionally those that relate to
+// a particular entity 'e'. An 'entity' is a value in the db that
+// describes the table (entity) to which the note is linked. For example,
+// a note relating to a membership title would have the value mp_title
+//func (m *Member) GetNotes(entityName string, entityID string) []note.Note {
+//
+//	query := `SELECT
+//		wn.effective_on,
+//		wn.note,
+//		wna.association,
+//		wna.association_entity_id
+//		FROM wf_note wn
+//		LEFT JOIN wf_note_association wna ON wn.id = wna.wf_note_id
+//		WHERE wna.member_id = ?
+//		%s %s
+//		ORDER BY wn.effective_on DESC`
+//
+//	// filter by entity name
+//	s1 := ""
+//	if len(entityName) > 0 {
+//		s1 = " AND " + entityName + " clause here"
+//	}
+//
+//	// Further filter by a specific entity id
+//	s2 := ""
+//	if len(entityID) > 0 {
+//		s2 = " AND " + entityID + " clause here"
+//	}
+//
+//	query = fmt.Sprintf(query, s1, s2)
+//	fmt.Println(query)
+//
+//	// Get the notes relating to this title
+//	n1 := note.Note{
+//		ID:            123,
+//		DateCreated:   "2016-01-01",
+//		DateUpdated:   "2016-02-02",
+//		DateEffective: "2016-03-03",
+//		Content:       "This is the actual note...",
+//	}
+//
+//	n2 := note.Note{
+//		ID:            123,
+//		DateCreated:   "2016-04-01",
+//		DateUpdated:   "2016-05-02",
+//		DateEffective: "2016-06-03",
+//		Content:       "This is the second note...",
+//	}
+//
+//	return []note.Note{n2, n1}
+//}

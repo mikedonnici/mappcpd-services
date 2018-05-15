@@ -9,7 +9,7 @@ import (
 	"github.com/mappcpd/web-services/testdata"
 )
 
-var db = testdata.NewTestDB()
+var db = testdata.NewDataStore()
 var helper = testdata.NewHelper()
 
 func TestMain(m *testing.M) {
@@ -23,14 +23,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestPingDatabase(t *testing.T) {
-	err := db.DS.MySQL.Session.Ping()
+	err := db.Store.MySQL.Session.Ping()
 	if err != nil {
 		t.Fatal("Could not ping database")
 	}
 }
 
 func TestOrganisationByID(t *testing.T) {
-	org, err := organisation.ByID(db.DS, 1)
+	org, err := organisation.ByID(db.Store, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -50,7 +50,7 @@ func TestOrganisationDeepEqual(t *testing.T) {
 		},
 	}
 
-	o, err := organisation.ByID(db.DS, 1)
+	o, err := organisation.ByID(db.Store, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -61,7 +61,7 @@ func TestOrganisationDeepEqual(t *testing.T) {
 
 // Test data has 2 parent organisations
 func TestOrganisationCount(t *testing.T) {
-	xo, err := organisation.All(db.DS)
+	xo, err := organisation.All(db.Store)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -70,7 +70,7 @@ func TestOrganisationCount(t *testing.T) {
 
 // Test data has 3 child organisations belonging to parent id 1
 func TestChildOrganisationCount(t *testing.T) {
-	o, err := organisation.ByID(db.DS, 1)
+	o, err := organisation.ByID(db.Store, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}

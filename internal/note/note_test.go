@@ -8,7 +8,7 @@ import (
 	"github.com/mappcpd/web-services/testdata"
 )
 
-var db = testdata.NewTestDB()
+var db = testdata.NewDataStore()
 var helper = testdata.NewHelper()
 
 func TestMain(m *testing.M) {
@@ -22,7 +22,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestPingDatabase(t *testing.T) {
-	err := db.DS.MySQL.Session.Ping()
+	err := db.Store.MySQL.Session.Ping()
 	if err != nil {
 		t.Fatal("Could not ping database")
 	}
@@ -39,7 +39,7 @@ func TestNoteContent(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		r, err := note.ByID(db.DS, c.ID)
+		r, err := note.ByID(db.Store, c.ID)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -58,7 +58,7 @@ func TestNoteType(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		r, err := note.ByID(db.DS, c.ID)
+		r, err := note.ByID(db.Store, c.ID)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -68,7 +68,7 @@ func TestNoteType(t *testing.T) {
 
 func TestMemberNote(t *testing.T) {
 
-	xn, err := note.ByMemberID(db.DS, 1)
+	xn, err := note.ByMemberID(db.Store, 1)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -85,7 +85,7 @@ func TestNoteFirstAttachmentUrl(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		n, err := note.ByID(db.DS, c.ID)
+		n, err := note.ByID(db.Store, c.ID)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}

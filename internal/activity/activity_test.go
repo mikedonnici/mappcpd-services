@@ -8,7 +8,7 @@ import (
 	"github.com/mappcpd/web-services/testdata"
 )
 
-var db = testdata.NewTestDB()
+var db = testdata.NewDataStore()
 var helper = testdata.NewHelper()
 
 func TestMain(m *testing.M) {
@@ -22,14 +22,14 @@ func TestMain(m *testing.M) {
 }
 
 func TestPingDatabase(t *testing.T) {
-	err := db.DS.MySQL.Session.Ping()
+	err := db.Store.MySQL.Session.Ping()
 	if err != nil {
 		t.Fatal("Could not ping database")
 	}
 }
 
 func TestActivityCount(t *testing.T) {
-	xa, err := activity.All(db.DS)
+	xa, err := activity.All(db.Store)
 	if err != nil {
 		t.Fatalf("Database error: %s", err)
 	}
@@ -49,7 +49,7 @@ func TestActivityTypesCount(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		xa, err := activity.Types(db.DS, c.id)
+		xa, err := activity.Types(db.Store, c.id)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -67,7 +67,7 @@ func TestActivityByID(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		a, err := activity.ByID(db.DS, c.id)
+		a, err := activity.ByID(db.Store, c.id)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}
@@ -87,7 +87,7 @@ func TestActivityByTypeID(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		a, err := activity.ByTypeID(db.DS, c.typeID)
+		a, err := activity.ByTypeID(db.Store, c.typeID)
 		if err != nil {
 			t.Fatalf("Database error: %s", err)
 		}

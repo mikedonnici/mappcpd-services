@@ -8,7 +8,7 @@ import (
 	"github.com/mappcpd/web-services/testdata"
 )
 
-var db = testdata.NewTestDB()
+var db = testdata.NewDataStore()
 var helper = testdata.NewHelper()
 
 func TestMain(m *testing.M) {

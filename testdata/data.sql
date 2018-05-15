@@ -320,18 +320,10 @@ INSERT INTO `%s`.`fs_url` VALUES
 
 -- name: insert-data-member
 INSERT INTO `%s`.`member` VALUES
-  (1, 2, 0, 14, NULL, 1, 1, 1, 1, NOW(), NOW(), NULL, '1970-11-03', '2000-01-01', 'M', 'Michael', 'Peter', 'Donnici', NULL,
-                                                NULL, NULL, 'michael@mesa.net.au', NULL, '5f4dcc3b5aa765d61d8327deb882cf99', NULL, NULL, NULL),
-  (2, 2, 0, 14, NULL, 1, 1, 0, 1, NOW(), NOW(), NULL, '1978-05-12', NULL, NULL, 'Velma',
-                                                '', 'Whitley', NULL, NULL, NULL,
-   'sapien.cursus@gravidamauris.ca', NULL, '', NULL, NULL, NULL),
-  (3, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1965-10-07', NULL, NULL,
-                                                                'Jakeem', '', 'Sellers', NULL, NULL,
-                                                                NULL, 'Vivamus@semperetlacinia.edu',
-   NULL, '', NULL, NULL, NULL),
-  (4, 2, 0, 14, NULL, 1, 1, 0, 1, '2015-08-30 17:10:36', NOW(), NULL, '1954-10-22', NULL, NULL,
-                                                                'Nicole', '', 'Colon', NULL, NULL, NULL,
-   'risus.Nunc.ac@magnaLoremipsum.com', NULL, '', NULL, NULL, NULL);
+  (1, 2, 0, 14, NULL, 1, 1, 1, 1, NOW(), NOW(), NULL, '1970-11-03', '2000-01-01', 'M', 'Michael', 'Peter', 'Donnici',
+                                                NULL,
+                                                NULL, '0402123123', 'michael@mesa.net.au', NULL,
+   '5f4dcc3b5aa765d61d8327deb882cf99', NULL, NULL, NULL);
 
 -- name: insert-data-mp_accreditation
 INSERT INTO `%s`.`mp_accreditation` VALUES
@@ -340,38 +332,37 @@ INSERT INTO `%s`.`mp_accreditation` VALUES
 
 -- name: insert-data-mp_contact_type
 INSERT INTO `%s`.`mp_contact_type` VALUES
-  (1, 1, 1, 1, 100, '2013-05-16 14:43:12', NOW(), 10, 'Mail',
+  (1, 1, 1, 1, 100, NOW(), NOW(), 10, 'Mail',
    'Primary contact information for membership and billing.'),
-  (2, 1, 1, 1, 50, '2013-05-16 14:43:12', NOW(), 20, 'Directory',
+  (2, 1, 1, 1, 50, NOW(), NOW(), 20, 'Directory',
    'The contact details that will show in the Member directory.'),
-  (3, 1, 0, 1, 0, '2013-05-16 14:43:13', NOW(), 30, 'Work', 'A place of work.'),
-  (4, 1, 0, 1, 0, '2013-05-16 14:43:14', NOW(), 40, 'Courier', 'Address details for courier.'),
-  (5, 1, 0, 1, 0, '2013-05-16 14:43:15', NOW(), 50, 'Home', 'Home contact information.'),
-  (6, 1, 0, 1, 0, '2013-06-04 20:12:29', NOW(), 100, 'Other', 'Any other contact type'),
-  (7, 1, 0, 1, 10, '2014-07-15 14:56:38', '2014-07-15 14:56:44', 15, 'Journal',
-   'Postal address for hard-copy Journal.');
+  (3, 1, 0, 1, 0, NOW(), NOW(), 30, 'Work', 'A place of work.'),
+  (4, 1, 0, 1, 0, NOW(), NOW(), 40, 'Courier', 'Address details for courier.'),
+  (5, 1, 0, 1, 0, NOW(), NOW(), 50, 'Home', 'Home contact information.'),
+  (6, 1, 0, 1, 0, NOW(), NOW(), 100, 'Other', 'Any other contact type'),
+  (7, 1, 0, 1, 10, NOW(), NOW(), 15, 'Journal', 'Postal address for hard-copy Journal.');
 
 -- insert-data-mp_m_accreditation
 
 -- name: insert-data-mp_m_contact
 INSERT INTO `%s`.`mp_m_contact` VALUES
-  (1, 7821, 2, 14, 1, '2016-03-03 20:33:37', '2018-03-26 20:31:34', NULL, '+61 2 9999 9999', '+61 2 9999 8888',
+  (1, 1, 2, 14, 1, NOW(), NOW(), NULL, '+61 2 9999 9999', '+61 2 9999 8888',
       'info@here.com', 'www.here.com', '123 Some Street', 'Unit abc', 'back shed', 'Jervis Bay', 'NSW', '2540', NULL);
 
 -- name: insert-data-mp_m_position
 INSERT INTO `%s`.`mp_m_position` VALUES
-  (1, 501, 2, 317, 1, '2017-12-02 20:31:22', '2017-12-02 20:31:22', '2017-12-03', '2017-12-03', NULL),
-  (2, 7821, 3, 95, 1, '2018-03-26 22:24:48', '2018-03-26 23:01:59', '2018-03-23', '2019-03-26', NULL),
-  (3, 7821, 1, 14, 1, '2018-03-26 23:04:29', '2018-03-26 23:04:29', NULL, NULL, NULL);
+  (1, 1, 2, 317, 1, NOW(), NOW(), '2017-12-03', '2017-12-03', NULL),
+  (2, 1, 3, 95, 1, NOW(), NOW(), '2018-03-23', '2019-03-26', NULL),
+  (3, 1, 1, 14, 1, NOW(), NOW(), NULL, NULL, NULL);
 
 -- name: insert-data-mp_m_qualification
 INSERT INTO `%s`.`mp_m_qualification` VALUES
-  (1, 501, 89, 229, 1, '2017-12-02 20:30:57', '2017-12-02 20:30:57', 1992, 'BBio', NULL);
+  (1, 1, 21, 0, 1, NOW(), NOW(), 1992, 'BBio', NULL);
 
 -- name: insert-data-mp_m_speciality
 INSERT INTO `%s`.`mp_m_speciality` VALUES
-  (1, 7821, 19, 1, '2018-03-26 23:52:12', '2018-03-26 23:52:12', NULL, NULL, 'Test this one.'),
-  (2, 7821, 11, 1, '2018-03-27 00:06:15', '2018-03-27 00:06:15', NULL, NULL, 'Likes computers');
+  (1, 1, 1, 1, NOW(), NOW(), NULL, NULL, 'This is a comment'),
+  (2, 1, 2, 1, NOW(), NOW(), NULL, NULL, 'This is another comment');
 
 -- insert-data-mp_m_tag
 
@@ -418,11 +409,11 @@ INSERT INTO `%s`.`mp_qualification` VALUES
 
 -- name: insert-data-mp_speciality
 INSERT INTO `%s`.`mp_speciality` VALUES
-  (1, 1, '2013-06-11 20:26:46', '2013-06-11 20:27:44', 'Cardiac Care Nurse (Medical)', '', 0),
-  (2, 1, '2013-06-11 20:27:05', '2013-06-11 20:27:05', 'Cardiac Cath Lab Nurse', '', 0),
-  (3, 1, '2013-06-11 20:28:01', '2013-06-11 20:28:01', 'Cardiac Technologist', '', 0),
-  (4, 1, '2013-06-11 20:28:23', '2013-06-11 20:28:23', 'Cardiovascular Genetic Diseases', '', 0),
-  (5, 1, '2013-06-11 20:31:29', '2013-06-11 20:31:29', 'Cardiovascular Surgery', '', 0);
+  (1, 1, NOW(), NOW(), 'Cardiac Care Nurse (Medical)', '', 0),
+  (2, 1, NOW(), NOW(), 'Cardiac Cath Lab Nurse', '', 0),
+  (3, 1, NOW(), NOW(), 'Cardiac Technologist', '', 0),
+  (4, 1, NOW(), NOW(), 'Cardiovascular Genetic Diseases', '', 0),
+  (5, 1, NOW(), NOW(), 'Cardiovascular Surgery', '', 0);
 
 -- name: insert-data-mp_tag
 INSERT INTO `%s`.`mp_tag` VALUES
