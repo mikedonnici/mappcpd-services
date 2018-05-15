@@ -32,6 +32,6 @@ func StringToTime(dateString string) (time.Time, error) {
 	}
 
 	msg := "Error parsing date string - expected one of the following layouts: '%s', '%s', OR '%s'"
-	msg = fmt.Sprintf(msg, "2006-01-02", "2006-01-02", time.RFC3339)
+	msg = fmt.Sprintf(msg, "2006-01-02", "2006-01-02 15:04:05", time.RFC3339)
 	return t, errors.New(msg)
 }

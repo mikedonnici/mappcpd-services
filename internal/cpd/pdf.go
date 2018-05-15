@@ -3,7 +3,6 @@ package cpd
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -27,7 +26,7 @@ const (
 )
 
 // PDFReport generates a PDF report and writes it to w
-func PDFReport(reportData MemberActivityReport, w io.Writer) {
+func PDFReport(reportData MemberActivityReport, w io.Writer) error {
 
 	pdf := initPDF()
 	addPageHeaderImage(pdf)
@@ -35,10 +34,7 @@ func PDFReport(reportData MemberActivityReport, w io.Writer) {
 	addSummarySection(pdf, reportData)
 	addDetailSection(pdf, reportData)
 
-	err := pdf.Output(w)
-	if err != nil {
-		fmt.Println(err)
-	}
+	return pdf.Output(w)
 }
 
 func initPDF() *gofpdf.Fpdf {
@@ -219,10 +215,10 @@ func floatToString(n float64) string {
 	return strconv.FormatFloat(n, 'f', 2, 64)
 }
 
+// niceDate returns unmodified date string on error
 func niceDate(date string) string {
 	t, err := time.Parse("2006-01-02", date)
 	if err != nil {
-		log.Println("Error passing date -", err)
 		return date
 	}
 	return t.Format("02 Jan 06")
