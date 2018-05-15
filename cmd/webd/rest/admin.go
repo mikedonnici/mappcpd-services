@@ -76,7 +76,7 @@ func AdminMembersSearch(w http.ResponseWriter, r *http.Request) {
 	if limit > 0 {
 		res, err = member.DocMembersLimit(DS, query, projection, limit)
 	} else {
-		res, err = member.DocMembersAll(DS, query, projection)
+		res, err = member.SearchDocDB(DS, query, projection)
 	}
 
 	if err != nil {
@@ -123,7 +123,7 @@ func AdminMembersSearchPost(w http.ResponseWriter, r *http.Request) {
 	if f.Limit > 0 {
 		res, err = member.DocMembersLimit(DS, f.Query, f.Projection, f.Limit)
 	} else {
-		res, err = member.DocMembersAll(DS, f.Query, f.Projection)
+		res, err = member.SearchDocDB(DS, f.Query, f.Projection)
 	}
 	if err != nil {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
@@ -214,8 +214,11 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
 		p.Message = Message{http.StatusOK, "success", "Data retrieved from ???"}
+		err := member.SyncByUpdatedAt(DS, m)
+		if err != nil {
+			p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
+		}
 		p.Data = m
-		member.SyncMember(DS, m)
 	}
 
 	p.Send(w)

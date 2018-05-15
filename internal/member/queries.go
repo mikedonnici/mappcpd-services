@@ -2,6 +2,8 @@ package member
 
 var Queries = map[string]string{
 	"select-member": selectMember,
+	"select-member-honorific": selectMemberHonorific,
+	"select-member-contact-locations": selectMemberContactLocations,
 	"select-membership-title": selectMembershipTitle,
 	"select-membership-title-history": selectMembershipTitleHistory,
 	"select-member-qualifications": selectMemberQualifications,
@@ -28,6 +30,34 @@ FROM
     member
 WHERE
     id = ?`
+
+const selectMemberHonorific = `SELECT
+	COALESCE(a.name, '') FROM a_name_prefix a
+	RIGHT JOIN member m ON m.a_name_prefix_id = a.id
+	WHERE m.id = ?`
+
+const selectMemberContactLocations = `SELECT 
+    COALESCE(mpct.name, ''),
+    CONCAT(COALESCE(mpmc.address1, ''), '\n', COALESCE(mpmc.address2, ''), '\n', COALESCE(mpmc.address3, '')),
+    COALESCE(mpmc.locality, ''),
+    COALESCE(mpmc.state, ''),
+    COALESCE(mpmc.postcode, ''),
+    COALESCE(country.name, ''),
+    COALESCE(mpmc.phone, ''),
+    COALESCE(mpmc.fax, ''),
+    COALESCE(mpmc.email, ''),
+    COALESCE(mpmc.web, ''),
+    COALESCE(mpct.order, '')
+FROM
+    mp_m_contact mpmc
+        LEFT JOIN
+    mp_contact_type mpct ON mpmc.mp_contact_type_id = mpct.id
+        LEFT JOIN
+    country ON mpmc.country_id = country.id
+WHERE
+    mpmc.member_id = ?
+GROUP BY mpmc.id
+ORDER BY mpct.order ASC`
 
 const selectMembershipTitle = `SELECT 
     COALESCE(mt.name, '')

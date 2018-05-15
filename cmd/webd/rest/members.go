@@ -31,10 +31,11 @@ func MembersProfile(w http.ResponseWriter, _ *http.Request) {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
 		p.Message = Message{http.StatusOK, "success", "Data retrieved from ???"}
+		err := member.SyncByUpdatedAt(DS, m)
+		if err != nil {
+			p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
+		}
 		p.Data = m
-
-		// TODO: remove this when fetching - should only be on update
-		member.SyncMember(DS, m)
 	}
 
 	p.Send(w)

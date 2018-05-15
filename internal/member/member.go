@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/mappcpd/web-services/internal/cpd"
@@ -13,6 +12,7 @@ import (
 	"github.com/mappcpd/web-services/internal/platform/datastore"
 	"github.com/mappcpd/web-services/internal/utility"
 	"github.com/pkg/errors"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -126,22 +126,16 @@ type Speciality struct {
 	Start       string `json:"start" bson:"start"`
 }
 
-// SetTitle sets the title (Mr, Prof, Dr) and Post nominal, if any
-func (m *Member) SetTitle(ds datastore.Datastore) error {
+// SetHonorific sets the title (Mr, Prof, Dr) and Post nominal, if any
+func (m *Member) SetHonorific(ds datastore.Datastore) error {
 
-	query := `SELECT
-	COALESCE(a.name, '') FROM a_name_prefix a
-	RIGHT JOIN member m ON m.a_name_prefix_id = a.id
-	WHERE m.id = ?`
+	query := Queries["select-member-honorific"]
 	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(&m.Title)
-	switch {
-	case err == sql.ErrNoRows:
-		// Do nothing... there is just no title
+	if err == sql.ErrNoRows {
 		return nil
-	case err != nil:
-		msg := ".SetTitle() failed"
-		log.Println(msg, err)
-		return errors.Wrap(err, msg)
+	}
+	if err != nil {
+		return errors.Wrap(err, "SetHonorific query error")
 	}
 
 	return nil
@@ -150,40 +144,14 @@ func (m *Member) SetTitle(ds datastore.Datastore) error {
 // SetContactLocations populates the Contact.Locations []Location
 func (m *Member) SetContactLocations(ds datastore.Datastore) error {
 
-	query := `SELECT
-	     COALESCE(mpct.name, ''),
-             CONCAT(
-             	COALESCE(mpmc.address1, ''), '\n',
-             	COALESCE(mpmc.address2, ''), '\n',
-             	COALESCE(mpmc.address3, '')
-             	),
-             COALESCE(mpmc.locality, ''),
-             COALESCE(mpmc.state, ''),
-             COALESCE(mpmc.postcode, ''),
-             COALESCE(country.name, ''),
-             COALESCE( mpmc.phone, ''),
-             COALESCE(mpmc.fax, ''),
-             COALESCE(mpmc.email, ''),
-             COALESCE(mpmc.web, ''),
-             COALESCE(mpct.order, '')
-             FROM mp_m_contact mpmc
-             LEFT JOIN mp_contact_type mpct ON mpmc.mp_contact_type_id = mpct.id
-             LEFT JOIN country ON mpmc.country_id = country.id
-             WHERE mpmc.member_id = ?
-             GROUP BY mpmc.id
-             ORDER BY mpct.order ASC`
-
-	//log.Println(sql)
-
+	query := Queries["select-member-contact-locations"]
 	rows, err := ds.MySQL.Session.Query(query, m.ID)
-	switch {
-	case err == sql.ErrNoRows:
-		// No rows
+	if err == sql.ErrNoRows {
 		return nil
-	case err != nil:
-		msg := ".SetContactLocations() sql error"
-		log.Println(msg, err)
-		return errors.Wrap(err, msg)
+
+	}
+	if err != nil {
+		return errors.Wrap(err, "SetContactLocations query error")
 	}
 	defer rows.Close()
 
@@ -205,14 +173,10 @@ func (m *Member) SetContactLocations(ds datastore.Datastore) error {
 			&l.Preference,
 		)
 		if err != nil {
-			msg := ".SetContactLocations() failed to scan row"
-			log.Println(msg, err)
-			return errors.Wrap(err, msg)
+			return errors.Wrap(err, "SetContactLocations scan error")
 		}
 
-		// Trim additional address newlines
-		l.Address = strings.Trim(l.Address, "\n")
-
+		l.Address = strings.Trim(l.Address, "\n") // Trim newlines at end
 		m.Contact.Locations = append(m.Contact.Locations, l)
 	}
 
@@ -254,17 +218,18 @@ func (m *Member) SetMembershipTitle(ds datastore.Datastore, mi int) error {
 
 	query := Queries["select-membership-title"]
 	err := ds.MySQL.Session.QueryRow(query, m.ID).Scan(&t)
-	switch {
-	case err == sql.ErrNoRows:
+	if err == sql.ErrNoRows {
 		// remove the default membership as there is no title
 		m.Memberships = []Membership{}
 		return nil
-	case err != nil:
-		return errors.Wrap(err, "SetMembershipTitle error")
-	default:
-		m.Memberships[mi].Title = t
-		return nil
 	}
+	if err != nil {
+		return errors.Wrap(err, "SetMembershipTitle error")
+	}
+
+	m.Memberships[mi].Title = t
+	return nil
+
 }
 
 // GetTitleHistory populates the Member.TitleHistory field for the Membership
@@ -274,10 +239,10 @@ func (m *Member) SetMembershipTitleHistory(ds datastore.Datastore, mi int) error
 
 	query := Queries["select-membership-title-history"]
 	rows, err := ds.MySQL.Session.Query(query, m.ID)
-	switch {
-	case err == sql.ErrNoRows:
+	if err == sql.ErrNoRows{
 		return nil
-	case err != nil:
+	}
+	if err != nil {
 		return errors.Wrap(err, "SetMembershipTitleHistory query error")
 	}
 	defer rows.Close()
@@ -451,9 +416,9 @@ func ByID(ds datastore.Datastore, id int) (*Member, error) {
 		return &m, errors.Wrap(err, "Error converting updatedAt to Time")
 	}
 
-	err = m.SetTitle(ds)
+	err = m.SetHonorific(ds)
 	if err != nil {
-		return &m, errors.Wrap(err, "SetTitle error")
+		return &m, errors.Wrap(err, "SetHonorific error")
 	}
 
 	err = m.SetContactLocations(ds)
@@ -497,66 +462,50 @@ func ByID(ds datastore.Datastore, id int) (*Member, error) {
 	return &m, nil
 }
 
-// UpdateMemberDoc updates the JSON-formatted member record in MongoDB
-func UpdateMemberDoc(ds datastore.Datastore, m *Member, w *sync.WaitGroup) {
+// UpdateDocDB updates the JSON-formatted member record in MongoDB
+func UpdateDocDB(ds datastore.Datastore, m *Member) error {
 
 	// Make the selector for Upsert
 	mid := map[string]int{"id": m.ID}
 
-	// Get pointer to the Members collection
 	mc, err := ds.MongoDB.MembersCollection()
 	if err != nil {
-		msg := "UpdateMemberDoc() could not get pointer to collection"
-		log.Println(msg, err)
-		return
+		return errors.Wrap(err, "UpdateDocDB could not get collection")
 	}
 
-	// Upsert
 	_, err = mc.Upsert(mid, &m)
 	if err != nil {
-		log.Printf("Error updating document in Members collection: %s\n", err.Error())
+		return errors.Wrap(err, "UpdateDocDB upsert error")
 	}
 
 	// Tell wait group we're done, if it was passed in
-	if w != nil {
-		w.Done()
-	}
+	//if w != nil {
+	//	w.Done()
+	//}
 
-	log.Println("Updated document in Members collection")
+	return nil
 }
 
-// SyncMember synchronises the Member record from MySQL -> MongoDB
-// Todo - this should not DECIDE on sync based on updated date... should just do one job
-func SyncMember(ds datastore.Datastore, m *Member) {
+// SyncByUpdatedAt synchronises the Member record from MySQL -> MongoDB if the MySQL update_at field is more recent
+// than the updateAt field in the MongoDB member doc
+func SyncByUpdatedAt(ds datastore.Datastore, m *Member) error {
 
-	// Fetch the current Doc (if there) and compare updatedAt
 	m2, err := DocMembersOne(ds, bson.M{"id": m.ID}, bson.M{})
-	if err != nil {
-		log.Println("Target document error: ", err, "- so do an upsert")
+	if err != nil && err != mgo.ErrNotFound {
+		return errors.Wrap(err, "SyncByUpdatedAt Mongo query error")
 	}
 
-	msg := fmt.Sprintf("Member id %v - MySQL updated at %s, MongoDB updated at %s", m.ID, m.UpdatedAt, m2.UpdatedAt)
+	// no sync
 	if m.UpdatedAt.Equal(m2.UpdatedAt) {
-		msg += " - NO need to sync"
-		log.Println(msg)
-		return
+		return nil
 	}
-	msg += " - syncing..."
-	log.Println(msg)
 
-	// Update the document in the Members collection
-	var w sync.WaitGroup
-	w.Add(1)
-	go UpdateMemberDoc(ds, m, &w)
-	w.Wait()
+	return UpdateDocDB(ds, m)
 }
 
-// DocMembersAll searches the Member collection. Receives query(q) and projection(p)
-// It returns []interface{} so that only the projected fields are present. The down side of
-// this is that the fields are returned in alphabetical order so it is not as readable
-// as the Member struct. Option might be to use the Member struct when no projection
-// is specified.
-func DocMembersAll(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
+// SearchDocDB searches the Member collection using the specified query and returns []interface{} so that the
+// projection can be applied.
+func SearchDocDB(ds datastore.Datastore, query map[string]interface{}, projection map[string]interface{}) ([]interface{}, error) {
 
 	members, err := ds.MongoDB.MembersCollection()
 	if err != nil {
@@ -564,11 +513,11 @@ func DocMembersAll(ds datastore.Datastore, q map[string]interface{}, p map[strin
 	}
 
 	// Convert string date filters to time.Time
-	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt"})
+	//utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
 
 	// Run query and return results
 	var r []interface{}
-	err = members.Find(q).Select(p).All(&r)
+	err = members.Find(query).Select(projection).All(&r)
 	if err != nil {
 		return nil, err
 	}
