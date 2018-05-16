@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/mappcpd/web-services/internal/member"
 	"github.com/mappcpd/web-services/testdata"
@@ -26,7 +27,7 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer data.TearDownMongoDB()
+	//defer data.TearDownMongoDB()
 
 	m.Run()
 }
@@ -64,6 +65,8 @@ func TestSaveDocDB(t *testing.T) {
 	is := is.New(t)
 	mem := member.Member{
 		ID:          1,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 		Active:      true,
 		Title:       "Mr",
 		FirstName:   "Michael",
@@ -80,6 +83,45 @@ func TestSaveDocDB(t *testing.T) {
 	m := xm[0]
 	is.NoErr(err)     // Error querying MongoDB
 	is.Equal(m.ID, 1) // ID should be 1
+}
+
+func TestSyncUpdated(t *testing.T) {
+	is := is.New(t)
+	mem := member.Member{
+		ID:          2,
+		CreatedAt:   time.Now().Add(-10 * time.Duration(time.Minute)), // 10 mins ago
+		UpdatedAt:   time.Now().Add(-10 * time.Duration(time.Minute)), // 10 mins ago
+		Active:      true,
+		Title:       "Mr",
+		FirstName:   "Barry",
+		LastName:    "White",
+		Gender:      "M",
+		DateOfBirth: "1945-03-15",
+	}
+	err := mem.SaveDocDB(data.Store)
+	is.NoErr(err) // Error saving to MongoDB
+
+	memUpdate := member.Member{
+		ID:          2,
+		CreatedAt:   time.Now().Add(-10 * time.Duration(time.Minute)), // 10 mins ago
+		UpdatedAt:   time.Now(), // should trigger update
+		Active:      false,
+		Title:       "Mr",
+		FirstName:   "Barry",
+		LastName:    "White",
+		Gender:      "M",
+		DateOfBirth: "1948-03-15",
+	}
+	err = memUpdate.SyncUpdated(data.Store)
+	is.NoErr(err) // Error syncing to MongoDB
+
+	q := bson.M{"lastName": "White"}
+	xm, err := member.SearchDocDB(data.Store, q)
+	m := xm[0]
+	is.NoErr(err)             // Error querying MongoDB
+	is.Equal(m.ID, 2)         // ID should be 2
+	is.Equal(m.Active, false) // Active should be false
+	is.Equal(m.DateOfBirth, "1948-03-15") // DateOfBirth incorrect
 }
 
 func printJSON(m member.Member) {
