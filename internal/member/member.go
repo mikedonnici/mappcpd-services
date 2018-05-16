@@ -237,7 +237,7 @@ func (m *Member) SetMembershipTitleHistory(ds datastore.Datastore, mi int) error
 
 	query := Queries["select-membership-title-history"]
 	rows, err := ds.MySQL.Session.Query(query, m.ID)
-	if err == sql.ErrNoRows{
+	if err == sql.ErrNoRows {
 		return nil
 	}
 	if err != nil {
@@ -366,6 +366,43 @@ func (m *Member) SetSpecialities(ds datastore.Datastore) error {
 	return nil
 }
 
+// SaveDocDB method upserts Member doc to MongoDB
+func (m *Member) SaveDocDB(ds datastore.Datastore) error {
+
+	selector := map[string]int{"id": m.ID}
+
+	mc, err := ds.MongoDB.MembersCollection()
+	if err != nil {
+		return errors.Wrap(err, "SaveDocDB could not get member collection")
+	}
+
+	_, err = mc.Upsert(selector, &m)
+	if err != nil {
+		return errors.Wrap(err, "SaveDocDB upsert error")
+	}
+
+	return nil
+}
+
+// SyncUpdated synchronises a Member value to MongoDB based on the UpdatedAt field
+func (m *Member) SyncUpdated(ds datastore.Datastore) error {
+
+	xm, err := SearchDocDB(ds, bson.M{"id": m.ID})
+	if err != nil && err != mgo.ErrNotFound {
+		return errors.Wrap(err, "SyncUpdated Mongo query error")
+	}
+
+	if len(xm) > 1 {
+		return errors.New(fmt.Sprintf("SyncUpdated found %v sync targets - should only be one!", len(xm)))
+	}
+
+	if m.UpdatedAt.Equal(xm[0].UpdatedAt) {
+		return nil
+	}
+
+	return m.SaveDocDB(ds)
+}
+
 // ByID returns a pointer to a populated Member value
 func ByID(ds datastore.Datastore, id int) (*Member, error) {
 
@@ -460,45 +497,6 @@ func ByID(ds datastore.Datastore, id int) (*Member, error) {
 	return &m, nil
 }
 
-// UpdateDocDB updates the JSON-formatted member record in MongoDB
-func UpdateDocDB(ds datastore.Datastore, m *Member) error {
-
-	// Make the selector for Upsert
-	mid := map[string]int{"id": m.ID}
-
-	mc, err := ds.MongoDB.MembersCollection()
-	if err != nil {
-		return errors.Wrap(err, "UpdateDocDB could not get collection")
-	}
-
-	_, err = mc.Upsert(mid, &m)
-	if err != nil {
-		return errors.Wrap(err, "UpdateDocDB upsert error")
-	}
-
-	return nil
-}
-
-// SyncByUpdatedAt synchronises the Member record from MySQL -> MongoDB if the MySQL update_at field is more recent
-// than the updateAt field in the MongoDB member doc
-func SyncByUpdatedAt(ds datastore.Datastore, m *Member) error {
-
-	xm, err := SearchDocDB(ds, bson.M{"id": m.ID})
-	if err != nil && err != mgo.ErrNotFound {
-		return errors.Wrap(err, "SyncByUpdatedAt Mongo query error")
-	}
-
-	if len(xm) > 1 {
-		return errors.New(fmt.Sprintf("SyncByUpdatedAt found %v sync targets - should only be one!", len(xm)))
-	}
-
-	if m.UpdatedAt.Equal(xm[0].UpdatedAt) {
-		return nil
-	}
-
-	return UpdateDocDB(ds, m)
-}
-
 // SearchDocDB searches the Member collection using the specified query
 func SearchDocDB(ds datastore.Datastore, query bson.M) ([]Member, error) {
 
@@ -515,40 +513,4 @@ func SearchDocDB(ds datastore.Datastore, query bson.M) ([]Member, error) {
 	}
 
 	return xm, nil
-}
-
-// SaveDocDB method upserts Member doc to MongoDB
-func (m *Member) SaveDocDB(ds datastore.Datastore) error {
-
-	selector := map[string]int{"id": m.ID}
-
-	mc, err := ds.MongoDB.MembersCollection()
-	if err != nil {
-		return errors.Wrap(err, "SaveDocDB could not get member collection")
-	}
-
-	_, err = mc.Upsert(selector, &m)
-	if err != nil {
-		return errors.Wrap(err, "SaveDocDB upsert error")
-	}
-
-	return nil
-}
-
-// UpdateDocDB method updates Member doc to MongoDB
-func (m *Member) UpdateDocDB(ds datastore.Datastore) error {
-
-	selector := map[string]int{"id": m.ID}
-
-	mc, err := ds.MongoDB.MembersCollection()
-	if err != nil {
-		return errors.Wrap(err, "UpdateDocDB could not get member collection")
-	}
-
-	err = mc.Update(selector, &m)
-	if err != nil {
-		return errors.Wrap(err, "UpdateDocDB update error")
-	}
-
-	return nil
 }

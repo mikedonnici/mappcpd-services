@@ -14,11 +14,11 @@ var db = testdata.NewDataStore()
 var helper = testdata.NewHelper()
 
 func TestMain(m *testing.M) {
-	err := db.Setup()
+	err := db.SetupMySQL()
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer db.TearDown()
+	defer db.TearDownMySQL()
 
 	m.Run()
 }

@@ -1,14 +1,14 @@
 package member
 
 var Queries = map[string]string{
-	"select-member": selectMember,
-	"select-member-honorific": selectMemberHonorific,
+	"select-member":                   selectMember,
+	"select-member-honorific":         selectMemberHonorific,
 	"select-member-contact-locations": selectMemberContactLocations,
-	"select-membership-title": selectMembershipTitle,
+	"select-membership-title":         selectMembershipTitle,
 	"select-membership-title-history": selectMembershipTitleHistory,
-	"select-member-qualifications": selectMemberQualifications,
-	"select-member-positions": selectMemberPositions,
-	"select-member-specialities": selectMemberSpecialities,
+	"select-member-qualifications":    selectMemberQualifications,
+	"select-member-positions":         selectMemberPositions,
+	"select-member-specialities":      selectMemberSpecialities,
 }
 
 const selectMember = `SELECT 

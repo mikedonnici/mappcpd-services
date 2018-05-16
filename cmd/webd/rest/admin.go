@@ -186,7 +186,7 @@ func AdminMembersID(w http.ResponseWriter, r *http.Request) {
 		p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
 	default:
 		p.Message = Message{http.StatusOK, "success", "Data retrieved from ???"}
-		err := member.SyncByUpdatedAt(DS, m)
+		err := m.SyncUpdated(DS)
 		if err != nil {
 			p.Message = Message{http.StatusInternalServerError, "failed", err.Error()}
 		}
