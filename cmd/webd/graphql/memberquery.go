@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/graphql-go/graphql"
-	"github.com/mappcpd/web-services/internal/member"
 	"github.com/mappcpd/web-services/internal/platform/jwt"
 )
 
@@ -35,7 +34,7 @@ var Query = &graphql.Field{
 				return nil, err
 			}
 
-			m.Token, err = member.RefreshToken(token)
+			m.Token, err = freshToken(token)
 			if err != nil {
 				return m, err
 			}

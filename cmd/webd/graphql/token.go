@@ -1,4 +1,4 @@
-package member
+package graphql
 
 import (
 	"os"
@@ -8,10 +8,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-// RefreshToken will validate a JWT, and return a fresh token if all ok
-func RefreshToken(currentToken string) (string, error) {
+// freshToken will validate a JWT, and return a fresh token if all ok
+func freshToken(currentToken string) (string, error) {
 
-	// todo should not have env vars here
 	iss := os.Getenv("MAPPCPD_API_URL")
 	key := os.Getenv("MAPPCPD_JWT_SIGNING_KEY")
 	ttl, err := strconv.Atoi(os.Getenv("MAPPCPD_JWT_TTL_HOURS"))
