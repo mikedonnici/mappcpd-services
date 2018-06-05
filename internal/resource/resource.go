@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/mappcpd/web-services/internal/utility"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/utility"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

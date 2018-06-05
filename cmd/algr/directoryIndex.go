@@ -8,7 +8,7 @@ import (
 
 	"github.com/34South/envr"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
-	"github.com/mappcpd/web-services/internal/member"
+	"github.com/cardiacsociety/web-services/internal/member"
 	"gopkg.in/mgo.v2/bson"
 )
 

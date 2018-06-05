@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/graphql-go/graphql"
-	"github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/cardiacsociety/web-services/internal/platform/jwt"
 )
 
 // Mutation handles mutations for member data

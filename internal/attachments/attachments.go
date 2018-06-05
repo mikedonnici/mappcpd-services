@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/mappcpd/web-services/internal/fileset"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/fileset"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 	"github.com/pkg/errors"
 )
 

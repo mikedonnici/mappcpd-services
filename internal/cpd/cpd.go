@@ -9,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/go-playground/validator.v9"
 
-	"github.com/mappcpd/web-services/internal/activity"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/activity"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 )
 
 // CPD represents an instance of a cpd activity recorded by a member - ie a CPD diary entry

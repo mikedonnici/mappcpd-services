@@ -1,7 +1,7 @@
 package graphql
 
 import (
-	"github.com/mappcpd/web-services/internal/member"
+	"github.com/cardiacsociety/web-services/internal/member"
 )
 
 // memberData is a local representation of member.Member

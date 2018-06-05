@@ -2,7 +2,7 @@ package graphql
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/mappcpd/web-services/internal/activity"
+	"github.com/cardiacsociety/web-services/internal/activity"
 )
 
 // activityTypeMap is a local version of activities.Type, to remove to the sql.NullInt64

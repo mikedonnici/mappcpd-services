@@ -3,7 +3,7 @@ package date_test
 import (
 	"testing"
 
-	"github.com/mappcpd/web-services/internal/date"
+	"github.com/cardiacsociety/web-services/internal/date"
 	"github.com/matryer/is"
 )
 

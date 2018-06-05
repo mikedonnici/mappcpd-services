@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/mappcpd/web-services/internal/cpd"
-	"github.com/mappcpd/web-services/internal/member"
-	"github.com/mappcpd/web-services/internal/platform/email"
+	"github.com/cardiacsociety/web-services/internal/cpd"
+	"github.com/cardiacsociety/web-services/internal/member"
+	"github.com/cardiacsociety/web-services/internal/platform/email"
 )
 
 // MembersProfile fetches a member record by id

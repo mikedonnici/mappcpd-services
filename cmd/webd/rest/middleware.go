@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/mappcpd/web-services/internal/platform/jwt"
+	"github.com/cardiacsociety/web-services/internal/platform/jwt"
 )
 
 // UserAuthToken is a global Encoded that is set up by the middleware for convenience

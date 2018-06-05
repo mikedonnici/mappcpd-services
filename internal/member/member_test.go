@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mappcpd/web-services/internal/member"
-	"github.com/mappcpd/web-services/testdata"
+	"github.com/cardiacsociety/web-services/internal/member"
+	"github.com/cardiacsociety/web-services/testdata"
 	"github.com/matryer/is"
 	"gopkg.in/mgo.v2/bson"
 )

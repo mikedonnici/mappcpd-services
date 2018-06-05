@@ -3,7 +3,7 @@ package rest
 import (
 	"net/http"
 
-	reports "github.com/mappcpd/web-services/internal/reports"
+	reports "github.com/cardiacsociety/web-services/internal/reports"
 )
 
 // ReportsTest handles a request to test the reports route

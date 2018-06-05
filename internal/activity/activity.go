@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/mappcpd/web-services/internal/utility"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/utility"
 	"github.com/pkg/errors"
 )
 

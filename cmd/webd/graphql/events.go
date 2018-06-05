@@ -2,7 +2,7 @@ package graphql
 
 import (
 	"github.com/graphql-go/graphql"
-	"github.com/mappcpd/web-services/internal/events"
+	"github.com/cardiacsociety/web-services/internal/events"
 )
 
 // event is slightly trimmer version of an events.event

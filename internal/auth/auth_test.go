@@ -5,9 +5,9 @@ import (
 	"log"
 	"testing"
 
-	"github.com/mappcpd/web-services/internal/auth"
-	//"github.com/mappcpd/web-services/internal/auth"
-	"github.com/mappcpd/web-services/testdata"
+	"github.com/cardiacsociety/web-services/internal/auth"
+	//"github.com/cardiacsociety/web-services/internal/auth"
+	"github.com/cardiacsociety/web-services/testdata"
 )
 
 var db = testdata.NewDataStore()

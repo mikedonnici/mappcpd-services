@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/graphql-go/handler"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 	"github.com/rs/cors"
 )
 

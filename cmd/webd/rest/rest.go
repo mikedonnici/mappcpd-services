@@ -1,7 +1,7 @@
 package rest
 
 import (
-	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 )
 
 // Store represents the global datastore passed to internal packages by the handlers

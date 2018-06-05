@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mappcpd/web-services/internal/activity"
-	"github.com/mappcpd/web-services/internal/cpd"
-	"github.com/mappcpd/web-services/internal/date"
+	"github.com/cardiacsociety/web-services/internal/activity"
+	"github.com/cardiacsociety/web-services/internal/cpd"
+	"github.com/cardiacsociety/web-services/internal/date"
 	"github.com/pkg/errors"
 )
 

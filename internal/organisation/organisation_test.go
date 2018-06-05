@@ -5,8 +5,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mappcpd/web-services/internal/organisation"
-	"github.com/mappcpd/web-services/testdata"
+	"github.com/cardiacsociety/web-services/internal/organisation"
+	"github.com/cardiacsociety/web-services/testdata"
 )
 
 var db = testdata.NewDataStore()

@@ -1,6 +1,6 @@
 package models
 
-import "github.com/mappcpd/web-services/internal/platform/datastore"
+import "github.com/cardiacsociety/web-services/internal/platform/datastore"
 
 func ReportModulesByDate(ds datastore.Datastore) (map[string]int, error) {
 

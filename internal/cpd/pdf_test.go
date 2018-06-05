@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mappcpd/web-services/internal/cpd"
+	"github.com/cardiacsociety/web-services/internal/cpd"
 	"github.com/matryer/is"
 )
 

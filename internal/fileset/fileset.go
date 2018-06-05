@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 	"github.com/pkg/errors"
 )
 
