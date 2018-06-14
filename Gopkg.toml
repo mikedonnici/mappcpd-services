@@ -26,7 +26,7 @@
 
 
 [metadata.heroku]
-  root-package = "github.com/mappcpd/web-services"
+  root-package = "github.com/cardiacsociety/web-services"
   go-version = "1.10"
   install = [ "./cmd/..." ]
 
