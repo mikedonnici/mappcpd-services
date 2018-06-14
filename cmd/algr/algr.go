@@ -1,10 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-
-	"encoding/json"
 
 	"github.com/34South/envr"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
@@ -33,6 +32,8 @@ type indexer interface {
 
 // update updates an index according to updateSched
 func update(i indexer, ut updateType) error {
+
+	ut = 1
 
 	switch ut {
 	case partial:
