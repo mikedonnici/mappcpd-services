@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -12,12 +13,11 @@ import (
 	"time"
 
 	"github.com/34South/envr"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/resource"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-
-	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/mappcpd/web-services/internal/resources"
 )
 
 type link struct {
@@ -28,7 +28,7 @@ type link struct {
 	longURL   string
 }
 
-type resource struct {
+type resourceData struct {
 	ID         int
 	Name       string
 	Keywords   string
@@ -62,15 +62,28 @@ var tasksFlag string
 
 var validTasks = []string{"fixResources", "pubmedData"}
 
+var DS datastore.Datastore
+
 func init() {
 	envr.New("fixrEnv", []string{
 		"MAPPCPD_SHORT_LINK_URL",
 		"MAPPCPD_SHORT_LINK_PREFIX",
+		"MAPPCPD_MONGO_DBNAME",
+		"MAPPCPD_MONGO_DESC",
+		"MAPPCPD_MONGO_URL",
+		"MAPPCPD_MYSQL_DESC",
+		"MAPPCPD_MYSQL_URL",
 	}).Auto()
 
 	// flags
 	flag.IntVar(&backdays, "b", 1, "Specify backdays as an integer > 0")
 	flag.StringVar(&tasksFlag, "t", "", "Specify comma-separated list of tasks to run, 'task1, task2, task3'")
+
+	var err error
+	DS, err = datastore.FromEnv()
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func main() {
@@ -93,8 +106,6 @@ func main() {
 		fmt.Println(errors.Cause(err))
 		os.Exit(1)
 	}
-
-	datastore.Connect()
 
 	for _, v := range tasks {
 
@@ -148,7 +159,7 @@ func checkShortLinks() error {
 		"WHERE `active` = 1 AND `primary` = 1 AND resource_url LIKE 'http%' " +
 		"AND updated_at >= NOW() - INTERVAL " + strconv.Itoa(backdays) + " DAY"
 
-	rows, err := datastore.MySQL.Session.Query(query)
+	rows, err := DS.MySQL.Session.Query(query)
 	if err != nil {
 		return err
 	}
@@ -161,7 +172,7 @@ func checkShortLinks() error {
 		}
 
 		// Work out what we expect, or need to set up for a short link
-		// Custom short URL based on id of resource with no padding, eg r12, r3435
+		// Custom short URL based on id of resourceData with no padding, eg r12, r3435
 		l.shortPath = fmt.Sprintf("%v%v", os.Getenv("MAPPCPD_SHORT_LINK_PREFIX"), l.id)
 		// The short_url should be
 		expectedShortURL := fmt.Sprintf("%v/%v", os.Getenv("MAPPCPD_SHORT_LINK_URL"), l.shortPath)
@@ -201,7 +212,7 @@ func setShortURL(id int, shortURL string) error {
 
 	query := `UPDATE ol_resource SET short_url = "%v", updated_at = NOW() WHERE id = %v LIMIT 1`
 	query = fmt.Sprintf(query, shortURL, id)
-	_, err := datastore.MySQL.Session.Exec(query)
+	_, err := DS.MySQL.Session.Exec(query)
 
 	return errors.Wrap(err, "sql updated failed")
 }
@@ -257,15 +268,15 @@ func checkSync(l link) error {
 
 // getLinkDoc fetches a doc from the Links collection.If the doc is not found it
 // returns a valid, but empty, value of type resources.Link.
-func getLinkDoc(shortPath string) (resources.Link, error) {
+func getLinkDoc(shortPath string) (resource.Link, error) {
 
-	var l resources.Link
+	var l resource.Link
 
 	// Always set this as it is used as the KEY for Links docs
 	l.ShortUrl = shortPath
 
 	// connect to collection
-	c, err := datastore.MongoDB.LinksCol()
+	c, err := DS.MongoDB.LinksCol()
 	if err != nil {
 		return l, errors.Wrap(err, "error connecting to collection")
 	}
@@ -289,9 +300,9 @@ func getLinkDoc(shortPath string) (resources.Link, error) {
 // sync upserts a doc to the Links collection. The selector is the shortPath value, eg /r123.
 // This value will always be the same and we don't know if we are creating a new record
 // or modifying an existing one. So shortPath is the best identifier.
-func sync(ld resources.Link, shortPath string) error {
+func sync(ld resource.Link, shortPath string) error {
 
-	c, err := datastore.MongoDB.LinksCol()
+	c, err := DS.MongoDB.LinksCol()
 	if err != nil {
 		return errors.Wrap(err, "error connecting to collection")
 	}
@@ -306,7 +317,7 @@ func sync(ld resources.Link, shortPath string) error {
 	return nil
 }
 
-// getResourceIDs fetches all of the resource ids with the specified active (soft-delete) status, from the primary db.
+// getResourceIDs fetches all of the resourceData ids with the specified active (soft-delete) status, from the primary db.
 func getResourceIDs(active bool) ([]int, error) {
 
 	var ids []int
@@ -322,7 +333,7 @@ func getResourceIDs(active bool) ([]int, error) {
 	// Only resources with proper urls, even though there are very few with relative urls
 	// Don't need back days - need to check everything.
 	query := "SELECT id FROM ol_resource WHERE resource_url LIKE 'http%' AND active = ?"
-	rows, err := datastore.MySQL.Session.Query(query, a)
+	rows, err := DS.MySQL.Session.Query(query, a)
 	if err != nil {
 		return nil, errors.New("Error executing query - " + err.Error())
 	}
@@ -384,7 +395,7 @@ func setResourcesActiveField(ids []int, active bool) error {
 
 	fmt.Printf("Setting %v Resources to active: %v", len(ids), active)
 
-	c, err := datastore.MongoDB.ResourcesCollection()
+	c, err := DS.MongoDB.ResourcesCollection()
 	if err != nil {
 		return errors.Wrap(err, "error connecting to collection")
 	}
@@ -418,7 +429,7 @@ func setLinksActiveField(ids []int, active bool) error {
 
 	fmt.Printf("Setting %v Links to active: %v", len(ids), active)
 
-	c, err := datastore.MongoDB.LinksCol()
+	c, err := DS.MongoDB.LinksCol()
 	if err != nil {
 		return errors.Wrap(err, "error connecting to collection")
 	}
@@ -445,7 +456,7 @@ func updatePubmedData() {
 		os.Exit(1)
 	}
 
-	// set new ol_resource.Attributes for each resource
+	// set new ol_resource.Attributes for each resourceData
 	for _, r := range xr {
 
 		// last keyword in ol_resource.keywords is the pubmed article id
@@ -484,21 +495,21 @@ func updatePubmedData() {
 	}
 }
 
-// resourceByAttribute fetches resource records that have a string LIKE 'pattern' in the ol_resource.Attributes field
-func resourcesByAttribute(pattern string) ([]resource, error) {
+// resourceByAttribute fetches resourceData records that have a string LIKE 'pattern' in the ol_resource.Attributes field
+func resourcesByAttribute(pattern string) ([]resourceData, error) {
 
-	var xr []resource
+	var xr []resourceData
 
 	query := "SELECT id, name, keywords, Attributes FROM ol_resource " +
 		"WHERE Attributes LIKE '%" + pattern + "%' " +
 		"AND updated_at >= NOW() - INTERVAL " + strconv.Itoa(backdays) + " DAY "
-	rows, err := datastore.MySQL.Session.Query(query)
+	rows, err := DS.MySQL.Session.Query(query)
 	if err != nil {
 		return xr, err
 	}
 
 	for rows.Next() {
-		var r resource
+		var r resourceData
 		var attributes []byte
 		err := rows.Scan(&r.ID, &r.Name, &r.Keywords, &attributes)
 		if err != nil {
@@ -538,7 +549,7 @@ func lastKeyword(list string) string {
 //  }
 //
 // Example: https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=25963440&retmode=json
-func (r *resource) pubmedData(articleID string) {
+func (r *resourceData) pubmedData(articleID string) {
 
 	url := fmt.Sprintf("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id=%s&retmode=json", articleID)
 	res, err := http.Get(url)
@@ -606,7 +617,7 @@ func (r *resource) pubmedData(articleID string) {
 }
 
 // bestDate attempts to find the best publish date fromt he available data
-func (r *resource) bestDate(data map[string]interface{}) {
+func (r *resourceData) bestDate(data map[string]interface{}) {
 
 	fmt.Println("Looking for best date...")
 
@@ -658,7 +669,7 @@ func (r *resource) bestDate(data map[string]interface{}) {
 }
 
 // updateResource updates the ol_resource record
-func updateResource(r resource) error {
+func updateResource(r resourceData) error {
 
 	// attributes stores as a JSON string
 	attributes, err := json.Marshal(r.Attributes)
@@ -676,7 +687,7 @@ func updateResource(r resource) error {
 			  WHERE id = %v LIMIT 1`
 	query = fmt.Sprintf(query, r.PubDate, r.PubYear, r.PubMonth, r.PubDay, attributes, r.ID)
 
-	_, err = datastore.MySQL.Session.Exec(query)
+	_, err = DS.MySQL.Session.Exec(query)
 
 	return err
 }

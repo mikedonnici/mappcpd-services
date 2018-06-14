@@ -1,18 +1,17 @@
 package datastore
 
 import (
-	"os"
-
+	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 )
 
 // MongoDBConnection represents a connection to a MongoDB server
 // and includes convenience methods for accessing each collection
 type MongoDBConnection struct {
-	url     string
-	db      string
-	Source  string
-	session *mgo.Session
+	DSN     string
+	DBName  string
+	Desc    string
+	Session *mgo.Session
 }
 
 // MongoQuery is used to map query fields in a request to mgo functions
@@ -38,59 +37,66 @@ func (mq MongoQuery) Do(c *mgo.Collection, r *[]interface{}) error {
 	return q.All(r)
 }
 
-// Connect to to MongoDB, returns an error if it fails
+// Connect to MongoDB
 func (m *MongoDBConnection) Connect() error {
-
-	m.url = os.Getenv("MAPPCPD_MONGO_URL")
-	m.db = os.Getenv("MAPPCPD_MONGO_DBNAME")
-	m.Source = os.Getenv("MAPPCPD_MONGO_DESC")
-
-	var err error
-	m.session, err = mgo.Dial(m.url)
+	err := m.checkFields()
 	if err != nil {
 		return err
 	}
-
-	return nil
+	m.Session, err = mgo.Dial(m.DSN)
+	return err
 }
 
 // MembersCollection returns a pointer to the Members collection
 func (m *MongoDBConnection) MembersCollection() (*mgo.Collection, error) {
 
-	return m.session.DB(m.db).C("Members"), nil
+	return m.Session.DB(m.DBName).C("Members"), nil
 }
 
 // ActivitiesCol returns a pointer to the Activities collection
 func (m *MongoDBConnection) ActivitiesCol() (*mgo.Collection, error) {
 
-	return m.session.DB(m.db).C("Activities"), nil
+	return m.Session.DB(m.DBName).C("Activities"), nil
 }
 
 // ResourcesCollection returns a pointer to the Resources collection
 func (m *MongoDBConnection) ResourcesCollection() (*mgo.Collection, error) {
 
-	return m.session.DB(m.db).C("Resources"), nil
+	return m.Session.DB(m.DBName).C("Resources"), nil
 }
 
 // ModulesCollection returns a pointer to the Modules collection
 func (m *MongoDBConnection) ModulesCollection() (*mgo.Collection, error) {
 
-	return m.session.DB(m.db).C("Modules"), nil
+	return m.Session.DB(m.DBName).C("Modules"), nil
 }
 
 // LinksCol returns a pointer to the Links collection
 func (m *MongoDBConnection) LinksCol() (*mgo.Collection, error) {
 
-	return m.session.DB(m.db).C("Links"), nil
+	return m.Session.DB(m.DBName).C("Links"), nil
 }
 
 // RecurringCol returns a pointer to the Recurring collection
 func (m *MongoDBConnection) RecurringCol() (*mgo.Collection, error) {
 
-	return m.session.DB(m.db).C("Recurring"), nil
+	return m.Session.DB(m.DBName).C("Recurring"), nil
 }
 
-// Close terminates the session
+// Close terminates the Session
 func (m *MongoDBConnection) Close() {
-	m.session.Close()
+	m.Session.Close()
+}
+
+func (m *MongoDBConnection) checkFields() error {
+	if m.DSN == "" {
+		return errors.New("MongoDBConnection.DSN (data source name / connection string) is not set")
+	}
+	if m.DBName == "" {
+		return errors.New("MongoDBConnection.DBName is not set")
+	}
+	if m.Desc == "" {
+		return errors.New("MongoDBConnection.Desc is not set")
+	}
+	return nil
 }

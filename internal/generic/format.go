@@ -66,6 +66,5 @@ func toSlice(rows *sql.Rows) []map[string]string {
 
 // MySQLDateToTime converts a MySQL date string (YYY-MM-DD) to a time.Time value
 func MySQLDateToTime(s string) (time.Time, error) {
-
 	return time.Parse("2006-01-02", s)
 }

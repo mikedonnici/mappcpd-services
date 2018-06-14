@@ -1,17 +1,16 @@
 package main
 
 import (
+	"encoding/json"
+	"encoding/xml"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
 	"time"
-
-	"encoding/json"
-	"encoding/xml"
-	"io/ioutil"
-	"net/http"
 
 	"github.com/34South/envr"
 	"github.com/pkg/errors"

@@ -6,18 +6,11 @@ import (
 	"runtime"
 	"strings"
 	"time"
-
-	"github.com/mappcpd/web-services/internal/constants"
 )
 
-// dateTime converts a MySQL timestamp (format "2006-01-02 15:04:05") string to a time.Time value
+// DateTime converts a MySQL timestamp (format "2006-01-02 15:04:05") string to a time.Time value
 func DateTime(dt string) (time.Time, error) {
-	return time.Parse(constants.MySQLTimestampFormat, dt)
-}
-
-// MysqlTimestamp converts a time.Time value into a MySQL timestamp - format "2006-01-02 15:04:05"
-func MySQLTimestamp(t time.Time) string {
-	return t.Format(constants.MySQLTimestampFormat)
+	return time.Parse("2006-01-02 15:04:05", dt)
 }
 
 // q is the query

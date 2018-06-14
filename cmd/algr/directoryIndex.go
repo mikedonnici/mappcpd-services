@@ -8,7 +8,7 @@ import (
 
 	"github.com/34South/envr"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
-	"github.com/mappcpd/web-services/internal/member"
+	"github.com/cardiacsociety/web-services/internal/member"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -53,12 +53,12 @@ func (di *directoryIndex) fullIndex() ([]algoliasearch.Object, error) {
 func (di *directoryIndex) fetchLimitedData() {
 	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
 	query := bson.M{"memberships.title": bson.M{"$exists": true}, "updatedAt": bson.M{"$gte": timeBack}}
-	di.RawData, di.Error = member.FetchMembers(query, 0)
+	di.RawData, di.Error = member.SearchDocDB(DS, query)
 }
 
 func (di *directoryIndex) fetchAllData() {
 	query := bson.M{"memberships.title": bson.M{"$exists": true}}
-	di.RawData, di.Error = member.FetchMembers(query, 0)
+	di.RawData, di.Error = member.SearchDocDB(DS, query)
 }
 
 func (di *directoryIndex) removeExcludedMembers() {

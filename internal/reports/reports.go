@@ -1,8 +1,8 @@
 package models
 
-import "github.com/mappcpd/web-services/internal/platform/datastore"
+import "github.com/cardiacsociety/web-services/internal/platform/datastore"
 
-func ReportModulesByDate() (map[string]int, error) {
+func ReportModulesByDate(ds datastore.Datastore) (map[string]int, error) {
 
 	r := make(map[string]int)
 
@@ -10,7 +10,7 @@ func ReportModulesByDate() (map[string]int, error) {
   		Count(*) As 'Modules'
 		FROM ol_m_module
 		GROUP BY Year(created_at), Month(created_at);`
-	rows, err := datastore.MySQL.Session.Query(sql)
+	rows, err := ds.MySQL.Session.Query(sql)
 	defer rows.Close()
 
 	if err != nil {
@@ -28,7 +28,7 @@ func ReportModulesByDate() (map[string]int, error) {
 }
 
 // ReportPointsByRecordDate groups cpd activity (points) by date the record was created.
-func ReportPointsByRecordDate() (map[string]float32, error) {
+func ReportPointsByRecordDate(ds datastore.Datastore) (map[string]float32, error) {
 
 	r := make(map[string]float32)
 
@@ -37,7 +37,7 @@ func ReportPointsByRecordDate() (map[string]float32, error) {
 		FROM ce_m_activity
 		GROUP BY Year(created_at), Month(created_at)
 		ORDER BY Year(created_at), Month(created_at);`
-	rows, err := datastore.MySQL.Session.Query(sql)
+	rows, err := ds.MySQL.Session.Query(sql)
 	defer rows.Close()
 
 	if err != nil {
@@ -55,7 +55,7 @@ func ReportPointsByRecordDate() (map[string]float32, error) {
 }
 
 // ReportPointsByActivityDate groups cpd activity (points) by the date the activity occurred
-func ReportPointsByActivityDate() (map[string]float32, error) {
+func ReportPointsByActivityDate(ds datastore.Datastore) (map[string]float32, error) {
 
 	r := make(map[string]float32)
 
@@ -64,7 +64,7 @@ func ReportPointsByActivityDate() (map[string]float32, error) {
 		FROM ce_m_activity
 		GROUP BY Year(activity_on), Month(created_at)
 		ORDER BY Year(activity_on), Month(created_at);`
-	rows, err := datastore.MySQL.Session.Query(sql)
+	rows, err := ds.MySQL.Session.Query(sql)
 	defer rows.Close()
 
 	if err != nil {

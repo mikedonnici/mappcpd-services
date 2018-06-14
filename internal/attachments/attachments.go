@@ -4,15 +4,13 @@
 package attachments
 
 import (
+	"database/sql"
 	"fmt"
 	"strconv"
 
-	"database/sql"
-
+	"github.com/cardiacsociety/web-services/internal/fileset"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 	"github.com/pkg/errors"
-
-	"github.com/mappcpd/web-services/internal/fileset"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
 // Attachment contains data about an uploaded file (attachment)- that is
@@ -56,13 +54,6 @@ func New() *Attachment {
 	return &Attachment{}
 }
 
-// ActivityAttachment returns a pointer to an initialised activity attachment
-//func NewActivity() (*Attachment, error) {
-//
-//
-//	return &Attachment{}
-//}
-
 // Validate checks the Attachment for the required values prior to registration
 func (a *Attachment) Validate() error {
 
@@ -105,7 +96,7 @@ func (a *Attachment) Validate() error {
 // file and details about it are being recorded in the database. HOWEVER, what if the user ID changes? In this case we could
 // force an update of the record. For now it will populate the fields which makes this operation IDEMPOTENT.
 // 'flags' is a hack to pass in an optional setting - at this stage just to set thumbnail = 1 for a resource file.
-func (a *Attachment) Register(flags ...string) error {
+func (a *Attachment) Register(ds datastore.Datastore, flags ...string) error {
 
 	// Validate first
 	if err := a.Validate(); err != nil {
@@ -113,11 +104,11 @@ func (a *Attachment) Register(flags ...string) error {
 	}
 
 	// Check if already registered, if so we will set the ID and URL and return without error
-	if err := a.Exists(); err != nil {
+	if err := a.Exists(ds); err != nil {
 		return errors.New("Error checking for existing registration - " + err.Error())
 	}
 	if a.ID > 0 { // ID was set so it DOES exist
-		if err := a.setURL(); err != nil {
+		if err := a.setURL(ds); err != nil {
 			return errors.New("Error setting URL for attachment - " + err.Error())
 		}
 		return nil
@@ -153,7 +144,7 @@ func (a *Attachment) Register(flags ...string) error {
 		return errors.New("Error registering attachment - unknown entity name")
 	}
 
-	result, err := datastore.MySQL.Session.Exec(query)
+	result, err := ds.MySQL.Session.Exec(query)
 	if err != nil {
 		return errors.New("Database error - " + err.Error())
 	}
@@ -171,7 +162,7 @@ func (a *Attachment) Register(flags ...string) error {
 // Exists checks for an existing record for the attachment so we can prevent duplicate registrations.
 // Note that it returns an error, except for sql.ErrorNoRows, which indicates that the record does not exist.
 // If the record is found then the fields are populated.
-func (a *Attachment) Exists() error {
+func (a *Attachment) Exists(ds datastore.Datastore) error {
 
 	var query string
 	var id int
@@ -199,7 +190,7 @@ func (a *Attachment) Exists() error {
 		return errors.New("Unknown entity: " + a.FileSet.Entity)
 	}
 
-	err := datastore.MySQL.Session.QueryRow(query).Scan(&id)
+	err := ds.MySQL.Session.QueryRow(query).Scan(&id)
 	// No rows is not an error here
 	if err == sql.ErrNoRows {
 		return nil
@@ -215,13 +206,13 @@ func (a *Attachment) Exists() error {
 }
 
 // setURL sets the public URL for an attachment by looking up fs_url record
-func (a *Attachment) setURL() error {
+func (a *Attachment) setURL(ds datastore.Datastore) error {
 
 	var url string
 
 	query := "SELECT base_url FROM fs_url WHERE active = 1 AND fs_set_id = %d ORDER BY priority ASC LIMIT 1"
 	query = fmt.Sprintf(query, a.FileSet.ID)
-	err := datastore.MySQL.Session.QueryRow(query).Scan(&url)
+	err := ds.MySQL.Session.QueryRow(query).Scan(&url)
 	if err == sql.ErrNoRows {
 		msg := fmt.Sprintf("No fs_url record found for file_set.id = %d - %s", a.FileSet.ID, err.Error())
 		return errors.New(msg)
@@ -236,13 +227,13 @@ func (a *Attachment) setURL() error {
 }
 
 // MemberActivityAttachments fetches the attachments for a member activity.
-func MemberActivityAttachments(memberActivityID int) ([]Attachment, error) {
+func MemberActivityAttachments(ds datastore.Datastore, memberActivityID int) ([]Attachment, error) {
 
 	var xa []Attachment
 
 	query := `SELECT
 			a.id AS 'attachmentId',
-			a.clean_filename as 'fileName',
+			a.clean_filename AS 'fileName',
 			CONCAT(fs.volume_name, fs.set_path, a.ce_m_activity_id, '/', a.cloudy_filename) AS 'filePath',
 			CONCAT(fu.base_url, fs.set_path, a.ce_m_activity_id, '/', a.cloudy_filename) AS 'fileUrl'
 			FROM ce_m_activity_attachment a
@@ -250,7 +241,7 @@ func MemberActivityAttachments(memberActivityID int) ([]Attachment, error) {
 			LEFT JOIN fs_url fu ON fs.id = fu.fs_set_id
 			WHERE a.ce_m_activity_id = ?`
 
-	rows, err := datastore.MySQL.Session.Query(query, memberActivityID)
+	rows, err := ds.MySQL.Session.Query(query, memberActivityID)
 	if err == sql.ErrNoRows {
 		return xa, nil
 	}

@@ -1,16 +1,14 @@
 package rest
 
 import (
-	"github.com/mappcpd/web-services/cmd/webd/rest/router"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 )
 
-// Start fires up the REST server
-func Start(port string) {
+// Store represents the global datastore passed to internal packages by the handlers
+var DS datastore.Datastore
 
-	// Connect to the databases
-	datastore.Connect()
-
-	// Crank up the router
-	router.Start(port)
+// Start fires up the REST server and sets the global datastore
+func Start(port string, ds datastore.Datastore) {
+	DS = ds
+	StartServer(port)
 }

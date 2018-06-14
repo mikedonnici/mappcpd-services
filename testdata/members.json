@@ -1,0 +1,98 @@
+{
+  "id": 7821,
+  "createdAt": "2016-03-04T07:33:37Z",
+  "updatedAt": "2018-05-16T05:11:09Z",
+  "active": true,
+  "title": "Professor",
+  "firstName": "Demos",
+  "middleNames": "Theolakis",
+  "lastName": "Rousos",
+  "postNominal": " ",
+  "gender": "M",
+  "dateOfBirth": "1970-11-03",
+  "memberships": [
+    {
+      "orgId": "csanz",
+      "orgCode": "CSANZ",
+      "orgName": "Cardiac Society of Australia and New Zealand",
+      "title": "Associate",
+      "titleHistory": [
+        {
+          "date": "2016-03-04",
+          "code": "no code",
+          "name": "Associate",
+          "description": "",
+          "comment": ""
+        }
+      ]
+    }
+  ],
+  "contact": {
+    "emailPrimary": "member@mappcpd.com",
+    "emailSecondary": "",
+    "mobile": "0402400191",
+    "locations": [
+      {
+        "order": 10,
+        "type": "Mail",
+        "address": "",
+        "city": "",
+        "state": "",
+        "postcode": "",
+        "country": "",
+        "phone": "",
+        "fax": "",
+        "email": "",
+        "url": ""
+      },
+      {
+        "order": 20,
+        "type": "Directory",
+        "address": "123 Some Street\nUnit abc\nback shed",
+        "city": "Jervis Bay",
+        "state": "NSW",
+        "postcode": "2540",
+        "country": "AUSTRALIA",
+        "phone": "+61 2 9999 9999",
+        "fax": "+61 2 9999 8888",
+        "email": "info@here.com",
+        "url": "www.here.com"
+      }
+    ],
+    "directory": true,
+    "consent": false
+  },
+  "qualifications": null,
+  "positions": [
+    {
+      "orgCode": "CL_PAED",
+      "orgName": "Paediatric and Congenital Cardiology Council",
+      "code": "AFFIL",
+      "name": "Affiliation",
+      "description": "... has an affiliation with an organisation",
+      "start": "",
+      "end": ""
+    },
+    {
+      "orgCode": "TAC",
+      "orgName": "RACP Therapeutics Advisory Committee",
+      "code": "CHAIR",
+      "name": "CHAIR",
+      "description": "... is the chair of a group / committee",
+      "start": "2018-03-23",
+      "end": "2019-03-26"
+    }
+  ],
+  "specialities": [
+    {
+      "name": "Computer / Internet",
+      "description": "",
+      "start": ""
+    },
+    {
+      "name": "Education and Ethics",
+      "description": "",
+      "start": ""
+    }
+  ]
+}

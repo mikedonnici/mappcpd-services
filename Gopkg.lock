@@ -117,6 +117,12 @@
   version = "v0.2.1"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/hashicorp/go-uuid"
+  packages = ["."]
+  revision = "27454136f0364f2d44b1276c552d69105cf8c498"
+
+[[projects]]
   name = "github.com/imdario/mergo"
   packages = ["."]
   revision = "33882c6bfe701aca0ff1472aa8b4ebd6135a560d"
@@ -199,6 +205,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "42c9a0dec874d0f85441dc6fc0d9683c4037245486c13beb48d70c4233bb15ff"
+  inputs-digest = "e9d353ff32de2093a134a0cd66a38fb794b2b49c539d133f82d3b4a7f0b928dc"
   solver-name = "gps-cdcl"
   solver-version = 1

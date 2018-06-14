@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"github.com/mappcpd/web-services/internal/utility"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/utility"
 )
 
 // Module defines struct for a CPD module
@@ -30,7 +30,7 @@ type Module struct {
 type Modules []Module
 
 // ModuleByID fetches a module by id, from the MySQL db
-func ModuleByID(id int) (*Module, error) {
+func ModuleByID(ds datastore.Datastore, id int) (*Module, error) {
 
 	// Set up a new empty Member
 	m := Module{ID: id}
@@ -53,7 +53,7 @@ func ModuleByID(id int) (*Module, error) {
 	var updatedAt string
 	var publishedAt string
 
-	err := datastore.MySQL.Session.QueryRow(query, id).Scan(
+	err := ds.MySQL.Session.QueryRow(query, id).Scan(
 		&createdAt,
 		&updatedAt,
 		&publishedAt,
@@ -75,9 +75,9 @@ func ModuleByID(id int) (*Module, error) {
 }
 
 // DocModulesAll searches the Modules collection.
-func DocModulesAll(q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
+func DocModulesAll(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}) ([]interface{}, error) {
 
-	modules, err := datastore.MongoDB.ModulesCollection()
+	modules, err := ds.MongoDB.ModulesCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -96,14 +96,14 @@ func DocModulesAll(q map[string]interface{}, p map[string]interface{}) ([]interf
 }
 
 // DocModulesLimit returns n modules
-func DocModulesLimit(q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
+func DocModulesLimit(ds datastore.Datastore, q map[string]interface{}, p map[string]interface{}, l int) ([]interface{}, error) {
 
 	m := []interface{}{}
 
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
-	modules, err := datastore.MongoDB.ModulesCollection()
+	modules, err := ds.MongoDB.ModulesCollection()
 	if err != nil {
 		return m, err
 	}
@@ -117,14 +117,14 @@ func DocModulesLimit(q map[string]interface{}, p map[string]interface{}, l int) 
 
 // DocModuleOne returns one module, unmarshaled into the proper struct
 // so no projection allowed here
-func DocModulesOne(q map[string]interface{}) (Module, error) {
+func DocModulesOne(ds datastore.Datastore, q map[string]interface{}) (Module, error) {
 
 	m := Module{}
 
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(q, []string{"updatedAt", "createdAt", "publishedAt"})
 
-	modules, err := datastore.MongoDB.ModulesCollection()
+	modules, err := ds.MongoDB.ModulesCollection()
 	if err != nil {
 		return m, err
 	}
@@ -137,7 +137,7 @@ func DocModulesOne(q map[string]interface{}) (Module, error) {
 }
 
 // QueryModulesCollection ... queries the modules collection :)
-func QueryModulesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
+func QueryModulesCollection(ds datastore.Datastore, mq datastore.MongoQuery) ([]interface{}, error) {
 
 	// results
 	r := []interface{}{}
@@ -146,7 +146,7 @@ func QueryModulesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 	utility.MongofyDateFilters(mq.Find, []string{"updatedAt", "createdAt"})
 
 	// get a pointer to the modules collection
-	c, err := datastore.MongoDB.ModulesCollection()
+	c, err := ds.MongoDB.ModulesCollection()
 	if err != nil {
 		return r, err
 	}
@@ -162,14 +162,14 @@ func QueryModulesCollection(mq datastore.MongoQuery) ([]interface{}, error) {
 
 // FetchModules returns values of type Module from the Modules collection in MongoDB, based on the query and
 // limited by the value of limit. If limit is 0 all results are returned.
-func FetchModules(query map[string]interface{}, limit int) ([]Module, error) {
+func FetchModules(ds datastore.Datastore, query map[string]interface{}, limit int) ([]Module, error) {
 
 	var data []Module
 
 	// Convert string date filters to time.Time
 	utility.MongofyDateFilters(query, []string{"updatedAt", "createdAt"})
 
-	c, err := datastore.MongoDB.ModulesCollection()
+	c, err := ds.MongoDB.ModulesCollection()
 	if err != nil {
 		return nil, err
 	}
@@ -179,9 +179,9 @@ func FetchModules(query map[string]interface{}, limit int) ([]Module, error) {
 }
 
 // SyncModule synchronises the Module record from MySQL -> MongoDB
-func SyncModule(m *Module) {
+func SyncModule(ds datastore.Datastore, m *Module) {
 	// Fetch the current Doc (if there) and compare updatedAt
-	m2, err := DocModulesOne(bson.M{"id": m.ID})
+	m2, err := DocModulesOne(ds, bson.M{"id": m.ID})
 	fmt.Println(m2)
 	if err != nil {
 		log.Println("Target document error: ", err, "- so do an upsert")
@@ -199,18 +199,18 @@ func SyncModule(m *Module) {
 	// Update the document in the Members collection
 	var w sync.WaitGroup
 	w.Add(1)
-	go UpdateModuleDoc(m, &w)
+	go UpdateModuleDoc(ds, m, &w)
 	w.Wait()
 }
 
 // UpdateModuleDoc updates a document in the Modules collection
-func UpdateModuleDoc(m *Module, w *sync.WaitGroup) {
+func UpdateModuleDoc(ds datastore.Datastore, m *Module, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
 	id := map[string]int{"id": m.ID}
 
 	// Get pointer to the Modules collection
-	mc, err := datastore.MongoDB.ModulesCollection()
+	mc, err := ds.MongoDB.ModulesCollection()
 	if err != nil {
 		log.Printf("Error getting pointer to Modules collection: %s\n", err.Error())
 		return

@@ -2,25 +2,24 @@ package graphql
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"strings"
 
-	"net/http"
-
 	"github.com/graphql-go/handler"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 	"github.com/rs/cors"
-
-	"github.com/mappcpd/web-services/cmd/webd/graphql/schema"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
 )
 
+// Store represents the global datastore passed to internal packages by the handlers
+var DS datastore.Datastore
+
 // Start fires up the GraphQL server
-func Start(port string) {
+func Start(port string, ds datastore.Datastore) {
 
-	// todo: should this even be here? Shouldn't the internal packages handle the connection?
-	datastore.Connect()
+	DS = ds
 
-	schema, err := schema.Create()
+	schema, err := CreateSchema()
 	if err != nil {
 		panic(err)
 	}

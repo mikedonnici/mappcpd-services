@@ -1,154 +1,176 @@
 package jwt
 
 import (
-	"errors"
-	"fmt"
-	"log"
-	"os"
-	"strconv"
 	"strings"
 	"time"
 
-	"github.com/34South/envr"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/pkg/errors"
 )
 
-// tokenLifeHours specifies the expiry time of the JWT, specified in env
-var tokenLifeHours int
-
-// The key for signing the JWTs - using the MYSQL_URL string for now so it will be host specific
-var signingKey = []byte(os.Getenv("MAPPCPD_MYSQL_URL"))
-
-type AuthToken struct {
-	Token     string      `json:"token"`
-	IssuedAt  time.Time   `json:"issuedAt"`
-	ExpiresAt time.Time   `json:"expiresAt"`
-	Claims    TokenClaims `json:"claims"`
+type Token struct {
+	signingKey []byte
+	ttlHours   int
+	Encoded    string      `json:"token"`
+	IssuedAt   time.Time   `json:"issuedAt"`
+	ExpiresAt  time.Time   `json:"expiresAt"`
+	Claims     TokenClaims `json:"claims"`
 }
 
 type TokenClaims struct {
-	ID    int      `json:"id"`
-	Name  string   `json:"name"`
-	Scope []string `json:"scope"`
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Role string `json:"role"`
 	jwt.StandardClaims
 }
 
-func init() {
+// New returns a pointer to a Token
+func New(issuer, signingKey string, ttlHours int) *Token {
+
+	var t Token
+
+	t.signingKey = []byte(signingKey)
+	t.ttlHours = ttlHours
+
+	// Initialise standard claims
+	t.Claims.StandardClaims = jwt.StandardClaims{
+		Issuer: issuer,
+	}
+
+	// Default issue time to now, can override with .ValidFrom()
+	t.SetTimes(time.Now())
+
+	return &t
+}
+
+// SetTimes sets the issuer, and time-related claims - requires the issue at time to be passed in.
+func (t *Token) SetTimes(iat time.Time) *Token {
+
+	t.Claims.StandardClaims.IssuedAt = iat.Unix()
+	t.Claims.StandardClaims.ExpiresAt = iat.Add(time.Hour * time.Duration(t.ttlHours)).Unix()
+
+	// Set Unix dates at root of struct for convenience (??)
+	t.IssuedAt = time.Unix(int64(t.Claims.StandardClaims.IssuedAt), 0)
+	t.ExpiresAt = time.Unix(int64(t.Claims.StandardClaims.ExpiresAt), 0)
+
+	return t
+}
+
+// Encode finishes of the Token value and creates the encoded token string or JWS
+func (t *Token) Encode() (Token, error) {
+
+	if t.Claims.Issuer == "" {
+		return *t, errors.New("Issuer cannot be blank")
+	}
+	if len(t.signingKey) < 1 {
+		return *t, errors.New("Signing key cannot be blank")
+	}
+	if t.ttlHours < 1 {
+		return *t, errors.New("TTL hours must be a positive integer")
+	}
+
 	var err error
-	envr.New("jwtEnv", []string{"JWT_TTL_HOURS"}).Auto()
-	tokenLifeHours, err = strconv.Atoi(os.Getenv("JWT_TTL_HOURS"))
-	if err != nil {
-		fmt.Println("Error setting tokenLifeHours from env var JWT_TTL_HOURS -", err)
-		fmt.Println("Setting a default value of 48 hours")
-		tokenLifeHours = 48
-	}
+	t.Encoded, err = jwt.NewWithClaims(jwt.SigningMethodHS256, t.Claims).SignedString([]byte(t.signingKey))
+	return *t, err
 }
 
-// CreateJWT creates a JWT
-func CreateJWT(id int, name string, scope []string) (AuthToken, error) {
+// CustomClaims sets custom claims
+func (t *Token) CustomClaims(claims map[string]interface{}) *Token {
 
-	// Return token
-	at := AuthToken{}
-
-	// Create the Claims
-	claims := TokenClaims{
-		id,
-		name,
-		scope,
-		jwt.StandardClaims{
-			IssuedAt:  time.Now().Unix(),
-			ExpiresAt: time.Now().Add(time.Hour * time.Duration(tokenLifeHours)).Unix(),
-			Issuer:    os.Getenv("MAPPCPD_API_URL"),
-		},
+	if id, ok := claims["id"]; ok {
+		t.Claims.ID = id.(int)
+	}
+	if name, ok := claims["name"]; ok {
+		t.Claims.Name = name.(string)
+	}
+	if role, ok := claims["role"]; ok {
+		t.Claims.Role = role.(string)
 	}
 
-	newToken := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	ss, err := newToken.SignedString(signingKey)
-	if err != nil {
-		return at, err
-	}
-
-	at.Token = ss
-	at.setDates()
-	at.Claims = claims
-
-	return at, nil
+	return t
 }
 
-// Check validates a JSON web token and returns an AuthToken value
-func Check(t string) (AuthToken, error) {
+// Valid returns true if the Token.Encoded string is a valid JWT
+func (t *Token) Valid() bool {
+	_, err := jwt.Parse(t.Encoded, func(tok *jwt.Token) (interface{}, error) {
+		return []byte(t.signingKey), nil
+	})
+	if err != nil {
+		return false
+	}
+	return true
+}
 
-	// token for return
-	at := AuthToken{Token: t}
+// String returns the encoded token string (JWS)
+func (t *Token) String() string {
+	return string(t.Encoded)
+}
 
-	// Custom error
-	var TokenError error
+// Decode attempts to decode token with signingKey and returns a new Token value if everything checks out
+func Decode(token, signingKey string) (Token, error) {
 
-	// The jwt library panics if the jwt does not contain 3 '.'s
-	// Assume because it splits the string at each period and gets and index
-	// out of range if it does not end up with three pieces.
-	if len(strings.Split(t, ".")) < 3 {
-		TokenError = errors.New("JWT should have 3 parts in format aaaa.bbbb.cccc")
-		return at, TokenError
+	t := Token{
+		Encoded:    token,
+		signingKey: []byte(signingKey),
+	}
+
+	// The jwt library panics if the jwt does not contain 3 '.'s - assume because it splits the string at each period
+	// and gets and index out of range if it does not end up with three pieces.
+	if len(strings.Split(token, ".")) < 3 {
+		return t, errors.New("JWT should have 3 parts in format aaaa.bbbb.cccc")
 	}
 
 	// Parse the token which sets the Valid field
-	// This code lifted from https://godoc.org/github.com/dgrijalva/jwt-go#Parse
-	// not 100% sure what's going on :)
-	tok, err := jwt.Parse(t, func(tok *jwt.Token) (interface{}, error) {
-		return signingKey, nil
+	tok, err := jwt.Parse(token, func(tok *jwt.Token) (interface{}, error) {
+		return t.signingKey, nil
 	})
 	if err != nil {
-		TokenError = errors.New("Error parsing token: " + err.Error())
-		return at, TokenError
+		return t, errors.New("Error parsing token: " + err.Error())
 	}
 
 	claims, ok := tok.Claims.(jwt.MapClaims)
 	if ok && tok.Valid {
 
-		// Set the Unix dates - YES this is redundant because we re-parse
-		// the token in the JWT.setDates() method
-		at.setDates()
+		//Custom claims
+		t.Claims.ID = int(claims["id"].(float64))
+		t.Claims.Name = claims["name"].(string)
+		t.Claims.Role = claims["role"].(string)
 
-		// set the values in  AuthToken.Claims .. tricky
-		// type problems here almost broke my brain...
-		// These are TokenCLaims - ie custom claims
-		at.Claims.ID = int(claims["id"].(float64))
-		at.Claims.Name = claims["name"].(string)
+		// Standard claims
+		t.Claims.ExpiresAt = int64(claims["exp"].(float64))
+		t.Claims.IssuedAt = int64(claims["iat"].(float64))
+		t.Claims.Issuer = claims["iss"].(string)
 
-		// Scope needs to be a []string but when we unpack the token
-		// is is a []interface{} = so use assertion to make the []string
-		a := claims["scope"].([]interface{})
-		b := make([]string, len(a))
-		for i := range b {
-			b[i] = a[i].(string)
-		}
-		at.Claims.Scope = b
+		// reverse engineer ttlHours from iat and exp
+		t.ttlHours = (int(t.Claims.ExpiresAt) - int(t.Claims.IssuedAt)) / 3600
 
-		// These are jwt.StandardClaims ...
-		at.Claims.ExpiresAt = int64(claims["exp"].(float64))
-		at.Claims.IssuedAt = int64(claims["iat"].(float64))
-		at.Claims.Issuer = claims["iss"].(string)
+		// Set the friendly dates
+		issueTime := time.Unix(t.Claims.IssuedAt, 0)
+		t.SetTimes(issueTime)
 
-		return at, nil
+		return t, nil
 	}
 
-	// ve is some fancy bit shifting thingo, too fancy for me so will
-	// return some simple error strings to the caller
-	if ve, ok := err.(*jwt.ValidationError); ok {
-		if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-			TokenError = errors.New("Token malformed")
-		} else if ve.Errors&(jwt.ValidationErrorExpired|jwt.ValidationErrorNotValidYet) != 0 {
-			// Token is either expired or not active yet
-			TokenError = errors.New("Token expired or not active")
-		} else {
-			TokenError = errors.New("jwt " + err.Error())
-		}
-	} else {
-		TokenError = errors.New("Failed to validate token - " + err.Error())
+	// Below here we are in error land
+	ve, ok := err.(*jwt.ValidationError)
+	if !ok {
+		return t, errors.New("Failed to validate token - " + err.Error())
 	}
 
-	return at, TokenError
+	if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+		return t, errors.New("Token malformed")
+	}
+	if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
+		return t, errors.New("Token issue date is in the future - not valid yet?")
+	}
+	if ve.Errors&jwt.ValidationErrorExpired != 0 {
+		return t, errors.New("Token has expired")
+	}
+	if ve.Errors&jwt.ValidationErrorSignatureInvalid != 0 {
+		return t, errors.New("Token signature is invalid")
+	}
+
+	return t, errors.New("Token error: " + err.Error())
 }
 
 // FromHeader extracts the jwt string from the header Authorization string (a).
@@ -164,54 +186,4 @@ func FromHeader(a string) (string, error) {
 	}
 
 	return strings.TrimSpace(t[1]), nil
-}
-
-// setDates is a utility method for the custom JWT type to set the
-// IssuedAt and ExpiresAt fields in our custom JWT struct
-func (t *AuthToken) setDates() {
-
-	// Parse the Token in our custom type  to get a a a jwt.token value
-	// from which to extract the dates we need...
-	tok, err := jwt.Parse(t.Token, func(token *jwt.Token) (interface{}, error) {
-		return signingKey, nil
-	})
-	if err != nil {
-		log.Printf("setDates() error parsing token: %s", err.Error())
-		return
-	}
-
-	claims, ok := tok.Claims.(jwt.MapClaims)
-	if ok && tok.Valid {
-
-		// The dates in Claims are stored as float64
-		// we want friendly date strings so need int first!
-		iat := int64(claims["iat"].(float64))
-		exp := int64(claims["exp"].(float64))
-
-		// Get local Time values in Unix format
-		iatUnix := time.Unix(iat, 0)
-		expUnix := time.Unix(exp, 0)
-
-		// Then tweak the format? - leave for now...
-
-		t.IssuedAt = iatUnix
-		t.ExpiresAt = expUnix
-	}
-}
-
-// CheckScope checks a token has a particular scope string, Received token (t) and
-// the string (s) to check for.
-func (t AuthToken) CheckScope(s string) bool {
-
-	for _, v := range t.Claims.Scope {
-		if v == s {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (t AuthToken) String() string {
-	return string(t.Token)
 }

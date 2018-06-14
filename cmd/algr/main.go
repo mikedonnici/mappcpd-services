@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/34South/envr"
-	"github.com/mappcpd/web-services/internal/platform/datastore"
-	"time"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 )
 
 // updateSched is a date flag used to determine the updateSched for a particular index
@@ -43,6 +43,8 @@ var resourceIndexName string
 
 var sched = scheduledUpdateType()
 
+var DS datastore.Datastore
+
 func init() {
 
 	envr.New("algrEnv", []string{
@@ -50,9 +52,18 @@ func init() {
 		"MAPPCPD_ALGOLIA_MEMBERS_INDEX",
 		"MAPPCPD_ALGOLIA_MODULES_INDEX",
 		"MAPPCPD_ALGOLIA_RESOURCES_INDEX",
+		"MAPPCPD_MONGO_DBNAME",
+		"MAPPCPD_MONGO_DESC",
+		"MAPPCPD_MONGO_URL",
+		"MAPPCPD_MYSQL_DESC",
+		"MAPPCPD_MYSQL_URL",
 	}).Auto()
 
-	datastore.Connect()
+	var err error
+	DS, err = datastore.FromEnv()
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
 func main() {

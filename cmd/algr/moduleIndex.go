@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
-	"github.com/mappcpd/web-services/internal/modules"
+	"github.com/cardiacsociety/web-services/internal/modules"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -41,12 +41,12 @@ func (mi *moduleIndex) fullIndex() ([]algoliasearch.Object, error) {
 func (mi *moduleIndex) fetchLimitedData() {
 	timeBack := time.Now().AddDate(0, 0, -1).Format(time.RFC3339)
 	query := bson.M{"current": true, "updatedAt": bson.M{"$gte": timeBack}}
-	mi.RawData, mi.Error = modules.FetchModules(query, 0)
+	mi.RawData, mi.Error = modules.FetchModules(DS, query, 0)
 }
 
 func (mi *moduleIndex) fetchAllData() {
 	query := bson.M{"current": true}
-	mi.RawData, mi.Error = modules.FetchModules(query, 0)
+	mi.RawData, mi.Error = modules.FetchModules(DS, query, 0)
 }
 
 func (mi *moduleIndex) createIndexObjects() {
