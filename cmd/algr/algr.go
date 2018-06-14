@@ -33,8 +33,6 @@ type indexer interface {
 // update updates an index according to updateSched
 func update(i indexer, ut updateType) error {
 
-	ut = 1
-
 	switch ut {
 	case partial:
 		return partialUpdate(i)
