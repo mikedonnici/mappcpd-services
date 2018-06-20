@@ -1,10 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
-
-	"encoding/json"
 
 	"github.com/34South/envr"
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
