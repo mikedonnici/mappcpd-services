@@ -6,7 +6,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/cardiacsociety/web-services/internal/platform/jwt"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/jwt"
 	"github.com/pkg/errors"
 )
 

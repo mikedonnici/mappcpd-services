@@ -2,7 +2,7 @@
 package note
 
 import (
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 )
 
 // Note represents a record of a comment, document or anything else. A Note can be linked to a member and

@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/34South/envr"
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
-	"github.com/cardiacsociety/web-services/internal/resource"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/resource"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

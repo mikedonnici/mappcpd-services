@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/34South/envr"
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 )
 
 // updateSched is a date flag used to determine the updateSched for a particular index

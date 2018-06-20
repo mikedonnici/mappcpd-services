@@ -8,13 +8,13 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/cardiacsociety/web-services/internal/attachments"
-	"github.com/cardiacsociety/web-services/internal/fileset"
-	"github.com/cardiacsociety/web-services/internal/generic"
-	"github.com/cardiacsociety/web-services/internal/member"
-	"github.com/cardiacsociety/web-services/internal/note"
-	"github.com/cardiacsociety/web-services/internal/platform/s3"
-	"github.com/cardiacsociety/web-services/internal/resource"
+	"github.com/mikedonnici/mappcpd-services/internal/attachments"
+	"github.com/mikedonnici/mappcpd-services/internal/fileset"
+	"github.com/mikedonnici/mappcpd-services/internal/generic"
+	"github.com/mikedonnici/mappcpd-services/internal/member"
+	"github.com/mikedonnici/mappcpd-services/internal/note"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/s3"
+	"github.com/mikedonnici/mappcpd-services/internal/resource"
 )
 
 // AdminTest is a test endpoint

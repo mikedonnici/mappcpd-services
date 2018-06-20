@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cardiacsociety/web-services/internal/platform/jwt"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/jwt"
 )
 
 // AuthorizeID checks the member id passed in matches the token ID. This is used when a

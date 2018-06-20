@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cardiacsociety/web-services/internal/auth"
-	"github.com/cardiacsociety/web-services/internal/platform/jwt"
+	"github.com/mikedonnici/mappcpd-services/internal/auth"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/jwt"
 )
 
 // AuthMemberLogin handles a authenticates a user by login and password, against

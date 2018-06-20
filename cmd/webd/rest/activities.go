@@ -10,11 +10,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/imdario/mergo"
-	"github.com/cardiacsociety/web-services/internal/activity"
-	"github.com/cardiacsociety/web-services/internal/attachments"
-	"github.com/cardiacsociety/web-services/internal/cpd"
-	"github.com/cardiacsociety/web-services/internal/fileset"
-	"github.com/cardiacsociety/web-services/internal/platform/s3"
+	"github.com/mikedonnici/mappcpd-services/internal/activity"
+	"github.com/mikedonnici/mappcpd-services/internal/attachments"
+	"github.com/mikedonnici/mappcpd-services/internal/cpd"
+	"github.com/mikedonnici/mappcpd-services/internal/fileset"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/s3"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )

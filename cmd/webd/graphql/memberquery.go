@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/graphql-go/graphql"
-	"github.com/cardiacsociety/web-services/internal/platform/jwt"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/jwt"
 )
 
 // Query resolves member queries, is a 'viewer' field for the member (user) identified by the token

@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cardiacsociety/web-services/internal/cpd"
-	"github.com/cardiacsociety/web-services/internal/date"
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/cpd"
+	"github.com/mikedonnici/mappcpd-services/internal/date"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"

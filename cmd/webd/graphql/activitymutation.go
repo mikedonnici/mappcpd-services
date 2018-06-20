@@ -5,8 +5,8 @@ import (
 	"os"
 
 	"github.com/graphql-go/graphql"
-	"github.com/cardiacsociety/web-services/internal/cpd"
-	"github.com/cardiacsociety/web-services/internal/platform/jwt"
+	"github.com/mikedonnici/mappcpd-services/internal/cpd"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/jwt"
 	"github.com/pkg/errors"
 )
 

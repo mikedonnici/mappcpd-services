@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
-	"github.com/cardiacsociety/web-services/internal/resource"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/resource"
 )
 
 // ResourcesID fetches a single resource from the MySQLConnection db

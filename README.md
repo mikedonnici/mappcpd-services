@@ -1,6 +1,6 @@
 # MappCPD Web Services
 
-[![Build Status](https://travis-ci.org/mappcpd/web-services.svg?branch=master)](https://travis-ci.org/mappcpd/web-services)
+[![Build Status](https://travis-ci.org/mikedonnici/mappcpd-services.svg?branch=master)](https://travis-ci.org/mikedonnici/mappcpd-services)
 
 Set of web services that extend the existing [MappCPD](https://mappcpd.com) monolithic [architecture](https://github.com/mappcpd/architecture/wiki).
 

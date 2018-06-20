@@ -1,7 +1,7 @@
 package organisation
 
 import (
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 )
 
 // Organisation defines a business, society or similar legal entity

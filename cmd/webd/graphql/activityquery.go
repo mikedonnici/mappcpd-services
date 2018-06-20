@@ -4,9 +4,9 @@ import (
 	"os"
 
 	"github.com/graphql-go/graphql"
-	"github.com/cardiacsociety/web-services/internal/attachments"
-	"github.com/cardiacsociety/web-services/internal/date"
-	"github.com/cardiacsociety/web-services/internal/platform/jwt"
+	"github.com/mikedonnici/mappcpd-services/internal/attachments"
+	"github.com/mikedonnici/mappcpd-services/internal/date"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/jwt"
 )
 
 // activityQuery resolves a query for a single member activity

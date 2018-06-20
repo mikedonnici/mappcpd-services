@@ -3,7 +3,7 @@ package generic
 import (
 	"fmt"
 
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 )
 
 // GetIDs returns a list of ids from any table. Takes the table name (t) and a filter (f)

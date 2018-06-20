@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/34South/envr"
-	"github.com/cardiacsociety/web-services/cmd/webd/graphql"
-	"github.com/cardiacsociety/web-services/cmd/webd/rest"
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/cmd/webd/graphql"
+	"github.com/mikedonnici/mappcpd-services/cmd/webd/rest"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 )
 
 const defaultRestServerPort = "5000"

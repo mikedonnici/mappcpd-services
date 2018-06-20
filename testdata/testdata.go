@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/hashicorp/go-uuid"
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 	"github.com/nleof/goyesql"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
@@ -17,7 +17,7 @@ import (
 const MySQLDSN = "root:password@tcp(localhost:3306)/"
 const MongoDSN = "mongodb://localhost/mapp_demo"
 
-var path = os.Getenv("GOPATH") + "/src/github.com/cardiacsociety/web-services/testdata/"
+var path = os.Getenv("GOPATH") + "/src/github.com/mikedonnici/mappcpd-services/testdata/"
 var schemaQueries = goyesql.MustParseFile(path + "schema.sql")
 var tableQueries = goyesql.MustParseFile(path + "tables.sql")
 var dataQueries = goyesql.MustParseFile(path + "data.sql")

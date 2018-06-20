@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gorilla/mux"
-	"github.com/cardiacsociety/web-services/internal/organisation"
+	"github.com/mikedonnici/mappcpd-services/internal/organisation"
 )
 
 // AllOrganisations handles requests for Organisation records

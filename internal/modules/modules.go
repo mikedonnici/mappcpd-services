@@ -8,8 +8,8 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/cardiacsociety/web-services/internal/platform/datastore"
-	"github.com/cardiacsociety/web-services/internal/utility"
+	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
+	"github.com/mikedonnici/mappcpd-services/internal/utility"
 )
 
 // Module defines struct for a CPD module
