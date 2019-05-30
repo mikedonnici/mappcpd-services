@@ -1,7 +1,7 @@
 package graphql
 
 import (
-	"github.com/mikedonnici/mappcpd-services/internal/cpd"
+	"github.com/cardiacsociety/web-services/internal/cpd"
 )
 
 // evaluationData representations the member evaluation data

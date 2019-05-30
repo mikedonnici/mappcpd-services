@@ -7,43 +7,70 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mikedonnici/mappcpd-services/internal/member"
-	"github.com/mikedonnici/mappcpd-services/testdata"
+	"github.com/cardiacsociety/web-services/internal/member"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/testdata"
 	"github.com/matryer/is"
 	"gopkg.in/mgo.v2/bson"
 )
 
-var data = testdata.NewDataStore()
-var helper = testdata.NewHelper()
+var ds datastore.Datastore
 
-func TestMain(m *testing.M) {
-	err := data.SetupMySQL()
-	if err != nil {
-		log.Fatalln(err)
+const doTeardown = true
+
+func TestMember(t *testing.T) {
+
+	if doTeardown {
+		var teardown func()
+		ds, teardown = setup()
+		defer teardown()
+	} else {
+		ds, _ = setup()
 	}
-	defer data.TearDownMySQL()
 
-	err = data.SetupMongoDB()
-	if err != nil {
-		log.Fatalln(err)
-	}
-	//defer data.TearDownMongoDB()
-
-	m.Run()
+	t.Run("member", func(t *testing.T) {
+		t.Run("testPingDatabase", testPingDatabase)
+		t.Run("testByID", testByID)
+		t.Run("testSearchDocDB", testSearchDocDB)
+		t.Run("testSaveDocDB", testSaveDocDB)
+		t.Run("testSyncUpdated", testSyncUpdated)
+		t.Run("testExcelReport", testExcelReport)
+		t.Run("testExcelReportJournal", testExcelReportJournal)
+		t.Run("testLapse", testLapse)
+	})
 }
 
-func TestPingDatabase(t *testing.T) {
+func setup() (datastore.Datastore, func()) {
+	var db = testdata.NewDataStore()
+	err := db.SetupMySQL()
+	if err != nil {
+		log.Fatalf("db.SetupMySQL() err = %s", err)
+	}
+	err = db.SetupMongoDB()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return db.Store, func() {
+		err := db.TearDownMySQL()
+		if err != nil {
+			log.Fatalf("db.TearDownMySQL() err = %s", err)
+		}
+	}
+}
+
+func testPingDatabase(t *testing.T) {
 	is := is.New(t)
-	err := data.Store.MySQL.Session.Ping()
+	err := ds.MySQL.Session.Ping()
 	is.NoErr(err) // Could not ping test database
 }
 
-func TestByID(t *testing.T) {
+func testByID(t *testing.T) {
 	is := is.New(t)
-	m, err := member.ByID(data.Store, 1)
+	m, err := member.ByID(ds, 1)
 	is.NoErr(err)                                              // Error fetching member by id
 	is.True(m.Active)                                          // Active should be true
 	is.Equal(m.LastName, "Donnici")                            // Last name incorrect
+	is.True(len(m.Memberships) > 0)                            // No memberships
 	is.Equal(m.Memberships[0].Title, "Associate")              // Incorrect membership title
 	is.Equal(m.Contact.EmailPrimary, "michael@mesa.net.au")    // Email incorrect
 	is.Equal(m.Contact.Mobile, "0402123123")                   // Mobile incorrect
@@ -53,15 +80,15 @@ func TestByID(t *testing.T) {
 	//printJSON(*m)
 }
 
-func TestSearchDocDB(t *testing.T) {
+func testSearchDocDB(t *testing.T) {
 	is := is.New(t)
 	q := bson.M{"id": 7821}
-	m, err := member.SearchDocDB(data.Store, q)
+	m, err := member.SearchDocDB(ds, q)
 	is.NoErr(err)                     // Error querying MongoDB
 	is.Equal(m[0].LastName, "Rousos") // Last name incorrect
 }
 
-func TestSaveDocDB(t *testing.T) {
+func testSaveDocDB(t *testing.T) {
 	is := is.New(t)
 	mem := member.Member{
 		ID:          1,
@@ -70,22 +97,22 @@ func TestSaveDocDB(t *testing.T) {
 		Active:      true,
 		Title:       "Mr",
 		FirstName:   "Michael",
-		MiddleNames: "Peter",
+		MiddleNames: []string{"Peter"},
 		LastName:    "Donnici",
 		Gender:      "M",
 		DateOfBirth: "1970-11-03",
 	}
-	err := mem.SaveDocDB(data.Store)
+	err := mem.SaveDocDB(ds)
 	is.NoErr(err) // Error saving to MongoDB
 
 	q := bson.M{"lastName": "Donnici"}
-	xm, err := member.SearchDocDB(data.Store, q)
+	xm, err := member.SearchDocDB(ds, q)
 	m := xm[0]
 	is.NoErr(err)     // Error querying MongoDB
 	is.Equal(m.ID, 1) // ID should be 1
 }
 
-func TestSyncUpdated(t *testing.T) {
+func testSyncUpdated(t *testing.T) {
 	is := is.New(t)
 	mem := member.Member{
 		ID:          2,
@@ -98,13 +125,13 @@ func TestSyncUpdated(t *testing.T) {
 		Gender:      "M",
 		DateOfBirth: "1945-03-15",
 	}
-	err := mem.SaveDocDB(data.Store)
+	err := mem.SaveDocDB(ds)
 	is.NoErr(err) // Error saving to MongoDB
 
 	memUpdate := member.Member{
 		ID:          2,
 		CreatedAt:   time.Now().Add(-10 * time.Duration(time.Minute)), // 10 mins ago
-		UpdatedAt:   time.Now(), // should trigger update
+		UpdatedAt:   time.Now(),                                       // should trigger update
 		Active:      false,
 		Title:       "Mr",
 		FirstName:   "Barry",
@@ -112,16 +139,74 @@ func TestSyncUpdated(t *testing.T) {
 		Gender:      "M",
 		DateOfBirth: "1948-03-15",
 	}
-	err = memUpdate.SyncUpdated(data.Store)
+	err = memUpdate.SyncUpdated(ds)
 	is.NoErr(err) // Error syncing to MongoDB
 
 	q := bson.M{"lastName": "White"}
-	xm, err := member.SearchDocDB(data.Store, q)
+	xm, err := member.SearchDocDB(ds, q)
 	m := xm[0]
-	is.NoErr(err)             // Error querying MongoDB
-	is.Equal(m.ID, 2)         // ID should be 2
-	is.Equal(m.Active, false) // Active should be false
+	is.NoErr(err)                         // Error querying MongoDB
+	is.Equal(m.ID, 2)                     // ID should be 2
+	is.Equal(m.Active, false)             // Active should be false
 	is.Equal(m.DateOfBirth, "1948-03-15") // DateOfBirth incorrect
+}
+
+// fetch some test data and ensure excel report is not returning an error
+func testExcelReport(t *testing.T) {
+
+	id := 1   // member record
+	want := 2 // expect 2 rows - heading and 2 record
+
+	m, err := member.ByID(ds, id)
+	if err != nil {
+		t.Fatalf("member.ByID() err = %s", err)
+	}
+	xm := []member.Member{*m}
+	f, err := member.ExcelReport(xm)
+	if err != nil {
+		t.Fatalf("member.ExcelReport() err = %s", err)
+	}
+
+	rows := f.GetRows(f.GetSheetName(f.GetActiveSheetIndex())) // rows is [][]string
+	got := len(rows)
+	if got != want {
+		t.Errorf("GetRows() row count = %d, want %d", got, want)
+	}
+}
+
+// fetch some test data and ensure excel report (journal) is not returning an error
+func testExcelReportJournal(t *testing.T) {
+
+	id := 1   // member record
+	want := 2 // expect 2 rows - heading and 2 record
+
+	m, err := member.ByID(ds, id)
+	if err != nil {
+		t.Fatalf("member.ByID() err = %s", err)
+	}
+	xm := []member.Member{*m}
+	f, err := member.ExcelReportJournal(xm)
+	if err != nil {
+		t.Fatalf("member.ExcelReportJournal() err = %s", err)
+	}
+
+	rows := f.GetRows(f.GetSheetName(f.GetActiveSheetIndex())) // rows is [][]string
+	got := len(rows)
+	if got != want {
+		t.Errorf("GetRows() row count = %d, want %d", got, want)
+	}
+}
+
+// test lapsing a member - @todo: check the actual result
+func testLapse(t *testing.T) {
+	m, err := member.ByID(ds, 1)
+	if err != nil {
+		t.Fatalf("ByID() err = %s", err)
+	}
+	err = m.Lapse(ds)
+	if err != nil {
+		t.Fatalf("member.Lapse() err = %s", err)
+	}
 }
 
 func printJSON(m member.Member) {

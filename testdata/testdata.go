@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 	"github.com/hashicorp/go-uuid"
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 	"github.com/nleof/goyesql"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2/bson"
@@ -15,13 +15,14 @@ import (
 
 // Hard coded for local dev and Travis CI
 const MySQLDSN = "root:password@tcp(localhost:3306)/"
-const MongoDSN = "mongodb://localhost/mapp_demo"
+const MongoDSN = "mongodb://localhost/"
 
-var path = os.Getenv("GOPATH") + "/src/github.com/mikedonnici/mappcpd-services/testdata/"
+var path = os.Getenv("GOPATH") + "/src/github.com/cardiacsociety/web-services/testdata/"
 var schemaQueries = goyesql.MustParseFile(path + "schema.sql")
 var tableQueries = goyesql.MustParseFile(path + "tables.sql")
 var dataQueries = goyesql.MustParseFile(path + "data.sql")
 var memberDocs = path + "members.json"
+var resourcesDocs = path + "resources.json"
 
 type TestStore struct {
 	Name  string
@@ -43,8 +44,8 @@ func NewDataStore() *TestStore {
 			},
 			MongoDB: datastore.MongoDBConnection{
 				DBName: n,
-				DSN: MongoDSN,
-				Desc: "test Mongo database",
+				DSN:    MongoDSN,
+				Desc:   "test Mongo database",
 			},
 		},
 	}
@@ -107,20 +108,37 @@ func (t *TestStore) SetupMongoDB() error {
 		return errors.Wrap(err, "Error pinging MongoDB")
 	}
 
+	// Import member data
 	m := bson.M{}
 	f, err := ioutil.ReadFile(memberDocs)
 	if err != nil {
-		return errors.Wrap(err, "File error")
+		return errors.Wrap(err, "Error reading members json file")
 	}
-
 	err = json.Unmarshal(f, &m)
 	if err != nil {
-		return errors.Wrap(err, "Unmarshal error")
+		return errors.Wrap(err, "Unmarshal error - members")
 	}
-
 	err = t.Store.MongoDB.Session.DB(t.Store.MongoDB.DBName).C("Members").Insert(m)
 	if err != nil {
-		return errors.Wrap(err, "Error inserting test member record")
+		return errors.Wrap(err, "Error inserting member document")
+	}
+
+	// Import resources data
+	var xr []bson.M
+	f, err = ioutil.ReadFile(resourcesDocs)
+	if err != nil {
+		return errors.Wrap(err, "Error reading resources json file")
+	}
+	err = json.Unmarshal(f, &xr)
+	if err != nil {
+		return errors.Wrap(err, "Unmarshal error - resources")
+	}
+
+	for _, r := range xr {
+		err = t.Store.MongoDB.Session.DB(t.Store.MongoDB.DBName).C("Resources").Insert(r)
+		if err != nil {
+			return errors.Wrap(err, "Error inserting resource document")
+		}
 	}
 
 	return nil

@@ -3,19 +3,29 @@ package datastore
 import (
 	"log"
 	"os"
+	"time"
 
 	"github.com/pkg/errors"
+
+	cache "github.com/patrickmn/go-cache"
 )
 
 // Datastore contains connections to the various databases
 type Datastore struct {
 	MySQL   MySQLConnection
 	MongoDB MongoDBConnection
+	Cache   *cache.Cache
 }
 
 // New returns a pointer to a Datastore
 func New() *Datastore {
-	return &Datastore{}
+
+	// Cache is used to store results of 'background' jobs
+	c := cache.New(5*time.Minute, 10*time.Minute)
+
+	return &Datastore{
+		Cache: c,
+	}
 }
 
 // ConnectAll establishes sessions with the databases

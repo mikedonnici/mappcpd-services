@@ -3,8 +3,8 @@ package cpd
 import (
 	"fmt"
 
-	"github.com/mikedonnici/mappcpd-services/internal/activity"
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/activity"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 )
 
 // MemberActivityReport represents an instance of a defined evaluation/compliance period that belongs to a Member.

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
-	"github.com/mikedonnici/mappcpd-services/internal/utility"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/utility"
 	"github.com/pkg/errors"
 )
 
@@ -22,8 +22,7 @@ type Activity struct {
 	UnitID        int     `json:"unitId" bson:"unitId"`
 	UnitName      string  `json:"unitName" bson:"unitName"`
 	CreditPerUnit float64 `json:"creditPerUnit" bson:"creditPerUnit"`
-	MaxCredit     float64 `json:"creditPerUnit" bson:"creditPerUnit"`
-	// Credit       Credit `json:"credit" bson:"credit"`
+	MaxCredit     float64 `json:"maxCredit" bson:"maxCredit"`
 }
 
 // Category is the broadest grouping of activity and is purely descriptive
@@ -49,8 +48,8 @@ type Credit struct {
 // descriptive attribute, Type is the most specific. However, it is also purely descriptive as the numbers all
 // occur in the Activity entity.
 type Type struct {
-	ID   sql.NullInt64 `json:"id" bson:"id"` // can be NULL for old data
-	Name string        `json:"name" bson:"name"`
+	ID   int    `json:"id" bson:"id"`
+	Name string `json:"name" bson:"name"`
 }
 
 // All fetches active Activity records from the specified datastore - used for testing
@@ -82,7 +81,7 @@ func activityList(ds datastore.Datastore) ([]Activity, error) {
 
 	var xa []Activity
 
-	q := Queries["select-activities"] + " WHERE a.active = 1"
+	q := queries["select-activities"] + " WHERE a.active = 1"
 	rows, err := ds.MySQL.Session.Query(q)
 	if err != nil {
 		return xa, err
@@ -104,7 +103,7 @@ func activityByID(ds datastore.Datastore, id int) (Activity, error) {
 
 	var a Activity
 
-	q := Queries["select-activities"] + ` WHERE a.id = ? LIMIT 1`
+	q := queries["select-activities"] + ` WHERE a.id = ? LIMIT 1`
 	rows, err := ds.MySQL.Session.Query(q, id) // not using .QueryRow so can share scanActivity func
 	if err != nil {
 		return a, err
@@ -133,11 +132,10 @@ func activityByTypeID(ds datastore.Datastore, id int) (Activity, error) {
 }
 
 func activityTypes(ds datastore.Datastore, activityID int) ([]Type, error) {
-
 	var xat []Type
 
-	query := "SELECT id, name FROM ce_activity_type WHERE active = 1 AND ce_activity_id = ?"
-	rows, err := ds.MySQL.Session.Query(query, activityID)
+	q := fmt.Sprintf(queries["select-activity-types"], activityID)
+	rows, err := ds.MySQL.Session.Query(q)
 	if err != nil {
 		return xat, err
 	}

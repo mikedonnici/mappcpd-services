@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/mikedonnici/mappcpd-services/internal/activity"
-	"github.com/mikedonnici/mappcpd-services/internal/cpd"
-	"github.com/mikedonnici/mappcpd-services/internal/date"
+	"github.com/cardiacsociety/web-services/internal/activity"
+	"github.com/cardiacsociety/web-services/internal/cpd"
+	"github.com/cardiacsociety/web-services/internal/date"
 	"github.com/pkg/errors"
 )
 
@@ -157,7 +157,7 @@ func mapActivitiesData(memberID int, filter map[string]interface{}) ([]activityD
 			Category:      v.Category.Name,
 			ActivityID:    v.Activity.ID,
 			Activity:      v.Activity.Name,
-			TypeID:        int(v.Type.ID.Int64), // null-able field
+			TypeID:        v.Type.ID,
 			Type:          v.Type.Name,
 			Description:   v.Description,
 			Evidence:      v.Evidence,
@@ -206,7 +206,7 @@ func mapActivityData(memberID, memberActivityID int) (activityData, error) {
 	a.Category = ma.Category.Name
 	a.ActivityID = ma.Activity.ID
 	a.Activity = ma.Activity.Name
-	a.TypeID = int(ma.Type.ID.Int64)
+	a.TypeID = ma.Type.ID
 	a.Type = ma.Type.Name
 	a.Description = ma.Description
 	a.Evidence = ma.Evidence

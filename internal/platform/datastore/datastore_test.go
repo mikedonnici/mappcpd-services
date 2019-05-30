@@ -4,8 +4,8 @@ import (
 	"log"
 	"testing"
 
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
-	"github.com/mikedonnici/mappcpd-services/testdata"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/testdata"
 )
 
 var db = testdata.NewDataStore()

@@ -2,28 +2,18 @@
 
 Contains executable for the web server api.
 
-Can start as REST server, or a GraphQL server. This is a workaround for the one web-process 
-limit on Heroku and allows the same repo to be pushed to two separate Heroku apps - one for 
-the REST server and the other GraphQL.
+REST(ish) web services and GraphQL run on the same deployment.
 
-
+GraphQL is simply answering on the `/graphql` endpoint.
 
 **flags**
 
-`-s` server type, values can be 'rest' or 'graphql'
-
-`-p` port number, defaults to 5000 for rest server, 5001 for graphql server
-
-
-eg. Start graphql server on dev machine:
+`-p` override default port (5000) - env var `PORT` takes precedence over all
 
 ```bash
-$  go run cmd/webd/main.go -s graphql
-```
+# start on dev machine with default port (5000)
+$  go run cmd/webd/main.go
 
-Alternatively, set env var:
- 
+# start on dev machine with custom port
+$ go run cmd/webd/main.go - p 8081
 ```
-WEBD_TYPE=[rest|graphql]
-```
-

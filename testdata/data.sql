@@ -232,33 +232,29 @@ INSERT INTO `%s`.`fn_invoice_inventory` VALUES
   (15580, 16593, 1, 1, '2017-01-04 21:30:36', '2017-01-04 21:30:36', 'Associate Membership Fee', 1.00, 300.00, 10.00,
           'GST');
 
--- name: insert-data-fn_invoice_payment
-INSERT INTO `%s`.`fn_invoice_payment` VALUES (1, 1, 1, 1, '2015-09-01 06:56:48', '2015-09-01 06:56:48', 108.90, NULL);
-
 -- name: insert-data-fn_m_invoice
 INSERT INTO `%s`.`fn_m_invoice` VALUES
-  (1, 502, 1, 1, 1, 0, '2015-09-01 06:13:26', '2015-09-01 06:56:48', '2015-09-01 06:13:27', '2015-09-01 06:13:33',
-      '2015-09-01', '2015-09-15', '2015-09-01', '2015-12-31', 108.90, NULL),
-  (2, 482, 1, 1, 0, 0, '2015-09-01 06:46:13', '2017-01-02 09:05:27', '2015-09-01 06:46:13', '2017-01-02 09:05:27',
-      '2015-09-01', '2015-09-15', '2015-09-01', '2015-12-31', 108.90, NULL),
-  (3, 488, 1, 1, 0, 0, '2015-09-01 06:46:13', '2017-01-02 09:05:27', '2015-09-01 06:46:13', '2017-01-02 09:05:27',
-      '2015-09-01', '2015-09-15', '2015-09-01', '2015-12-31', 108.90, NULL),
-  (4, 499, 3, 1, 0, 0, '2015-09-01 06:46:13', '2017-01-02 09:05:27', '2015-09-01 06:46:13', '2017-01-02 09:05:27',
-      '2015-09-01', '2015-09-15', '2015-09-01', '2015-12-31', 326.70, NULL),
-  (5, 485, 3, 1, 0, 0, '2015-09-01 06:46:13', '2017-01-02 09:05:28', '2015-09-01 06:46:13', '2017-01-02 09:05:28',
-      '2015-09-01', '2015-09-15', '2015-09-01', '2015-12-31', 326.70, NULL);
+  (1, 1, 1, 1, 1, 0, NOW(), NOW(), NOW(), NOW(),
+      '2018-01-01', '2018-01-15', '2018-01-01', '2018-12-31', 110.11, "Subs for 2018"),
+  (2, 1, 1, 1, 1, 0, NOW(), NOW(), NOW(), NOW(),
+      '2019-01-01', '2019-01-15', '2019-01-01', '2019-12-31', 220.22, "Subs for 2019");
+
+-- name: insert-data-fn_invoice_payment
+INSERT INTO `%s`.`fn_invoice_payment` VALUES 
+  (1, 1, 1, 1, NOW(), NOW(), 108.95, "Allocation of payment id 1 to invoice id 1");
+
+  -- name: insert-data-fn_payment
+INSERT INTO `%s`.`fn_payment` VALUES
+  (1, 1, 1, NULL, 1, NOW(), NOW(), '2015-09-01', 108.95, 'Payment for invoice id 1', 'data1 - 123', 'data2 - abc', 'data3 - 123abc', 'data4 - abc123'),
+  (2, 4, 1, NULL, 1, NOW(), NOW(), '2016-09-01', 10.10, '', '', '', '', ''),
+  (3, 3, 1, NULL, 1, NOW(), NOW(), '2017-09-01', 20.20, '', '', '', '', ''),
+  (4, 2, 1, NULL, 1, NOW(), NOW(), '2018-09-01', 20.31, '', '', '', '', ''),
+  (5, 1, 2, NULL, 1, NOW(), NOW(), '2018-09-01', 30.32, '', '', '', '', '');
 
 -- name: insert-data-fn_m_subscription
 INSERT INTO `%s`.`fn_m_subscription` VALUES
-  (1, 502, 1, NULL, 1, 0, '2015-09-01 04:46:58', '2017-01-02 09:05:22', NULL, '2018-01-01', NULL),
-  (2, 482, 1, 1, 1, 0, '2015-09-01 06:43:23', '2017-01-02 09:05:22', NULL, '2018-01-01', NULL),
-  (3, 488, 1, 1, 1, 0, '2015-09-01 06:43:23', '2017-01-02 09:05:22', NULL, '2018-01-01', NULL),
-  (4, 499, 3, 2, 1, 0, '2015-09-01 06:45:34', '2017-01-02 09:05:22', NULL, '2018-01-01', NULL),
-  (5, 485, 3, 2, 1, 0, '2015-09-01 06:45:34', '2017-01-02 09:05:22', NULL, '2018-01-01', NULL);
+  (1, 1, 1, NULL, 1, 0, NOW(), NOW(), NULL, '2020-01-01', NULL);
 
--- name: insert-data-fn_payment
-INSERT INTO `%s`.`fn_payment` VALUES
-  (1, 5, 502, NULL, 1, '2015-09-01 06:56:48', '2015-09-01 06:56:48', '2015-09-01', 108.90, '', '', '', '', '');
 
 -- name: insert-data-fn_payment_type
 INSERT INTO `%s`.`fn_payment_type` VALUES
@@ -351,9 +347,9 @@ INSERT INTO `%s`.`mp_m_contact` VALUES
 
 -- name: insert-data-mp_m_position
 INSERT INTO `%s`.`mp_m_position` VALUES
-  (1, 1, 2, 317, 1, NOW(), NOW(), '2017-12-03', '2017-12-03', NULL),
-  (2, 1, 3, 95, 1, NOW(), NOW(), '2018-03-23', '2019-03-26', NULL),
-  (3, 1, 1, 14, 1, NOW(), NOW(), NULL, NULL, NULL);
+  (1, 1, 1, 317, 1, NOW(), NOW(), '2017-12-03', '2017-12-03', NULL),
+  (2, 1, 2, 95, 1, NOW(), NOW(), '2018-03-23', '2019-03-26', NULL),
+  (3, 1, 3, 14, 1, NOW(), NOW(), NULL, NULL, NULL);
 
 -- name: insert-data-mp_m_qualification
 INSERT INTO `%s`.`mp_m_qualification` VALUES
@@ -368,44 +364,44 @@ INSERT INTO `%s`.`mp_m_speciality` VALUES
 
 -- name: insert-data-mp_position
 INSERT INTO `%s`.`mp_position` VALUES
-  (1, 0, 1, '2015-08-30 17:10:25', '2015-08-30 17:10:25', 0, 'AFFIL', 'Affiliation',
+  (1, 0, 1, '2015-08-30 17:10:25', '2015-08-30 17:10:25', 0, 'AFFIL', 'Affiliate',
    '... has an affiliation with an organisation'),
   (2, 0, 1, '2015-08-30 17:10:26', '2015-08-30 17:10:26', 0, 'MEMBER', 'Member', '... is a member of an organisation'),
-  (3, 0, 1, '2015-08-30 17:10:26', '2015-08-30 17:10:26', 0, 'CHAIR', 'CHAIR',
+  (3, 0, 1, '2015-08-30 17:10:26', '2015-08-30 17:10:26', 0, 'CHAIR', 'Chair',
    '... is the chair of a group / committee'),
   (4, 0, 1, '2015-08-30 17:10:26', '2015-08-30 17:10:26', 0, 'MANAGER', 'Manager', 'A management position.');
 
 -- name: insert-data-mp_qualification
 INSERT INTO `%s`.`mp_qualification` VALUES
-  (1, 0, 1, '2013-06-10 16:30:29', '2013-06-10 16:30:29', 0, 'BCh', 'Bachelor of Chemistry', ''),
-  (2, 0, 1, '2013-06-10 16:32:15', '2013-06-10 16:32:15', 0, 'MBBS', 'Bachelor of Medicine, Bachelor of Surgery', ''),
-  (3, 0, 1, '2013-06-10 16:32:51', '2013-06-10 16:32:51', 0, 'BSc', 'Bachelor of Science', ''),
-  (4, 0, 1, '2013-06-10 16:33:37', '2013-06-10 16:33:37', 0, 'ChB', 'Bachelor of Surgery', ''),
-  (5, 0, 1, '2013-06-10 16:34:13', '2013-06-10 16:34:13', 0, 'DDU', 'Diploma of Diagnostic Ultrasound', ''),
-  (6, 0, 1, '2013-06-10 16:34:33', '2013-06-10 16:34:33', 0, 'DSc', 'Doctor of Science', ''),
-  (7, 0, 1, '2013-06-10 16:35:04', '2013-06-10 16:35:04', 0, 'FACC', 'Fellow of the American College of Cardiology', ''),
-  (8, 0, 1, '2013-06-10 16:35:27', '2013-06-10 16:35:27', 0, 'FACS', 'Fellow of the American College of Surgeons', ''),
-  (9, 0, 1, '2013-06-10 16:35:44', '2013-06-10 16:35:44', 0, 'FAHA', 'Fellow of the American Heart Association', ''),
-  (10, 0, 1, '2013-06-10 16:36:03', '2013-06-10 16:36:03', 0, 'FCCP', 'Fellow of the American College of Chest Physicians', ''),
-  (11, 0, 1, '2013-06-10 16:36:25', '2013-06-10 16:36:25', 0, 'FCSANZ', 'Fellow of the Cardiac Society of Australia and New Zealand', ''),
-  (12, 0, 1, '2013-06-10 16:37:04', '2013-06-10 16:37:04', 0, 'FRACP', 'Fellow of the Royal Australasian College of Physicians', ''),
-  (13, 0, 1, '2013-06-10 16:37:23', '2013-10-03 20:22:18', 0, 'FRACS', 'Fellow of the Royal Australiasian College of Surgeons', ''),
-  (14, 0, 1, '2013-06-10 16:37:44', '2013-06-10 16:37:44', 0, 'FRCP', 'Fellow of the Royal College of Physicians', ''),
-  (15, 0, 1, '2013-06-10 16:38:11', '2013-06-10 16:38:11', 0, 'FRCS', 'Fellow of the Royal College of Surgeons', ''),
-  (16, 0, 1, '2013-06-10 16:38:29', '2013-06-10 16:38:29', 0, 'FTSE', 'Fellow of the Austalian Academy of Technological Sciences and Engineering', ''),
-  (17, 0, 1, '2013-06-10 16:39:08', '2013-06-10 16:39:08', 0, 'MB', 'Bachelor of Medicine', ''),
-  (18, 0, 1, '2013-06-10 16:39:31', '2013-06-10 16:39:31', 0, 'MD', 'Doctor of Medicine', ''),
-  (19, 0, 1, '2013-06-10 16:39:54', '2013-06-10 16:39:54', 0, 'MRCP', 'Member of the Royal College of Physicians', ''),
-  (20, 0, 1, '2013-06-10 16:40:11', '2013-06-10 19:59:00', 0, 'MSc', 'Master of Science', ''),
-  (21, 0, 1, '2013-06-10 16:42:59', '2013-06-10 16:42:59', 0, 'PhD', 'PhD', ''),
-  (22, 0, 1, '2013-06-10 16:43:22', '2013-06-10 16:43:22', 0, 'BS', 'Bachelor of Surgery', ''),
-  (23, 0, 1, '2013-06-10 20:02:52', '2013-06-10 20:02:52', 0, 'BEd', 'Bachelor of Education', ''),
-  (24, 0, 1, '2013-06-10 20:03:11', '2013-06-10 20:03:11', 0, 'MEd', 'Master of Education', ''),
-  (25, 0, 1, '2013-06-10 20:03:56', '2013-06-10 20:03:56', 0, 'MA', 'Master of Arts', ''),
-  (26, 0, 1, '2013-06-10 20:21:47', '2013-06-10 20:21:47', 0, 'MBA', 'Master of Business Administration', ''),
-  (27, 0, 1, '2013-06-10 20:29:57', '2013-06-10 20:29:57', 0, 'BSc (Med)', 'Bachelor of Science (Medicine)', ''),
-  (28, 0, 1, '2013-06-10 20:30:45', '2013-06-10 20:30:45', 0, 'BMedSc', 'Bachelor of Medical Sciences', ''),
-  (29, 0, 1, '2013-06-10 20:34:03', '2013-06-10 20:34:03', 0, 'BM', 'Bachelor of Medicine', '');
+  (1, 0, 1, NOW(), NOW(), 0, 'BCh', 'Bachelor of Chemistry', ''),
+  (2, 0, 1, NOW(), NOW(), 0, 'MBBS', 'Bachelor of Medicine, Bachelor of Surgery', ''),
+  (3, 0, 1, NOW(), NOW(), 0, 'BSc', 'Bachelor of Science', ''),
+  (4, 0, 1, NOW(), NOW(), 0, 'ChB', 'Bachelor of Surgery', ''),
+  (5, 0, 1, NOW(), NOW(), 0, 'DDU', 'Diploma of Diagnostic Ultrasound', ''),
+  (6, 0, 1, NOW(), NOW(), 0, 'DSc', 'Doctor of Science', ''),
+  (7, 0, 1, NOW(), NOW(), 0, 'FACC', 'Fellow of the American College of Cardiology', ''),
+  (8, 0, 1, NOW(), NOW(), 0, 'FACS', 'Fellow of the American College of Surgeons', ''),
+  (9, 0, 1, NOW(), NOW(), 0, 'FAHA', 'Fellow of the American Heart Association', ''),
+  (10, 0, 1, NOW(), NOW(), 0, 'FCCP', 'Fellow of the American College of Chest Physicians', ''),
+  (11, 0, 1, NOW(), NOW(), 0, 'FCSANZ', 'Fellow of the Cardiac Society of Australia and New Zealand', ''),
+  (12, 0, 1, NOW(), NOW(), 0, 'FRACP', 'Fellow of the Royal Australasian College of Physicians', ''),
+  (13, 0, 1, NOW(), NOW(), 0, 'FRACS', 'Fellow of the Royal Australiasian College of Surgeons', ''),
+  (14, 0, 1, NOW(), NOW(), 0, 'FRCP', 'Fellow of the Royal College of Physicians', ''),
+  (15, 0, 1, NOW(), NOW(), 0, 'FRCS', 'Fellow of the Royal College of Surgeons', ''),
+  (16, 0, 1, NOW(), NOW(), 0, 'FTSE', 'Fellow of the Austalian Academy of Technological Sciences and Engineering', ''),
+  (17, 0, 1, NOW(), NOW(), 0, 'MB', 'Bachelor of Medicine', ''),
+  (18, 0, 1, NOW(), NOW(), 0, 'MD', 'Doctor of Medicine', ''),
+  (19, 0, 1, NOW(), NOW(), 0, 'MRCP', 'Member of the Royal College of Physicians', ''),
+  (20, 0, 1, NOW(), NOW(), 0, 'MSc', 'Master of Science', ''),
+  (21, 0, 1, NOW(), NOW(), 0, 'PhD', 'PhD', ''),
+  (22, 0, 1, NOW(), NOW(), 0, 'BS', 'Bachelor of Surgery', ''),
+  (23, 0, 1, NOW(), NOW(), 0, 'BEd', 'Bachelor of Education', ''),
+  (24, 0, 1, NOW(), NOW(), 0, 'MEd', 'Master of Education', ''),
+  (25, 0, 1, NOW(), NOW(), 0, 'MA', 'Master of Arts', ''),
+  (26, 0, 1, NOW(), NOW(), 0, 'MBA', 'Master of Business Administration', ''),
+  (27, 0, 1, NOW(), NOW(), 0, 'BSc (Med)', 'Bachelor of Science (Medicine)', ''),
+  (28, 0, 1, NOW(), NOW(), 0, 'BMedSc', 'Bachelor of Medical Sciences', ''),
+  (29, 0, 1, NOW(), NOW(), 0, 'BM', 'Bachelor of Medicine', '');
 
 -- name: insert-data-mp_speciality
 INSERT INTO `%s`.`mp_speciality` VALUES
@@ -420,16 +416,18 @@ INSERT INTO `%s`.`mp_tag` VALUES
   (1, 1, NOW(), NOW(), 'Allied Health', ''),
   (2, 1, NOW(), NOW(), 'Nurse', ''),
   (3, 1, NOW(), NOW(), 'Surgeon', ''),
-  (4, 1, '2013-06-12 16:27:22', '2013-06-12 16:27:22', 'Advanced Trainee', ''),
-  (5, 1, '2013-07-15 14:19:37', '2013-07-15 14:19:37', 'Retired / Comp', 'Complimentary subscription');
+  (4, 1, NOW(), NOW(), 'Advanced Trainee', ''),
+  (5, 1, NOW(), NOW(), 'Retired / Comp', 'Complimentary subscription');
 
 -- name: insert-data-ms_m_application
 INSERT INTO `%s`.`ms_m_application` VALUES
-  (1, 502, 388, 440, 2, NULL, 1, '2015-09-01 04:30:30', '2015-09-01 04:44:01', '2015-09-01', 1, 'all good!'),
+  (1, 502, 388, 440, 2, NULL, 1, '2015-09-01 04:30:30', '2015-09-01 04:44:01', '2015-09-01', 1, 'first application'),
   (2, 482, 72, 440, 2, 1, 1, '2015-09-01 06:28:15', '2015-09-01 06:43:22', '2015-09-01', 1, NULL),
   (3, 488, 389, 456, 2, 1, 1, '2015-09-01 06:29:00', '2015-09-01 06:43:23', '2015-09-01', 1, NULL),
   (4, 499, 423, 195, 4, 2, 1, '2015-09-01 06:29:56', '2015-09-01 06:45:34', '2015-09-01', 1, NULL),
-  (5, 485, 168, 317, 4, 2, 1, '2015-09-01 06:31:16', '2015-09-01 06:45:34', '2015-09-01', 1, NULL);
+  (5, 485, 168, 317, 4, 2, 1, '2015-09-01 06:31:16', '2015-09-01 06:45:34', '2015-09-01', 1, NULL),
+  (6, 502, 388, 440, 4, NULL, 1, '2017-09-01 04:30:30', '2017-09-01 04:44:01', '2017-07-01', 1, 'second application'),
+  (7, 502, 388, 440, 4, NULL, 0, '2017-09-01 04:30:30', '2017-09-01 04:44:01', '2017-07-01', 1, 'soft-deleted record');
 
 -- name: insert-data-ms_m_application_meeting
 INSERT INTO `%s`.`ms_m_application_meeting` VALUES
@@ -438,26 +436,14 @@ INSERT INTO `%s`.`ms_m_application_meeting` VALUES
 -- insert-data-ms_m_permission
 
 -- name: insert-data-ms_m_status
-INSERT INTO `%s`.`ms_m_status` VALUES (1, 1, 1, 0, 1, 0, '2015-08-30 17:10:57', NOW(), NULL),
-  (2, 2, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
-  (3, 3, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
-  (4, 4, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
-  (5, 5, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
-  (6, 6, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
-  (7, 7, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
-  (8, 8, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL),
-  (9, 9, 1, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), NULL);
+INSERT INTO `%s`.`ms_m_status` VALUES
+  (1, 1, 1, 0, 1, 1, '2015-08-30 17:10:57', NOW(), NULL);
 
 -- name: insert-data-ms_m_title
 INSERT INTO `%s`.`ms_m_title` VALUES
   (1, 1, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
-   'Test data does will not show historic titles'),
-  (2, 2, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
-   'Test data does will not show historic titles'),
-  (3, 3, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
-   'Test data does will not show historic titles'),
-  (4, 4, 2, NULL, 1, 1, '2015-08-30 17:10:57', NOW(), '2015-08-31',
    'Test data does will not show historic titles');
+
 
 -- insert-data-ms_permission
 
@@ -553,9 +539,9 @@ INSERT INTO `%s`.`ol_resource` VALUES
 INSERT INTO `%s`.`organisation` VALUES
   (1, NULL, 1, 1, 1, NOW(), NOW(), 'ABC', 'ABC Organisation', '', '', '', '', '', '', '', '', '', ''),
   (2, NULL, 1, 1, 1, NOW(), NOW(), 'DEF', 'DEF Organisation', '', '', '', '', '', '', '', '', '', ''),
-  (3, 1, 1, 1, 1, NOW(), NOW(), 'ABC-1', 'ABC Sub1', '', '', '', '', '', '', '', '', '', ''),
-  (4, 1, 1, 1, 1, NOW(), NOW(), 'ABC-2', 'ABC Sub2', '', '', '', '', '', '', '', '', '', ''),
-  (5, 1, 1, 1, 1, NOW(), NOW(), 'ABC-3', 'ABC Sub3', '', '', '', '', '', '', '', '', '', '');
+  (3, 1, 2, 1, 1, NOW(), NOW(), 'ABC-1', 'ABC Sub1', '', '', '', '', '', '', '', '', '', ''),
+  (4, 1, 3, 1, 1, NOW(), NOW(), 'ABC-2', 'ABC Sub2', '', '', '', '', '', '', '', '', '', ''),
+  (5, 1, 4, 1, 1, NOW(), NOW(), 'ABC-3', 'ABC Sub3', '', '', '', '', '', '', '', '', '', '');
 
 -- name: insert-data-organisation_type
 INSERT INTO `%s`.`organisation_type` VALUES
@@ -604,32 +590,17 @@ INSERT INTO `%s`.`wf_issue_category` VALUES
   (5, 1, '2013-07-04 14:36:36', '2013-07-04 14:36:36', 'Data Integrity', 'Issues relating to missing or broken data.');
 
 -- name: insert-data-wf_issue_type
-INSERT INTO `%s`.`wf_issue_type` VALUES
-  (1, 4, NULL, 1, 1, 1, 1, '2013-07-04 14:37:45', '2013-11-27 17:53:14', 'Invoice Raised',
-      'A new invoice has been raised and is pending payment.',
-   'Members can pay online or by alternate methods specified on the invoice.', NULL),
-  (2, 4, NULL, 1, 1, 1, 1, '2013-07-04 14:38:26', '2013-11-27 17:54:15', 'Invoice Past Due',
-      'Invoice is past due and pending payment.', 'Please pay online or by alternate methods specified on the invoice.',
-   NULL), (3, 5, NULL, 1, 1, 1, 0, '2013-09-03 16:32:00', '2013-09-09 14:16:40', 'Missing Primary Email',
-              'All active members require a primary email to access the system and for communications.',
-           'Add a primary email address to member profile.', NULL),
-  (4, 5, NULL, 1, 1, 1, 0, '2013-09-03 16:34:11', '2013-09-09 14:15:49', 'Missing Membership Subscription',
-      'All active members require a membership subscription, even if that subscription is complimentary.',
-   'Assign the appropriate membership subscription.', NULL),
-  (5, 5, NULL, 1, 1, 1, 0, '2013-09-03 16:36:54', '2013-09-09 14:18:07', 'Empty Contact Card',
-      'All active members require at least one field to be filled in for each persistent contact card.',
-   'Edit member contact information and provide at least one value (or \'n/a\') in each of the persistent contact cards.',
-   NULL), (6, 4, NULL, 1, 1, 1, 1, '2013-11-07 11:48:01', '2013-11-27 17:55:38', 'Invoice Final Notice',
-              'Invoice is past due and a final notice has been issued by email.',
-           'Please note no further notices will be emailed.  If your subscription is not paid immediately, your Membership of the Society will be cancelled.',
-           NULL), (8, 1, NULL, 1, 1, 0, 0, '2015-04-08 22:38:32', '2015-04-08 22:38:32', 'Email Communication Failure',
-                      'A recent email communication failed for some reason. ',
-                   'Check the specific messages in the Member\'s communication tab for clues as to the appropriate follow up.',
-                   NULL), (9, 4, NULL, 1, 1, 0, 0, '2016-03-20 16:13:08', '2016-03-20 16:13:08', 'Invoice Overpaid',
-                              'Total of payments allocated to invoice exceeds the invoice total. ',
-                           'Require manual intervention to remove payment allocations as well as refund if applicable.',
-                           NULL),
-  (10000, 1, NULL, 1, 0, 0, 0, '2013-09-10 21:06:29', '2013-09-11 15:53:12', 'General Admin', '-', '-', NULL);
+INSERT INTO `%s`.`wf_issue_type` VALUES 
+(1,4,NULL,1,1,1,1,'2013-07-05 10:37:45','2013-11-28 15:53:14','Invoice Raised','A new invoice has been raised and is pending payment.','Members can pay online or by alternate methods specified on the invoice.',NULL),
+(2,4,NULL,1,1,1,1,'2013-07-05 10:38:26','2013-11-28 15:54:15','Invoice Past Due','Invoice is past due and pending payment.','Please pay online or by alternate methods specified on the invoice.',NULL),
+(3,5,NULL,1,1,1,0,'2013-09-04 12:32:00','2013-09-10 10:16:40','Missing Primary Email','All active members require a primary email to access the system and for communications.','Add a primary email address to member profile.',NULL),
+(4,5,NULL,1,1,1,0,'2013-09-04 12:34:11','2013-09-10 10:15:49','Missing Membership Subscription','All active members require a membership subscription, even if that subscription is complimentary.','Assign the appropriate membership subscription.',NULL),
+(5,5,NULL,1,1,1,0,'2013-09-04 12:36:54','2013-09-10 10:18:07','Empty Contact Card','All active members require at least one field to be filled in for each persistent contact card.','Edit member contact information and provide at least one value (or \'n/a\') in each of the persistent contact cards.',NULL),
+(6,4,NULL,1,1,1,1,'2013-11-08 09:48:01','2013-11-28 15:55:38','Invoice Final Notice','Invoice is past due and a final notice has been issued by email.','Please note no further notices will be emailed.  If your subscription is not paid immediately, your Membership of the Society will be cancelled.',NULL),
+(8,1,NULL,1,1,0,0,'2015-04-09 18:38:32','2015-04-09 18:38:32','Email Communication Failure','A recent email communication failed for some reason. ','Check the specific messages in the Members communication tab for clues as to the appropriate follow up.',NULL),
+(9,4,NULL,1,1,0,0,'2016-03-21 14:12:09','2016-03-21 14:12:09','Invoice Overpaid','Total of payments allocated to invoice exceeds the invoice total. ','Require manual intervention to remove payment allocations as well as refund if applicable.',NULL),
+(10,2,NULL,1,1,0,0,'2019-03-12 10:45:07','2019-03-12 10:45:07','Online Application','Online applications pending acceptance.','Check supplied information, assign appropriate title and status, allocate to meetings.',NULL),
+(10000,1,NULL,1,0,0,0,'2013-09-11 17:06:29','2013-09-12 11:53:12','General Admin','-','-',NULL);
 
 -- name: insert-data-wf_note
 INSERT INTO `%s`.`wf_note` VALUES
@@ -642,10 +613,29 @@ INSERT INTO `%s`.`wf_note` VALUES
 INSERT INTO `%s`.`wf_note_association` VALUES
   (1, 1, 1, 1, 1, NOW(), NOW(), 'application'),
   (2, 2, 1, 1, 1, NOW(), NOW(), 'issue'),
-  (3, 3, 1, 2, 1, NOW(), NOW(), 'issue'),
-  (4, 4, 2, 3, 1, NOW(), NOW(), 'issue');
+  (3, 3, 1, 2, 1, NOW(), NOW(), 'issue');
 
 -- name: insert-data-wf_note_type
-INSERT INTO `%s`.`wf_note_type` VALUES
-  (1, 1, 1, NOW(), NOW(), 'System', 'Note added by system housekeeping'),
-  (10001, 1, 0, NOW(), NOW(), 'General', '');
+INSERT INTO `%s`.`wf_note_type` (`id`,`active`,`system`,`created_at`,`updated_at`,`name`,`description`) VALUES
+  (1,1,1,'2013-11-08 09:53:15','2013-11-08 09:53:15','System','Note added by the system housekeeping functions'),
+  (10001,1,0,'2013-05-07 02:18:02','2013-06-27 12:43:21','General',''),
+  (10002,1,0,'2013-06-27 12:43:33','2013-06-27 12:43:33','Award',''),
+  (10003,1,0,'2013-06-27 15:15:10','2013-06-27 15:15:10','Call',''),
+  (10004,1,0,'2013-06-27 15:38:56','2013-06-27 15:38:56','Deceased',''),
+  (10005,1,0,'2013-06-27 16:12:30','2013-06-27 16:12:30','Email',''),
+  (10006,1,0,'2013-06-27 16:22:04','2013-06-27 16:22:04','File Note',''),
+  (10007,1,0,'2013-06-27 16:22:04','2013-06-27 16:22:04','History',''),
+  (10008,1,0,'2013-06-27 16:22:04','2013-06-27 16:22:04','Lapsed',''),
+  (10009,1,0,'2013-06-27 16:22:04','2013-07-31 16:28:04','Lead Extraction',''),
+  (10010,1,0,'2013-06-27 16:22:04','2013-06-27 16:22:04','Named Lecture',''),
+  (10011,1,0,'2013-06-27 16:22:04','2013-06-27 16:22:04','Prize',''),
+  (10012,1,0,'2013-06-27 16:22:04','2013-06-27 16:22:04','Removed',''),
+  (10013,1,0,'2013-06-28 11:02:47','2013-06-28 11:02:47','Research',''),
+  (10014,1,0,'2013-06-28 11:03:06','2013-06-28 11:03:06','Resigned',''),
+  (10015,1,0,'2013-06-28 11:03:06','2013-06-28 11:03:06','Retired',''),
+  (10016,1,0,'2013-06-28 11:03:06','2013-06-28 11:03:06','Suspend',''),
+  (10017,1,0,'2013-07-16 12:28:28','2013-07-16 12:28:28','Communication','Define type of communication, eg email'),
+  (10018,1,0,'2013-07-16 16:22:40','2013-07-16 16:22:40','Advanced Trainee','Name of Hospital'),
+  (10019,1,0,'2013-08-08 11:45:48','2013-08-08 11:45:48','Other / Scholarship','ASM Scholarship, Travelling Scholarship to ACC AHA and ESC, Research Scholarships'),
+  (10020,1,0,'2013-10-28 08:25:37','2013-10-28 08:25:37','Personal','');
+

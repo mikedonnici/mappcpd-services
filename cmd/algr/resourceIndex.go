@@ -4,7 +4,7 @@ import (
 	"time"
 
 	"github.com/algolia/algoliasearch-client-go/algoliasearch"
-	"github.com/mikedonnici/mappcpd-services/internal/resource"
+	"github.com/cardiacsociety/web-services/internal/resource"
 	"gopkg.in/mgo.v2/bson"
 )
 

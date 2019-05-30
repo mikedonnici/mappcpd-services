@@ -5,39 +5,60 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/mikedonnici/mappcpd-services/internal/organisation"
-	"github.com/mikedonnici/mappcpd-services/testdata"
+	"github.com/cardiacsociety/web-services/internal/organisation"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/testdata"
 )
 
-var db = testdata.NewDataStore()
-var helper = testdata.NewHelper()
+var ds datastore.Datastore
 
-func TestMain(m *testing.M) {
+func TestOrganisation(t *testing.T) {
+
+	var teardown func()
+	ds, teardown = setup()
+	defer teardown()
+
+	t.Run("organisation", func(t *testing.T) {
+		t.Run("testPingDatabase", testPingDatabase)
+		t.Run("testOrganisationByID", testOrganisationByID)
+		t.Run("testOrganisationDeepEqual", testOrganisationDeepEqual)
+		t.Run("testOrganisationCount", testOrganisationCount)
+		t.Run("testChildOrganisationCount", testChildOrganisationCount)
+		t.Run("testOrganisationByTypeID", testOrganisationByTypeID)
+	})
+}
+
+func setup() (datastore.Datastore, func()) {
+	var db = testdata.NewDataStore()
 	err := db.SetupMySQL()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalf("SetupMySQL() err = %s", err)
 	}
-	defer db.TearDownMySQL()
-
-	m.Run()
+	return db.Store, func() {
+		db.TearDownMySQL()
+	}
 }
 
-func TestPingDatabase(t *testing.T) {
-	err := db.Store.MySQL.Session.Ping()
+func testPingDatabase(t *testing.T) {
+	err := ds.MySQL.Session.Ping()
 	if err != nil {
-		t.Fatal("Could not ping database")
+		t.Fatalf("Ping() err = %s", err)
 	}
 }
 
-func TestOrganisationByID(t *testing.T) {
-	org, err := organisation.ByID(db.Store, 1)
+func testOrganisationByID(t *testing.T) {
+	org, err := organisation.ByID(ds, 1)
 	if err != nil {
-		t.Fatalf("Database error: %s", err)
+		t.Fatalf("organisation.ByID() err = %s", err)
 	}
-	helper.Result(t, "ABC Organisation", org.Name)
+	got := org.Name
+	want := "ABC Organisation"
+	if got != want {
+		t.Errorf("organisation.ByID() Name = %q, want %q", got, want)
+	}
 }
 
-func TestOrganisationDeepEqual(t *testing.T) {
+func testOrganisationDeepEqual(t *testing.T) {
 
 	exp := organisation.Organisation{
 		ID:   1,
@@ -50,29 +71,63 @@ func TestOrganisationDeepEqual(t *testing.T) {
 		},
 	}
 
-	o, err := organisation.ByID(db.Store, 1)
+	o, err := organisation.ByID(ds, 1)
 	if err != nil {
-		t.Fatalf("Database error: %s", err)
+		t.Fatalf("organisation.ByID() err = %s", err)
 	}
 
-	res := reflect.DeepEqual(exp, o)
-	helper.Result(t, true, res)
+	got := reflect.DeepEqual(exp, o)
+	want := true
+	if got != want {
+		t.Errorf("reflect.DeepEqual() = %v, want %v", got, want)
+	}
 }
 
 // Test data has 2 parent organisations
-func TestOrganisationCount(t *testing.T) {
-	xo, err := organisation.All(db.Store)
+func testOrganisationCount(t *testing.T) {
+	xo, err := organisation.All(ds)
 	if err != nil {
-		t.Fatalf("Database error: %s", err)
+		t.Fatalf("organisation.All() err = %s", err)
 	}
-	helper.Result(t, 2, len(xo))
+	got := len(xo)
+	want := 2
+	if got != want {
+		t.Errorf("organisation.All() count = %d, want %d", got, want)
+	}
 }
 
 // Test data has 3 child organisations belonging to parent id 1
-func TestChildOrganisationCount(t *testing.T) {
-	o, err := organisation.ByID(db.Store, 1)
+func testChildOrganisationCount(t *testing.T) {
+	o, err := organisation.ByID(ds, 1)
 	if err != nil {
-		t.Fatalf("Database error: %s", err)
+		t.Fatalf("organisation.ByID() err = %s", err)
 	}
-	helper.Result(t, 3, len(o.Groups))
+	got := len(o.Groups)
+	want := 3
+	if got != want {
+		t.Errorf("organisation.ByID().Groups count = %d, want %d", got, want)
+	}
+}
+
+// test organisations by type id
+func testOrganisationByTypeID(t *testing.T) {
+	cases := []struct {
+		arg  int // type id
+		want int // count
+	}{
+		{arg: 1, want: 2},
+		{arg: 2, want: 1},
+		{arg: 4, want: 1},
+	}
+
+	for _, c := range cases {
+		xo, err := organisation.ByTypeID(ds, c.arg)
+		if err != nil {
+			t.Fatalf("organisation.ByTypeID(%d) err = %s", c.arg, err)
+		}
+		got := len(xo)
+		if got != c.want {
+			t.Errorf("organisation.ByTypeID(%d) count = %d, want %d", c.arg, got, c.want)
+		}
+	}
 }

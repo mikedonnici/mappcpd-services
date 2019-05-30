@@ -1,0 +1,243 @@
+[
+  {
+    "id": 2000,
+    "createdAt": {
+      "$date": "2016-09-12T04:35:22.000Z"
+    },
+    "updatedAt": {
+      "$date": "2017-08-22T03:16:33.000Z"
+    },
+    "pubDate": {
+      "date": {
+        "$date": "2016-08-05T00:00:00.000Z"
+      },
+      "year": 2016,
+      "month": 8,
+      "day": 6
+    },
+    "typeId": 60,
+    "type": "Video (web)",
+    "primary": true,
+    "name": "Risk factor management as the fourth pillar of AF management",
+    "description": "CSANZ 2016 - Adelaide, 4-7 August 2016\r\nSpeaker: Dennis Lau\r\nDuration: 23 min",
+    "keywords": [
+      "CSANZ2016",
+      "CSANZ 2016",
+      "CSANZ16",
+      "Lau",
+      "AF"
+    ],
+    "resourceUrl": "https://webcast.gigtv.com.au/Mediasite/Play/bb4663e0c3b64cc58f200064bb6c03db1d",
+    "shortUrl": "https://csanz.io/r2000",
+    "thumbnailUrl": "",
+    "attributes": {
+      "source": "CSANZ",
+      "free": true,
+      "public": true
+    },
+    "active": true
+  },
+  {
+    "id": 24967,
+    "active": true,
+    "createdAt": {
+      "$date": "2018-06-24T23:58:08.000Z"
+    },
+    "updatedAt": {
+      "$date": "2018-06-25T13:30:56.000Z"
+    },
+    "pubDate": {
+      "date": {
+        "$date": "2018-06-06T00:00:00.000Z"
+      },
+      "year": 2018,
+      "month": 6,
+      "day": 6
+    },
+    "typeId": 60,
+    "type": "Video (web)",
+    "primary": true,
+    "name": "Case-Based Questions",
+    "description": "2018 Port Douglas Heart Meeting and Expo\r\nSpeaker: Various\r\nDuration:  54 minutes",
+    "keywords": [
+      "PD2018",
+      "Port Douglas 2018"
+    ],
+    "resourceUrl": "https://vimeo.com/276141704",
+    "shortUrl": "https://csanz.io/r24967",
+    "thumbnailUrl": "",
+    "attributes": {}
+  },
+  {
+    "id": 10003,
+    "createdAt": {
+      "$date": "2017-12-04T04:22:11.000Z"
+    },
+    "updatedAt": {
+      "$date": "2018-02-15T06:06:39.000Z"
+    },
+    "pubDate": {
+      "date": {
+        "$date": "2017-08-30T00:00:00.000Z"
+      },
+      "year": 2017,
+      "month": 8,
+      "day": 30
+    },
+    "typeId": 80,
+    "type": "Article (journal)",
+    "primary": true,
+    "name": "Human Papillomavirus Status and the Risk of Cerebrovascular Events Following Radiation Therapy for Head and Neck Cancer.",
+    "description": "Radiation therapy (RT) is a standard treatment for head and neck cancer; however, it is associated with inflammation, accelerated atherosclerosis, and cerebrovascular events (CVEs; stroke or transient ischemic attack). Human papillomavirus (HPV) is found in nearly half of head and neck cancers and is associated with inflammation and atherosclerosis. Whether HPV confers an increased risk of CVEs after RT is unknown.",
+    "keywords": [
+      "cancer and stroke",
+      "cerebrovascular disease/stroke",
+      "human papillomavirus",
+      "radiation therapy",
+      "transient ischemic attack",
+      "virus",
+      "Addison D",
+      "Seidelmann SB",
+      "Janjua SA",
+      "Emami H",
+      "Staziaki PV",
+      "Hallett TR",
+      "Szilveszter B",
+      "Lu MT",
+      "Cambria RP",
+      "Hoffmann U",
+      "Chan AW",
+      "Wirth LJ",
+      "Neilan TG",
+      "28855164"
+    ],
+    "resourceUrl": "https://doi.org/10.1161/JAHA.117.006453",
+    "shortUrl": "https://csanz.io/r10003",
+    "thumbnailUrl": "",
+    "attributes": {
+      "category": "",
+      "sourceId": "28855164",
+      "sourceName": "Journal of the American Heart Association",
+      "sourceNameAbbrev": "J Am Heart Assoc",
+      "sourcePubDate": "2017 Aug 30",
+      "sourceIssue": "9",
+      "free": true,
+      "public": true,
+      "source": "Pubmed",
+      "sourceVolume": "6",
+      "sourcePages": ""
+    },
+    "active": true
+  },
+  {
+    "id": 10002,
+    "createdAt": {
+      "$date": "2017-12-04T04:22:11.000Z"
+    },
+    "updatedAt": {
+      "$date": "2018-02-15T06:06:39.000Z"
+    },
+    "pubDate": {
+      "date": {
+        "$date": "2017-08-30T00:00:00.000Z"
+      },
+      "year": 2017,
+      "month": 8,
+      "day": 30
+    },
+    "typeId": 80,
+    "type": "Article (journal)",
+    "primary": true,
+    "name": "Lower Mitochondrial Energy Production of the Thigh Muscles in Patients With Low-Normal Ankle-Brachial Index.",
+    "description": "Lower muscle mitochondrial energy production may contribute to impaired walking endurance in patients with peripheral arterial disease. A borderline ankle-brachial index (ABI) of 0.91 to 1.10 is associated with poorer walking endurance compared with higher ABI. We hypothesized that in the absence of peripheral arterial disease, lower ABI is associated with lower mitochondrial energy production.",
+    "keywords": [
+      "aging",
+      "ankle\u2010brachial index",
+      "mitochondrial function",
+      "AlGhatrif M",
+      "Zane A",
+      "Oberdier M",
+      "Canepa M",
+      "Studenski S",
+      "Simonsick E",
+      "Spencer RG",
+      "Fishbein K",
+      "Reiter D",
+      "Lakatta EG",
+      "McDermott MM",
+      "Ferrucci L",
+      "28855165"
+    ],
+    "resourceUrl": "https://doi.org/10.1161/JAHA.117.006604",
+    "shortUrl": "https://csanz.io/r10002",
+    "thumbnailUrl": "",
+    "attributes": {
+      "public": true,
+      "source": "Pubmed",
+      "sourceId": "28855165",
+      "sourceNameAbbrev": "J Am Heart Assoc",
+      "sourceVolume": "6",
+      "sourceIssue": "9",
+      "free": true,
+      "sourceName": "Journal of the American Heart Association",
+      "sourcePubDate": "2017 Aug 30",
+      "sourcePages": "",
+      "category": ""
+    },
+    "active": true
+  },
+  {
+    "id": 10012,
+    "createdAt": {
+      "$date": "2017-12-04T04:22:11.000Z"
+    },
+    "updatedAt": {
+      "$date": "2018-02-15T06:06:40.000Z"
+    },
+    "pubDate": {
+      "date": {
+        "$date": "2017-11-01T00:00:00.000Z"
+      },
+      "year": 2017,
+      "month": 11,
+      "day": 1
+    },
+    "typeId": 80,
+    "type": "Article (journal)",
+    "primary": true,
+    "name": "Low cerebral blood flow after cardiac arrest is not associated with anaerobic cerebral metabolism.",
+    "description": "Estimation of cerebral anaerobic metabolism in survivors and non-survivors after cardiac arrest.",
+    "keywords": [
+      "Cardiac arrest",
+      "Cerebral blood flow",
+      "Lactate",
+      "Metabolism",
+      "Post-cardiac arrest syndrome",
+      "Hoedemaekers CW",
+      "Ainslie PN",
+      "Hinssen S",
+      "Aries MJ",
+      "Bisschops LL",
+      "Hofmeijer J",
+      "van der Hoeven JG",
+      "28844934"
+    ],
+    "resourceUrl": "https://doi.org/10.1016/j.resuscitation.2017.08.218",
+    "shortUrl": "https://csanz.io/r10012",
+    "thumbnailUrl": "",
+    "attributes": {
+      "sourceName": "Resuscitation",
+      "sourcePubDate": "2017 Nov",
+      "sourceIssue": "",
+      "free": true,
+      "source": "Pubmed",
+      "sourceId": "28844934",
+      "sourceVolume": "120",
+      "sourcePages": "45-50",
+      "category": "",
+      "public": true,
+      "sourceNameAbbrev": "Resuscitation"
+    },
+    "active": true
+  }
+]

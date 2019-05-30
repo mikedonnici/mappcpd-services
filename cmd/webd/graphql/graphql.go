@@ -1,21 +1,18 @@
 package graphql
 
 import (
-	"fmt"
 	"net/http"
-	"os"
-	"strings"
 
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 	"github.com/graphql-go/handler"
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
 	"github.com/rs/cors"
 )
 
-// Store represents the global datastore passed to internal packages by the handlers
+// DS represents the global datastore passed to internal packages by the handlers
 var DS datastore.Datastore
 
-// Start fires up the GraphQL server
-func Start(port string, ds datastore.Datastore) {
+// Server returns a handler for the GraphQL server
+func Server(ds datastore.Datastore) http.Handler {
 
 	DS = ds
 
@@ -37,8 +34,5 @@ func Start(port string, ds datastore.Datastore) {
 		AllowedHeaders: []string{"Authorization", "Content-Type"},
 	}).Handler(h)
 
-	http.Handle("/graphql", ch)
-	host := strings.Join(strings.Split(os.Getenv("MAPPCPD_API_URL"), ":")[:2], "")
-	fmt.Println("GraphQL server listening at", host+":"+port+"/graphql")
-	http.ListenAndServe(":"+port, nil)
+	return ch
 }

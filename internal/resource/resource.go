@@ -12,8 +12,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
-	"github.com/mikedonnici/mappcpd-services/internal/utility"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/utility"
 	"github.com/pkg/errors"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -48,7 +48,7 @@ type PubDate struct {
 
 type Resources []Resource
 
-// ByID fetches a resource by id, from the MySQL db
+// ByID fetches a resource by id, from the MySQL data
 func ByID(ds datastore.Datastore, id int) (*Resource, error) {
 
 	// Set up a new empty Member
@@ -131,11 +131,14 @@ func ByID(ds datastore.Datastore, id int) (*Resource, error) {
 		fmt.Println(msg, err)
 		//os.Exit(1)
 	}
-	r.PubDate.Date, err = time.Parse("2006-01-02", presentedOn)
-	if err != nil {
-		msg := fmt.Sprintf("ByID() record %v - could not Parse presented_on", id)
-		fmt.Println(msg, err)
-		//os.Exit(1)
+
+	if presentedOn != "" && presentedOn != "0000-00-00" {
+		r.PubDate.Date, err = time.Parse("2006-01-02", presentedOn)
+		if err != nil {
+			msg := fmt.Sprintf("ByID() record %v - could not Parse presented_on", id)
+			fmt.Println(msg, err)
+			//os.Exit(1)
+		}
 	}
 
 	// Convert year, month and day strings to int
@@ -176,7 +179,7 @@ func ByID(ds datastore.Datastore, id int) (*Resource, error) {
 	return &r, nil
 }
 
-// DocResourcesAll searches the Resource collection. Receives query(q) and projection(p)
+// DocResourcesAll searches the Resource collection. Receives query(query) and projection(p)
 // It returns []interface{} so that only the projected fields are present. The down side of
 // this is that the fields are returned in alphabetical order so it is not as readable
 // as the Member struct. Option might be to use the Member struct when no projection
@@ -304,12 +307,12 @@ func SyncResource(ds datastore.Datastore, r *Resource) {
 	// Update the document in the Members collection
 	var w sync.WaitGroup
 	w.Add(1)
-	go UpdateResourceDoc(ds, r, &w)
+	go updateResourceDoc(ds, r, &w)
 	w.Wait()
 }
 
 // UpdateMemberDoc updates the JSON-formatted member record in MongoDB
-func UpdateResourceDoc(ds datastore.Datastore, r *Resource, w *sync.WaitGroup) {
+func updateResourceDoc(ds datastore.Datastore, r *Resource, w *sync.WaitGroup) {
 
 	// Make the selector for Upsert
 	id := map[string]int{"id": r.ID}
@@ -339,73 +342,40 @@ func UpdateResourceDoc(ds datastore.Datastore, r *Resource, w *sync.WaitGroup) {
 // then this will hand off to .Update() to see if the record should be updated instead.
 func (r *Resource) Save(ds datastore.Datastore) (int, error) {
 
-	// At this point we will not save a resource without a target url... defeats the purpose
+	// Don't save a resource without a target url
 	if r.ResourceURL == "" {
-		m := "Cannot r.Save() when there is no resource url"
-		fmt.Println(m)
-		return 0, errors.New(m)
-
+		return 0, errors.New("Cannot save a resource without a url")
 	}
 
-	// To prevent duplicate resources we need to check for a match based on suitable field(s).
-	// For now we can use the resource_url field as there is no point(?) having multiple Resources that point
-	// to the same location. However, it might be better to match on multiple fields?
-	// If we do find a duplicate we then need to check if we should update the resource as something may have changed.
-	// This is an issue when doing batch resource inserts because we may load the same batch, find many duplicates,
-	// update them all and hence change the updated_at stamp. This then causes other services to update (mongr->algr)
-	// when they don't need to.
-	// Note that we don't yet have the field value for r.ID, so we can set it here if we do find a duplicate resource_url,
-	// otherwise set it further along, when a new record is created in MySQL.
-	// todo flaky check for duplicate, if func returns zero we create a duplicate! only thing saving it is return for blank resource url above
-	r.ID = DuplicateResourceURL(ds, r.ResourceURL)
+	// set r.ID if there is a matching resource url in the database and update only if it is not an exact match
+	r.ID = ResourceByURL(ds, r.ResourceURL)
 	if r.ID > 0 {
-		//fmt.Println("")
-		//fmt.Println("#################################################################################")
-		//fmt.Printf("Trying to Save() a resource that has the same resource_url (%v) as existing resource id %v\n", r.ResourceURL, r.ID)
-		//fmt.Println("Checking if this resource should be updated instead...")
 
-		// See if there is any real need to update, rather than just updating willy nilly :)
-		// First, fetch the current Resource with this ID...
-		r2, err := ByID(ds, r.ID)
+		nothingToUpdate, err := r.ExactDatabaseMatch(ds)
 		if err != nil {
-			fmt.Printf("Could not fetch the (possible) duplicate resource id %v, err: %v - skipping this record", r.ID, err)
-			return int(r.ID), err
+			msg := fmt.Sprintf("Error checking equality of Resource id %v value with its counterpart in the database: %s - cannot update", r.ID, err)
+			return int(r.ID), errors.New(msg)
+		}
+		if nothingToUpdate {
+			msg := fmt.Sprintf("Resource id %v update appears to be identical with its counterpart in the database - nothing to update", r.ID)
+			return int(r.ID), errors.New(msg)
 		}
 
-		//fmt.Println("")
-		//fmt.Println("New Resource:")
-		//fmt.Println(r)
-		//fmt.Println("")
-		//fmt.Println("Existing Resource:")
-		//fmt.Println(r2)
-
-		// Resource (r) is our update candidate, r2 is the possible duplicate from the database. Check
-		// key fields to see if there is anything that actually needs to be updated...
-		if ResourceDeepEqual(r, r2) {
-			fmt.Println("Resource", r.ID, "has no significant changes, skipping update")
-			return int(r.ID), err
-		}
-
-		// Not deeply equal, so update
-		fmt.Print("Resource ", r.ID, " has changed and needs to be updated... ")
 		err = r.Update(ds, r.ID)
 		if err != nil {
-			fmt.Printf("Update failed for Resource %v with err: %v - skipping this record", r.ID, err)
-			return int(r.ID), err
+			msg := fmt.Sprintf("Update failed for Resource %v with err: %v", r.ID, err)
+			return int(r.ID), errors.New(msg)
 		}
 
-		// Set ShortUrl
-		err = r.SetShortURL(ds)
-		if err != nil {
-			fmt.Println("setShortURL error:", err)
-			return int(r.ID), err
-		}
-
-		fmt.Println("done!")
 		return int(r.ID), nil
 	}
 
-	// No duplicate so add a new resource...
+	return r.Add(ds)
+}
+
+// Add inserts a Resource into the mysql database and returns the new record id
+func (r *Resource) Add(ds datastore.Datastore) (int, error) {
+
 	query := "INSERT INTO ol_resource (ol_resource_type_id, active, `primary`," +
 		`created_at, updated_at, presented_on, presented_year, presented_month, presented_date,
 		name, description, keywords,
@@ -427,10 +397,13 @@ func (r *Resource) Save(ds datastore.Datastore) (int, error) {
 	attributes := ""
 	xb, err := json.Marshal(r.Attributes)
 	if err != nil {
-		fmt.Println("Could not marshal attributes prior to insert - ignoring attributes completely")
+		log.Println("Could not marshal attributes prior to insert - ignoring attributes completely")
 	} else {
 		attributes = strings.Replace(string(xb), "\"", "\\\"", -1)
 	}
+
+	r.CreatedAt = time.Now()
+	r.UpdatedAt = time.Now()
 
 	query = fmt.Sprintf(query, r.TypeID, 1, r.Primary,
 		r.CreatedAt.Format("2006-01-02 15:04:05"),
@@ -444,23 +417,21 @@ func (r *Resource) Save(ds datastore.Datastore) (int, error) {
 
 	res, err := ds.MySQL.Session.Exec(query)
 	if err != nil {
-		fmt.Println("Error with query: \n", query, "\n", err)
-		return 0, err
+		msg := fmt.Sprintf("Error with query: %s\nError: %s", query, err)
+		return 0, errors.New(msg)
 	}
 
 	id, err := res.LastInsertId()
-	// Set the ID now we have it, for any subsequent convenience
+	if err != nil {
+		msg := fmt.Sprintf("Error fetching last insert id: %s", err)
+		return 0, errors.New(msg)
+	}
 	r.ID = int(id)
+	log.Println("Added a new resource with ID", r.ID)
 
-	// A little useful output for the logs...
-	fmt.Println("Added a new resource with ID", r.ID)
-
-	// Make sure we set the shortURL - this sets the value in the MySQL field: ol_resource.short_url
-	// *AFTER* it creates the record in MongoDB... otherwise, the short link will be activated but will
-	// not be redirected.
 	err = r.SetShortURL(ds)
 	if err != nil {
-		fmt.Println("setShortURL error:", err)
+		log.Println("Error setting short url for new resource:", err)
 	}
 
 	return r.ID, nil
@@ -479,6 +450,8 @@ func (r *Resource) Update(ds datastore.Datastore, id int) error {
 	// Create comma separated keyword list for MySQL field from r.Keywords []string
 	keywords := strings.Join(r.Keywords, ",")
 
+	r.UpdatedAt = time.Now()
+
 	query = fmt.Sprintf(query, r.TypeID, 1, r.Primary,
 		r.UpdatedAt.Format("2006-01-02 15:04:05"),
 		r.PubDate.Date.Format("2006-01-02"),
@@ -495,12 +468,35 @@ func (r *Resource) Update(ds datastore.Datastore, id int) error {
 		return err
 	}
 
+	err = r.SetShortURL(ds)
+	if err != nil {
+		msg := fmt.Sprintf("setShortURL error: %v", err)
+		return errors.New(msg)
+	}
+
 	return nil
+}
+
+// ExactDatabaseMatch returns true if a exactly matching record exists in the database. The bool response
+// is only useful if there is no error, otherwise a false negative might lead to duplicate records being created
+func (r *Resource) ExactDatabaseMatch(ds datastore.Datastore) (bool, error) {
+
+	dbResource, err := ByID(ds, r.ID)
+	if err != nil {
+		msg := fmt.Sprintf("Could not fetch existing resource id %v, err: %v - skipping this record", r.ID, err)
+		return false, errors.New(msg)
+	}
+
+	if ResourceDeepEqual(r, dbResource) {
+		return true, nil
+	}
+
+	return false, nil
 }
 
 // SetShortURL sets the short_url fields in MySQL ol_resource.short_url. This is here for convenience so that when
 // a Resource is added via the API, and we don't yet have an ID, we can set the short url without making another API call.
-// This is a bit "hackish", however the current MappCPD application will send a user to the short url if it exists in the db
+// This is a bit "hackish", however the current MappCPD application will send a user to the short url if it exists in the data
 // -e, if there is a value in ol_resource.short_url. So BEFORE we set this value we need to make sure a record exists in the Links
 // collection in MongoDB as this is what the short url service (linkr) refers to when doing short link redirecting
 func (r *Resource) SetShortURL(ds datastore.Datastore) error {
@@ -546,11 +542,11 @@ func (r *Resource) SetShortURL(ds datastore.Datastore) error {
 	return nil
 }
 
-// DuplicateResourceURL checks the MySQL db for the existence of a resource_url, and returns the FIRST id or 0
+// ResourceByURL checks the MySQL data for the existence of a resource_url, and returns the FIRST id or 0
 // This is here to help prevent the addition of duplicate resources. In the .Save() func if a duplicate is found,
 // that is, a duplicate resource_url, .Update() will be run instead. This means the id is required so we know which record
 // to update. It is possible there could be more than one duplicate so, for now, return the FIRST duplicate with QueryRow()
-func DuplicateResourceURL(ds datastore.Datastore, url string) int {
+func ResourceByURL(ds datastore.Datastore, url string) int {
 
 	var c int
 
@@ -565,37 +561,43 @@ func DuplicateResourceURL(ds datastore.Datastore, url string) int {
 	return c
 }
 
+// ResourceDeepEqual compares key fields in a Resource and returns true if all are equal
 func ResourceDeepEqual(r, r2 *Resource) bool {
 
 	if r.Name != r2.Name {
-		//fmt.Println("")
-		//fmt.Println("Name not equal")
-		//fmt.Println(r.Name, "&", r2.Name)
 		return false
 	}
 	if r.Description != r2.Description {
-		//fmt.Println("")
-		//fmt.Println("Descriptions not equal")
-		//fmt.Println(r.Desc, "&", r2.Desc)
 		return false
 	}
 	if !reflect.DeepEqual(r.PubDate, r2.PubDate) {
-		//fmt.Println("")
-		//fmt.Println("PubDate not equal")
-		//fmt.Println(r.PubDate, "&", r2.PubDate)
 		return false
 	}
 	if !reflect.DeepEqual(r.Keywords, r2.Keywords) {
-		//fmt.Println("")
-		//fmt.Println("Keywords not equal...")
-		//for i := range r.Keywords {
-		//	if r.Keywords[i] != r2.Keywords[i] {
-		//		fmt.Println(r.Keywords[i], " NOT EQUAL TO", r2.Keywords[i])
-		//	}
-		//}
-		//fmt.Println(r.Keywords, "&", r2.Keywords)
 		return false
 	}
 
 	return true
+}
+
+// Sync saves the Resource to the document database.
+func (r *Resource) Sync(ds datastore.Datastore) error {
+	return r.SaveDoc(ds)
+}
+
+// SaveDoc upserts Resource doc to MongoDB
+func (r *Resource) SaveDoc(ds datastore.Datastore) error {
+
+	rc, err := ds.MongoDB.ResourcesCollection()
+	if err != nil {
+		return fmt.Errorf("resource.SaveDoc() err = %s", err)
+	}
+
+	selector := map[string]int{"id": r.ID}
+	_, err = rc.Upsert(selector, &r)
+	if err != nil {
+		return fmt.Errorf("resource.SaveDoc() err = %s", err)
+	}
+
+	return nil
 }

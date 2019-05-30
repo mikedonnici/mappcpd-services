@@ -1,10 +1,7 @@
-/*
-	Package Email sends emails using Sendgrid API. At this stage can only do single emails with one attachemnt.
-*/
+// Package email sends emails using Sendgrid API. At this stage can only do single emails with one attachemnt.
 package email
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -13,6 +10,7 @@ import (
 	"github.com/sendgrid/sendgrid-go/helpers/mail"
 )
 
+// Email represents an email
 type Email struct {
 	FromName     string
 	FromEmail    string
@@ -24,6 +22,7 @@ type Email struct {
 	Attachments  []Attachment
 }
 
+// Attachment to an email
 type Attachment struct {
 	MIMEType      string
 	FileName      string
@@ -39,6 +38,7 @@ func init() {
 	envr.New("email", []string{"SENDGRID_API_KEY"}).Clean()
 }
 
+// Send sends an email
 func (e Email) Send() error {
 
 	message := prepare(e)
@@ -53,9 +53,9 @@ func (e Email) Send() error {
 	if err != nil {
 		log.Println(err)
 	} else {
-		fmt.Println(response.StatusCode)
-		fmt.Println(response.Body)
-		fmt.Println(response.Headers)
+		log.Println(response.StatusCode)
+		log.Println(response.Body)
+		log.Println(response.Headers)
 	}
 
 	return err

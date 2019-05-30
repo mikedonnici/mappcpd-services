@@ -1,8 +1,9 @@
 package activity
 
-// Queries is a map containing common queries for the package
-var Queries = map[string]string{
-	"select-activities": selectActivities,
+// queries is a map containing common queries for the package
+var queries = map[string]string{
+	"select-activities":     selectActivities,
+	"select-activity-types": selectActivityTypes,
 }
 
 const selectActivities = `SELECT
@@ -22,3 +23,13 @@ FROM
   ce_activity_category c ON a.ce_activity_category_id = c.id
   LEFT JOIN
   ce_activity_unit u ON a.ce_activity_unit_id = u.id`
+
+const selectActivityTypes = `
+SELECT 
+  id, 
+  name 
+FROM 
+  ce_activity_type 
+WHERE 
+  active = 1 AND 
+  ce_activity_id = %d`

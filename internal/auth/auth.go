@@ -3,7 +3,7 @@ package auth
 import (
 	"fmt"
 
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 )
 
 // AuthMember checks login & pass against db. Check for md5() or encrypted string.

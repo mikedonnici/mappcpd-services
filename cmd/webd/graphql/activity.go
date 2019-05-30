@@ -1,8 +1,8 @@
 package graphql
 
 import (
+	"github.com/cardiacsociety/web-services/internal/activity"
 	"github.com/graphql-go/graphql"
-	"github.com/mikedonnici/mappcpd-services/internal/activity"
 )
 
 // activityTypeMap is a local version of activities.Type, to remove to the sql.NullInt64
@@ -90,12 +90,11 @@ var activityTypesQueryField = &graphql.Field{
 			return nil, nil
 		}
 
-		// Deal with sql.NullInt64 type from ce_activity.ce_activity_type_id
 		var xat []activityTypeMap
 		for _, v := range types {
 			at := activityTypeMap{}
-			if v.ID.Valid {
-				at.ID = int(v.ID.Int64)
+			if v.ID > 0 {
+				at.ID = v.ID
 				at.Name = v.Name
 				xat = append(xat, at)
 			}

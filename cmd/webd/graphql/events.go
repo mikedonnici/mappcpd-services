@@ -1,8 +1,8 @@
 package graphql
 
 import (
+	"github.com/cardiacsociety/web-services/internal/events"
 	"github.com/graphql-go/graphql"
-	"github.com/mikedonnici/mappcpd-services/internal/events"
 )
 
 // event is slightly trimmer version of an events.event

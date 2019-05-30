@@ -1,6 +1,7 @@
 web: webd
 pubmedr: pubmedr
-mongr: mongr
+syncr: syncr
 algr: algr
 fixr: fixr
 mailr: mailr
+backupdb: backupdb

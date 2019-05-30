@@ -4,14 +4,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/mikedonnici/mappcpd-services/internal/cpd"
+	"github.com/cardiacsociety/web-services/internal/cpd"
 	"github.com/matryer/is"
 )
 
-
 func TestCreatePDF(t *testing.T) {
 	is := is.New(t)
-	f, err := os.Create(os.TempDir()+"/test.pdf")
+	f, err := os.Create(os.TempDir() + "/test.pdf")
 	defer f.Close()
 	is.NoErr(err) // Error creating pdf file
 
@@ -22,6 +21,3 @@ func TestCreatePDF(t *testing.T) {
 	err = cpd.PDFReport(m, f)
 	is.NoErr(err) // Could not create PDF
 }
-
-
-

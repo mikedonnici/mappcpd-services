@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/mikedonnici/mappcpd-services/internal/platform/jwt"
-	"github.com/mikedonnici/mappcpd-services/testdata"
+	"github.com/cardiacsociety/web-services/internal/platform/jwt"
+	"github.com/cardiacsociety/web-services/testdata"
 	"github.com/matryer/is"
 )
 

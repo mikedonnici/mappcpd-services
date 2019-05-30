@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/34South/envr"
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
 )
 
 // updateSched is a date flag used to determine the updateSched for a particular index
@@ -34,12 +34,14 @@ const (
 
 var updateTypes = []string{"partial", "full", "atomic"}
 
-var collections = flag.String("c", "", "collections to sync - 'all', 'directory', 'members', 'modules' or 'resources'")
+var collections = flag.String("c", "", "collections to sync - 'all', 'directory', 'members', 'modules', 'resources', 'qualifications', 'organisations'")
 
 var directoryIndexName string
 var memberIndexName string
 var moduleIndexName string
 var resourceIndexName string
+var qualificationIndexName string
+var organisationIndexName string
 
 var sched = scheduledUpdateType()
 
@@ -52,6 +54,8 @@ func init() {
 		"MAPPCPD_ALGOLIA_MEMBERS_INDEX",
 		"MAPPCPD_ALGOLIA_MODULES_INDEX",
 		"MAPPCPD_ALGOLIA_RESOURCES_INDEX",
+		"MAPPCPD_ALGOLIA_QUALIFICATIONS_INDEX",
+		"MAPPCPD_ALGOLIA_ORGANISATIONS_INDEX",
 		"MAPPCPD_MONGO_DBNAME",
 		"MAPPCPD_MONGO_DESC",
 		"MAPPCPD_MONGO_URL",
@@ -74,6 +78,8 @@ func main() {
 	memberIndexName = os.Getenv("MAPPCPD_ALGOLIA_MEMBERS_INDEX")
 	resourceIndexName = os.Getenv("MAPPCPD_ALGOLIA_RESOURCES_INDEX")
 	moduleIndexName = os.Getenv("MAPPCPD_ALGOLIA_MODULES_INDEX")
+	qualificationIndexName = os.Getenv("MAPPCPD_ALGOLIA_QUALIFICATIONS_INDEX")
+	organisationIndexName = os.Getenv("MAPPCPD_ALGOLIA_ORGANISATIONS_INDEX")
 
 	switch *collections {
 	case "all":
@@ -81,6 +87,8 @@ func main() {
 		updateMemberIndex()
 		updateModuleIndex()
 		updateResourceIndex()
+		updateQualificationIndex()
+		updateOrganisationIndex()
 	case "directory":
 		updateDirectoryIndex()
 	case "members":
@@ -89,6 +97,10 @@ func main() {
 		updateModuleIndex()
 	case "resources":
 		updateResourceIndex()
+	case "qualifications":
+		updateQualificationIndex()
+	case "organisations":
+		updateOrganisationIndex()
 	default:
 		fmt.Println("Unknown flag, -h for help.")
 	}
@@ -177,6 +189,50 @@ func updateResourceIndex() {
 	mi := newResourceIndex(resourceIndexName)
 	if err := update(&mi, ut); err != nil {
 		log.Fatalln("Error updating resource index -", err)
+	}
+}
+
+func updateQualificationIndex() {
+
+	if qualificationIndexName == "" {
+		log.Println("Qualifications index name is an empty string - skipping")
+		return
+	}
+
+	// Always atomic because this index has no mongo collection and hence no Object IDs. Any other type
+	// of index update will result in duplicate records.
+	var ut updateType
+	switch sched {
+	default:
+		ut = atomic
+	}
+	updateLogMessage(qualificationIndexName, ut)
+
+	i := newQualificationIndex(qualificationIndexName)
+	if err := update(&i, ut); err != nil {
+		log.Fatalln("Error updating qualifications index -", err)
+	}
+}
+
+func updateOrganisationIndex() {
+
+	if organisationIndexName == "" {
+		log.Println("Organisation index name is an empty string - skipping")
+		return
+	}
+
+	// Always atomic because this index has no mongo collection and hence no Object IDs. Any other type
+	// of index update will result in duplicate records.
+	var ut updateType
+	switch sched {
+	default:
+		ut = atomic
+	}
+	updateLogMessage(organisationIndexName, ut)
+
+	i := newOrganisationIndex(organisationIndexName)
+	if err := update(&i, ut); err != nil {
+		log.Fatalln("Error updating organisation index -", err)
 	}
 }
 

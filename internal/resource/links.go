@@ -4,8 +4,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/mikedonnici/mappcpd-services/internal/platform/datastore"
-	"github.com/mikedonnici/mappcpd-services/internal/utility"
+	"github.com/cardiacsociety/web-services/internal/platform/datastore"
+	"github.com/cardiacsociety/web-services/internal/utility"
 	"gopkg.in/mgo.v2/bson"
 )
 
