@@ -27,6 +27,7 @@ before_script:
   - mongo mydb_test --eval 'db.createUser({user:"travis",pwd:"test",roles:["readWrite"]});'
 
 env:
+  - GO111MODULE=on
   global:
     - MAPPCPD_ADMIN_USER="admin"
     - MAPPCPD_ADMIN_PASS="password"
